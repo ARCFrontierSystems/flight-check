@@ -25,6 +25,7 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: Install test-only tools (not used by Seaworthy at runtime)
         run: |
+          sudo apt-get update -q
           sudo apt-get install -y --no-install-recommends poppler-utils
           python -m pip install --disable-pip-version-check "jsonschema==4.23.0"
       - name: Unit tests

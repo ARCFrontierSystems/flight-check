@@ -240,7 +240,7 @@ def render(final, summary):
             out.append("**%s**" % g["decision"])
             out.append("")
             for r in g["reasons"]:
-                out.append(md(r) if r.startswith("- ") else md(r))
+                out.append(md(r))
             out.append("")
             out.append("_%s_" % md(g["scope_statement"]))
         elif num in ("3", "4", "5", "6", "7"):
