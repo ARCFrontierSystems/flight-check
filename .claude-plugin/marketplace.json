@@ -1,0 +1,15 @@
+{
+  "name": "arc-frontier-systems",
+  "owner": {
+    "name": "ARC Frontier Systems"
+  },
+  "description": "Plugins published by ARC Frontier Systems.",
+  "plugins": [
+    {
+      "name": "seaworthy",
+      "source": "./plugins/seaworthy",
+      "description": "Evidence-first ship-readiness audit for any software project, with a Legal Review Assistant and Attorney Review Packet.",
+      "category": "security"
+    }
+  ]
+}

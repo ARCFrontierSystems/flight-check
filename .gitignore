@@ -1,0 +1,14 @@
+# Seaworthy run output when auditing this repository itself (reports may contain quoted findings)
+.seaworthy/runs/
+.seaworthy/packets/
+# Local leak-gate denylist (never commit; see CONTRIBUTING.md)
+.seaworthy-denylist*
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+# plugin eval results
+evals/results/
+# Editors / OS
+.DS_Store
+*.swp

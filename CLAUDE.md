@@ -8,3 +8,19 @@ This project is named **Seaworthy**. Plugin id: `seaworthy`.
 - "DevGuard" was a short-lived interim name, dropped because of the OWASP DevGuard project. It also means Seaworthy.
 - The GitHub repository is still named `project-guardian`; that is the same project.
 - Seaworthy is unrelated to other projects that share the name (for example the Kubernetes health CLI or the Docker test harness called "seaworthy").
+
+## Repository layout
+
+- `plugins/seaworthy/` is the shipped Claude Code plugin (skills, agents, scripts, schemas, references). Everything in it reaches users.
+- `.claude-plugin/marketplace.json` publishes the plugin from `./plugins/seaworthy`.
+- `tests/`, `tools/`, `docs/` are development-only and never ship.
+
+## Development rules
+
+- Run before every commit: `python3 -m unittest discover -s tests/unit -p 'test_*.py'`, `python3 tools/sync_agents.py --check`, `python3 tools/lint_plugin.py`, and `claude plugin validate --strict plugins/seaworthy`.
+- Shared agent instructions live in `tools/agent-blocks/`; edit them there and run `python3 tools/sync_agents.py`. Control lists in agents are generated from `plugins/seaworthy/references/required-controls.json`.
+- Plugin scripts are Python 3.9+ standard library only: no network, no subprocess, no eval/exec. The lint enforces this.
+- Never put blind-test fixtures, ground truth, expected findings, or fixture-specific identifiers into `plugins/`. Seaworthy must discover issues from evidence. Improve general procedures, never special-case a test app.
+- Never commit strings that look like real credentials (build test samples at runtime) or invisible/bidirectional Unicode characters (in code, write them as escape sequences, never as the characters themselves; `tools/lint_plugin.py` rejects them).
+- Never name private or unrelated projects anywhere in this repository. The leak gate reads a private denylist from `SEAWORTHY_LEAK_DENYLIST` (a local file that is never committed).
+- Seaworthy never gives legal advice or claims compliance/certification; keep that true in every file, including docs.
