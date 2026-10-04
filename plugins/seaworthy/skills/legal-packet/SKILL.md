@@ -1,6 +1,6 @@
 ---
 name: legal-packet
-description: Seaworthy Legal Review Assistant. Prepares "SEAWORTHY — ATTORNEY REVIEW PACKET", a printable PDF that organizes legal/business findings, technical evidence, and specific questions for qualified counsel. Not legal advice. Run explicitly with /seaworthy:legal-packet.
+description: Legal Review Assistant: builds the Attorney Review Packet PDF of findings and questions for counsel. Not legal advice.
 argument-hint: "[SW-0001,SW-0002 | all] [--run RUN_DIR] [--project NAME] [--for NAME] [--a4] [--out DIR]"
 disable-model-invocation: true
 allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py *)
@@ -18,19 +18,19 @@ This helps the user prepare for a conversation with qualified legal counsel. It 
 3. **Never invent counsel's conclusions or decisions.** Decisions are recorded only from what the user reports, through `/seaworthy:track`.
 4. **Do not modify the project.** Write only inside the Seaworthy run directory.
 
-`SW` means `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py`, which is pre-approved. Run no other shell commands.
+Run Seaworthy's script only as a single plain command that starts exactly with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py`, as in the examples below. Never use shell variables, `cd`, `&&`, pipes, or redirection around it; only that exact form is pre-approved. Run no other shell commands.
 
 ## Steps
 
 1. **Find the audit run.**
    - If `--run` was given, use it.
-   - Otherwise run `SW runs --base <root>/.seaworthy/runs`, where `<root>` is the current directory, and use `latest_finalized`.
+   - Otherwise run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py runs --base <root>/.seaworthy/runs`, where `<root>` is the current directory, and use `latest_finalized`.
    - For untrusted-tier audits, the user must give `--out DIR`; use `<DIR>/runs`.
    - If there is no finalized run, tell the user to run `/seaworthy:audit` first, and stop.
 
    The ledger is `<root>/.seaworthy/ledger.json`, or `<DIR>/ledger.json` for the untrusted tier.
 
-2. **Select findings.** Run `SW findings <run_dir> --legal --detail`.
+2. **Select findings.** Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py findings <run_dir> --legal --detail`.
    - With explicit IDs, use those. Each must carry a legal or business classification; if one does not, explain that the packet is only for findings that warrant legal or business review.
    - Otherwise (or with `all`), use every finding whose classification is not `INFORMATIONAL`.
    - If none qualify, tell the user that no findings currently warrant an Attorney Review Packet, and stop.
@@ -60,7 +60,7 @@ This helps the user prepare for a conversation with qualified legal counsel. It 
    - **No conclusions.** Neither summary may contain legal conclusions. When you refer to wording from the project's own documents, put it in double quotes.
 
 4. **Build the packet.** Run:
-   `SW packet <run_dir> --request <run_dir>/packet-request.json --out <run_dir>/attorney-review-packet.pdf --ledger <ledger>`
+   `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py packet <run_dir> --request <run_dir>/packet-request.json --out <run_dir>/attorney-review-packet.pdf --ledger <ledger>`
    - Add `--page-size a4` if the user asked for A4.
    - If `--out DIR` was given for the packet, write the PDF there instead.
    - If the command rejects the request (for example a prohibited conclusion or an unknown finding), correct the request and run it again.

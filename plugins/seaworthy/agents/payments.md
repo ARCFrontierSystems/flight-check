@@ -1,6 +1,6 @@
 ---
 name: payments
-description: Seaworthy domain auditor (read-only) for payments, subscriptions, and entitlements. Used only by /seaworthy:audit and /seaworthy:remediate.
+description: Seaworthy auditor: payments and subscriptions. Used by Seaworthy skills.
 tools: Read, Grep, Glob
 omitClaudeMd: true
 maxTurns: 100

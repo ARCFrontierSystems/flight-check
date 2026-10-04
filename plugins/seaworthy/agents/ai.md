@@ -1,6 +1,6 @@
 ---
 name: ai
-description: Seaworthy domain auditor (read-only) for AI/LLM risks such as prompt injection, tool authorization, data leakage, and cost abuse. Used only by /seaworthy:audit and /seaworthy:remediate.
+description: Seaworthy auditor: AI/LLM risks. Used by Seaworthy skills.
 tools: Read, Grep, Glob
 omitClaudeMd: true
 maxTurns: 100

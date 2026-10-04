@@ -1,6 +1,6 @@
 ---
 name: data
-description: Seaworthy domain auditor (read-only) for data protection and privacy, including retention and deletion. Used only by /seaworthy:audit and /seaworthy:remediate.
+description: Seaworthy auditor: data protection and privacy. Used by Seaworthy skills.
 tools: Read, Grep, Glob
 omitClaudeMd: true
 maxTurns: 100

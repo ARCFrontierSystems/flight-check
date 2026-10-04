@@ -1,6 +1,6 @@
 ---
 name: testing
-description: Seaworthy domain auditor (read-only) for test coverage of critical behavior. Used only by /seaworthy:audit and /seaworthy:remediate.
+description: Seaworthy auditor: test coverage. Used by Seaworthy skills.
 tools: Read, Grep, Glob
 omitClaudeMd: true
 maxTurns: 80

@@ -1,6 +1,6 @@
 ---
 name: platform
-description: Seaworthy domain auditor (read-only) for infrastructure and deployment, reliability and recovery, operational readiness, and production readiness. Used only by /seaworthy:audit and /seaworthy:remediate.
+description: Seaworthy auditor: infrastructure, reliability, operations. Used by Seaworthy skills.
 tools: Read, Grep, Glob
 omitClaudeMd: true
 maxTurns: 100

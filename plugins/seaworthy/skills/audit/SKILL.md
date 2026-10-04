@@ -1,6 +1,6 @@
 ---
 name: audit
-description: Evidence-first ship-readiness audit of a software project covering security, privacy, legal/business risk, compliance readiness, accessibility, reliability, and production readiness. Produces a deterministic ship gate, a 33-section report, and machine-readable findings. Run explicitly with /seaworthy:audit.
+description: Evidence-first ship-readiness audit: security, privacy, legal/business, compliance readiness, accessibility, reliability, production readiness. Deterministic ship gate and report.
 argument-hint: "[path] [--untrusted] [--out DIR] [--context FILE] [--evidence FILE ...] [--domains a,b]"
 disable-model-invocation: true
 allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py *)
@@ -21,7 +21,7 @@ The question: **"Based on the evidence available in this project, what could pre
 6. **Never reproduce secrets.** Agents mask them; keep them masked.
 7. **Do not invent findings, evidence, or summaries.** You may transcribe, validate, and organize what the agents and the script return. You must not add findings of your own.
 
-`SW` below means: `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py`. Run it exactly that way. Do not run any other shell command. The script is pre-approved only while this skill's first turn lasts. After the agents return, the user may be asked to approve it, and in non-interactive sessions it is denied unless allowed in settings. If a call is denied, do not try another way. Tell the user to allow exactly `Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py *)` (for example by choosing "always allow" at the prompt, or by adding it to `permissions.allow` in their settings), and that the partial results stay in the run directory, and re-running `/seaworthy:audit` afterwards starts a complete new run. Then follow "If the script cannot run".
+Run Seaworthy's script only as a single plain command that starts exactly with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py`, as in the examples below. Never use shell variables, `cd`, `&&`, pipes, or redirection around it; only that exact form is pre-approved. Do not run any other shell command. The script is pre-approved only while this skill's first turn lasts. After the agents return, the user may be asked to approve it, and in non-interactive sessions it is denied unless allowed in settings. If a call is denied, do not try another way. Tell the user to allow exactly `Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py *)` (for example by choosing "always allow" at the prompt, or by adding it to `permissions.allow` in their settings), and that the partial results stay in the run directory, and re-running `/seaworthy:audit` afterwards starts a complete new run. Then follow "If the script cannot run".
 
 ## 0. Parse the request
 
@@ -46,7 +46,7 @@ Arguments: `$ARGUMENTS`
 
 ## 1. Start the run
 
-Run `SW init-run --base <run base> --root <root>`. It prints `run_id`, `run_dir`, `started_at`, and `commit`.
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py init-run --base <run base> --root <root>`. It prints `run_id`, `run_dir`, `started_at`, and `commit`.
 
 If `python3` is unavailable or the command fails, follow "If the script cannot run" at the end.
 
@@ -107,7 +107,7 @@ For each reply, extract the JSON object and write it to `<run_dir>/part-<agent>.
 
 ## 4. Validate
 
-Run `SW validate <run_dir>`.
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py validate <run_dir>`.
 
 If it reports errors in a part file:
 1. Launch that agent again with its previous JSON and the exact error list, asking for a corrected complete JSON object. Overwrite the part file with the corrected output.
@@ -122,11 +122,11 @@ If any part file contains findings, launch `seaworthy:verifier` with:
 
 > Run directory: `<run_dir>`. Audit root: `<absolute root>`. Read these Seaworthy part files and give a verdict for every finding: `<list of part-*.json paths>`. Identify findings as `<agent>.<local_id>`. Return only the JSON object described in your instructions.
 
-Write its JSON to `<run_dir>/verification.json`. Run `SW validate <run_dir>` again; if `verification.json` has errors, re-run the verifier once with them. If no findings exist, skip this step.
+Write its JSON to `<run_dir>/verification.json`. Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py validate <run_dir>` again; if `verification.json` has errors, re-run the verifier once with them. If no findings exist, skip this step.
 
 ## 6. Finalize and gate
 
-Run `SW finalize <run_dir> --root <absolute root> --ledger <ledger path>`.
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py finalize <run_dir> --root <absolute root> --ledger <ledger path>`.
 
 This assembles the agent results, mechanically checks every quote against the files, applies the verifier's verdicts, assigns stable finding IDs (`SW-0001`, ...), detects regressions through the ledger, and computes the ship gate. Its JSON output lists the gate decision, its reasons, and every finding.
 
@@ -156,7 +156,7 @@ Write `<run_dir>/summary.json` from the finalize output, using only facts from t
 - **accepted_risk_candidates:** findings or UNVERIFIED controls that an owner might reasonably accept, with compensating controls. Use them only when defensible; never CRITICAL findings. These are candidates only. Acceptance requires the user's explicit decision through `/seaworthy:track`.
 - **regression_recommendations:** specific tests that would catch each blocking issue if it returned.
 
-Run `SW render <run_dir>`. If it rejects the summary (for example for a prohibited claim or an unknown ID), fix the summary and render again.
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py render <run_dir>`. If it rejects the summary (for example for a prohibited claim or an unknown ID), fix the summary and render again.
 
 ## 8. Report to the user
 

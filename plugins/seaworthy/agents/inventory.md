@@ -1,6 +1,6 @@
 ---
 name: inventory
-description: Seaworthy project inventory (read-only). Maps a project's stack, data, and surfaces and decides which audit domains apply. Used only by /seaworthy:audit.
+description: Seaworthy inventory agent (read-only). Used by /seaworthy:audit.
 tools: Read, Grep, Glob
 omitClaudeMd: true
 maxTurns: 60

@@ -1,6 +1,6 @@
 ---
 name: appsec
-description: Seaworthy domain auditor (read-only) for application security, authentication, and authorization. Used only by /seaworthy:audit and /seaworthy:remediate.
+description: Seaworthy auditor: app security, authentication, authorization. Used by Seaworthy skills.
 tools: Read, Grep, Glob
 omitClaudeMd: true
 maxTurns: 120

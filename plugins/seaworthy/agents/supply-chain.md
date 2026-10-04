@@ -1,6 +1,6 @@
 ---
 name: supply-chain
-description: Seaworthy domain auditor (read-only) for dependencies and supply chain, third-party services, and IP/asset licensing. Used only by /seaworthy:audit and /seaworthy:remediate.
+description: Seaworthy auditor: supply chain, third parties, IP. Used by Seaworthy skills.
 tools: Read, Grep, Glob
 omitClaudeMd: true
 maxTurns: 100

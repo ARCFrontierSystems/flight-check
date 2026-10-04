@@ -1,6 +1,6 @@
 ---
 name: governance
-description: Seaworthy domain auditor (read-only) for legal/business risk, compliance readiness, and documentation consistency; feeds the Legal Review Assistant. Used only by /seaworthy:audit and /seaworthy:remediate.
+description: Seaworthy auditor: legal/business, compliance readiness, docs. Used by Seaworthy skills.
 tools: Read, Grep, Glob
 omitClaudeMd: true
 maxTurns: 120

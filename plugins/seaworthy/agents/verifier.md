@@ -1,6 +1,6 @@
 ---
 name: verifier
-description: Seaworthy finding verifier (read-only). Independently re-checks every finding's evidence and searches for mitigations before a ship decision. Used only by /seaworthy:audit and /seaworthy:remediate.
+description: Seaworthy finding verifier (read-only). Used by Seaworthy skills.
 tools: Read, Grep, Glob
 omitClaudeMd: true
 maxTurns: 150
