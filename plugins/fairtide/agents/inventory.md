@@ -71,4 +71,4 @@ Return ONLY one JSON object in a single fenced `json` code block, with no text b
 }
 ```
 
-Rules: evidence `kind` must be one of `code`, `config`, `documentation`, `dependency`, `absence` (never `file`); paths are relative to the audit root; quotes are copied exactly from the cited lines with no added line numbers; leave out keys you do not use instead of writing `null`; include an applicability entry for all 19 domains.
+Rules: evidence `kind` must be one of `code`, `config`, `documentation`, `dependency`, `absence` (never `file`); every `code`, `config`, `documentation`, or `dependency` item needs `start_line`, `end_line`, and an exact `quote`, even when it only shows that a file exists (quote one identifying line, such as its first non-empty line); paths are relative to the audit root; quotes are copied exactly from the cited lines with no added line numbers; leave out keys you do not use instead of writing `null`; include an applicability entry for all 19 domains.
