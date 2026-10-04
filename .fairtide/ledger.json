@@ -103,7 +103,7 @@
       "domain": "legal-business",
       "title": "Product name Fairtide differs from repository, marketplace and schema identifiers (project-guardian), with no recorded name-clearance decision",
       "severity": "INFORMATIONAL",
-      "status": "OPEN",
+      "status": "NOT_REPRODUCED",
       "first_seen_run": "20261004T230555Z",
       "last_seen_run": "20261004T230555Z",
       "history": [
@@ -113,6 +113,13 @@
           "source": "fairtide",
           "note": "first observed",
           "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "fairtide",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
         }
       ],
       "legal": {
@@ -137,7 +144,7 @@
       "domain": "legal-business",
       "title": "CONTRIBUTING.md does not state the license or terms under which contributions are accepted",
       "severity": "INFORMATIONAL",
-      "status": "OPEN",
+      "status": "NOT_REPRODUCED",
       "first_seen_run": "20261004T230555Z",
       "last_seen_run": "20261004T230555Z",
       "history": [
@@ -147,6 +154,13 @@
           "source": "fairtide",
           "note": "first observed",
           "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "fairtide",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
         }
       ],
       "legal": {
@@ -171,7 +185,7 @@
       "domain": "legal-business",
       "title": "Public plugin that produces legal-adjacent output has only Apache-2.0 and disclaimers, with no terms of use or governing-law decision",
       "severity": "INFORMATIONAL",
-      "status": "OPEN",
+      "status": "NOT_REPRODUCED",
       "first_seen_run": "20261004T230555Z",
       "last_seen_run": "20261004T230555Z",
       "history": [
@@ -181,6 +195,13 @@
           "source": "fairtide",
           "note": "first observed",
           "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "fairtide",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
         }
       ],
       "legal": {
@@ -205,7 +226,7 @@
       "domain": "operational-readiness",
       "title": "SECURITY.md directs reporters to private vulnerability reporting, which maintainer docs say is not yet enabled",
       "severity": "LOW",
-      "status": "OPEN",
+      "status": "NOT_REPRODUCED",
       "first_seen_run": "20261004T230555Z",
       "last_seen_run": "20261004T230555Z",
       "history": [
@@ -215,6 +236,13 @@
           "source": "fairtide",
           "note": "first observed",
           "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "fairtide",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
         }
       ]
     },
@@ -226,7 +254,7 @@
       "domain": "privacy",
       "title": "README says secrets are masked in all output files, but masking is applied only when rendering Markdown and PDF",
       "severity": "LOW",
-      "status": "REMEDIATED",
+      "status": "VERIFIED",
       "first_seen_run": "20261004T230555Z",
       "last_seen_run": "20261004T230555Z",
       "history": [
@@ -242,6 +270,13 @@
           "status": "REMEDIATED",
           "source": "fairtide",
           "note": "remediation recorded; pending verification by re-audit: Likely secrets are now masked in all agent text when a run is assembled, so audit.final.json and the ledger never hold them; the README states exactly which outputs are masked and that raw agent replies stay in the gitignored run directory."
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "VERIFIED",
+          "source": "fairtide",
+          "note": "re-audit verified the fix: assemble.py runs mask_secrets over the inventory, the verification output and every part file. This matches the README claim.",
+          "run_id": "20261004T231719Z"
         }
       ],
       "legal": {
@@ -278,7 +313,7 @@
       "domain": "supply-chain",
       "title": "CI installs test and validation tools without lockfiles (jsonschema transitive deps, npm global, apt)",
       "severity": "INFORMATIONAL",
-      "status": "OPEN",
+      "status": "NOT_REPRODUCED",
       "first_seen_run": "20261004T230555Z",
       "last_seen_run": "20261004T230555Z",
       "history": [
@@ -288,6 +323,13 @@
           "source": "fairtide",
           "note": "first observed",
           "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "fairtide",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
         }
       ]
     }
@@ -303,6 +345,12 @@
     {
       "run_id": "20261004T230555Z",
       "at": "2026-10-04T23:14:06Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    },
+    {
+      "run_id": "20261004T231719Z",
+      "at": "2026-10-04T23:25:26Z",
       "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
       "mode": "audit"
     }
