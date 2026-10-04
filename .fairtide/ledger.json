@@ -10,7 +10,7 @@
       "domain": "accessibility",
       "title": "Generated attorney review packet PDF is untagged and has no document language (pdf.py to_bytes)",
       "severity": "LOW",
-      "status": "OPEN",
+      "status": "REMEDIATED",
       "first_seen_run": "20261004T223431Z",
       "last_seen_run": "20261004T223431Z",
       "history": [
@@ -20,6 +20,12 @@
           "source": "fairtide",
           "note": "first observed",
           "run_id": "20261004T223431Z"
+        },
+        {
+          "at": "2026-10-04T23:05:24Z",
+          "status": "REMEDIATED",
+          "source": "fairtide",
+          "note": "remediation recorded; pending verification by re-audit: Partial fix: the packet PDF now declares its document language (/Lang) and displays its title (/ViewerPreferences DisplayDocTitle); docs/limitations.md states that the PDF is untagged and that the Markdown copy is the accessible version. Full PDF tagging is not implemented."
         }
       ],
       "legal": {
@@ -34,7 +40,19 @@
             "run_id": "20261004T223431Z"
           }
         ]
-      }
+      },
+      "remediations": [
+        {
+          "at": "2026-10-04T23:05:24Z",
+          "note": "Partial fix: the packet PDF now declares its document language (/Lang) and displays its title (/ViewerPreferences DisplayDocTitle); docs/limitations.md states that the PDF is untagged and that the Markdown copy is the accessible version. Full PDF tagging is not implemented.",
+          "files": [
+            "plugins/fairtide/scripts/fairtide_lib/pdf.py",
+            "plugins/fairtide/scripts/fairtide_lib/packet.py",
+            "docs/limitations.md"
+          ],
+          "source": "fairtide"
+        }
+      ]
     },
     "e713f5835e4d758d": {
       "id": "FT-0002",
