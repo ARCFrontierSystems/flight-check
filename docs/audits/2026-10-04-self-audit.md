@@ -1,5 +1,7 @@
 # Fairtide self-audit, 2026-10-04 (Phase 3)
 
+**Follow-up:** the fixes and re-audits are recorded in [the Phase 4 record](2026-10-04-phase-4-remediation.md).
+
 Fairtide audited its own repository with `/fairtide:audit`. This page records the result exactly as Fairtide produced it, then a review of that result, including what the audit missed and how the tool behaved. Nothing was fixed in this phase. Fixes are Phase 4 and need the owner's authorization.
 
 ## How it was run

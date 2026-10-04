@@ -132,6 +132,12 @@
             "source": "fairtide",
             "note": "classified BUSINESS DECISION REQUIRED",
             "run_id": "20261004T230555Z"
+          },
+          {
+            "at": "2026-10-04T23:27:15Z",
+            "status": "OPEN",
+            "source": "fairtide",
+            "note": "included in attorney review packet attorney-review-packet.pdf"
           }
         ]
       }
@@ -173,6 +179,12 @@
             "source": "fairtide",
             "note": "classified BUSINESS DECISION REQUIRED",
             "run_id": "20261004T230555Z"
+          },
+          {
+            "at": "2026-10-04T23:27:15Z",
+            "status": "OPEN",
+            "source": "fairtide",
+            "note": "included in attorney review packet attorney-review-packet.pdf"
           }
         ]
       }
@@ -214,6 +226,12 @@
             "source": "fairtide",
             "note": "classified LEGAL REVIEW REQUIRED",
             "run_id": "20261004T230555Z"
+          },
+          {
+            "at": "2026-10-04T23:27:15Z",
+            "status": "OPEN",
+            "source": "fairtide",
+            "note": "included in attorney review packet attorney-review-packet.pdf"
           }
         ]
       }
