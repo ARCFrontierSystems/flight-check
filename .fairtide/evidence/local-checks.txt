@@ -1,0 +1,86 @@
+Local check results for this repository
+Generated: 2026-10-04T22:34:17Z on commit 3329416d20e88ddffa1c221e05fd72131d8cd9f7
+Environment: Python 3.11.15, Claude Code 2.1.289 (Claude Code)
+
+== python3 -m unittest discover -s tests/unit -p 'test_*.py' -v
+test_agent_field_must_match_file_name (test_end_to_end.EndToEndTests.test_agent_field_must_match_file_name) ... ok
+test_attorney_review_packet (test_end_to_end.EndToEndTests.test_attorney_review_packet) ... ok
+test_bad_duplicate_reference_is_rejected (test_end_to_end.EndToEndTests.test_bad_duplicate_reference_is_rejected) ... ok
+test_duplicate_findings_are_merged (test_end_to_end.EndToEndTests.test_duplicate_findings_are_merged) ... ok
+test_finalize_report_and_gate (test_end_to_end.EndToEndTests.test_finalize_report_and_gate) ... ok
+test_init_run_and_ledger_cli (test_end_to_end.EndToEndTests.test_init_run_and_ledger_cli) ... ok
+test_invalid_run_writes_nothing (test_end_to_end.EndToEndTests.test_invalid_run_writes_nothing) ... ok
+test_near_duplicate_questions_not_merged_twice (test_end_to_end.EndToEndTests.test_near_duplicate_questions_not_merged_twice) ... ok
+test_verifier_rejection_and_fabricated_evidence (test_end_to_end.EndToEndTests.test_verifier_rejection_and_fabricated_evidence) ... ok
+test_runs_findings_and_inventory_reuse (test_end_to_end.ListingCommandTests.test_runs_findings_and_inventory_reuse) ... ok
+test_duplicates_in_one_run_get_distinct_fingerprints (test_ledger_gate.FingerprintTests.test_duplicates_in_one_run_get_distinct_fingerprints) ... ok
+test_stable_across_line_shift (test_ledger_gate.FingerprintTests.test_stable_across_line_shift) ... ok
+test_critical (test_ledger_gate.GateTests.test_critical) ... ok
+test_exit_codes_distinct (test_ledger_gate.GateTests.test_exit_codes_distinct) ... ok
+test_failed_evidence_turns_critical_into_insufficient_evidence (test_ledger_gate.GateTests.test_failed_evidence_turns_critical_into_insufficient_evidence) ... ok
+test_low_finding_does_not_block_but_high_potential_does (test_ledger_gate.GateTests.test_low_finding_does_not_block_but_high_potential_does) ... ok
+test_not_ready (test_ledger_gate.GateTests.test_not_ready) ... ok
+test_ready_for_release (test_ledger_gate.GateTests.test_ready_for_release) ... ok
+test_unassessed_domain_blocks (test_ledger_gate.GateTests.test_unassessed_domain_blocks) ... ok
+test_unverified_release_critical_control_blocks (test_ledger_gate.GateTests.test_unverified_release_critical_control_blocks) ... ok
+test_acceptance_requires_all_fields_and_expires (test_ledger_gate.LedgerTests.test_acceptance_requires_all_fields_and_expires) ... ok
+test_closing_open_finding_is_refused (test_ledger_gate.LedgerTests.test_closing_open_finding_is_refused) ... ok
+test_domain_not_assessed_does_not_mark_not_reproduced (test_ledger_gate.LedgerTests.test_domain_not_assessed_does_not_mark_not_reproduced) ... ok
+test_legal_status_rules (test_ledger_gate.LedgerTests.test_legal_status_rules) ... ok
+test_remediated_but_still_observed_reopens (test_ledger_gate.LedgerTests.test_remediated_but_still_observed_reopens) ... ok
+test_remediation_requires_reaudit_verification (test_ledger_gate.LedgerTests.test_remediation_requires_reaudit_verification) ... ok
+test_run_cannot_be_merged_twice (test_ledger_gate.LedgerTests.test_run_cannot_be_merged_twice) ... ok
+test_same_finding_with_changed_quote_keeps_id (test_ledger_gate.LedgerTests.test_same_finding_with_changed_quote_keeps_id) ... ok
+test_stable_ids_and_regression (test_ledger_gate.LedgerTests.test_stable_ids_and_regression) ... ok
+test_domain_mismatch_is_not_a_match (test_scorer.ScorerTests.test_domain_mismatch_is_not_a_match) ... ok
+test_manifest_validation (test_scorer.ScorerTests.test_manifest_validation) ... ok
+test_matching_decoys_unlisted_and_metrics (test_scorer.ScorerTests.test_matching_decoys_unlisted_and_metrics) ... ok
+test_gaps_for_redaction_and_ellipsis (test_textsafety_evidence.EvidenceCheckTests.test_gaps_for_redaction_and_ellipsis) ... ok
+test_line_tolerance_and_range (test_textsafety_evidence.EvidenceCheckTests.test_line_tolerance_and_range) ... ok
+test_missing_file_and_out_of_root (test_textsafety_evidence.EvidenceCheckTests.test_missing_file_and_out_of_root) ... ok
+test_ok_and_whitespace_insensitive (test_textsafety_evidence.EvidenceCheckTests.test_ok_and_whitespace_insensitive) ... ok
+test_quote_mismatch (test_textsafety_evidence.EvidenceCheckTests.test_quote_mismatch) ... ok
+test_summary_values (test_textsafety_evidence.EvidenceCheckTests.test_summary_values) ... ok
+test_symlink_escaping_root_is_refused (test_textsafety_evidence.EvidenceCheckTests.test_symlink_escaping_root_is_refused) ... ok
+test_code_block_fence_longer_than_content (test_textsafety_evidence.TextSafetyTests.test_code_block_fence_longer_than_content) ... ok
+test_markdown_neutralizes_links_images_and_html (test_textsafety_evidence.TextSafetyTests.test_markdown_neutralizes_links_images_and_html) ... ok
+test_placeholders_are_not_redacted (test_textsafety_evidence.TextSafetyTests.test_placeholders_are_not_redacted) ... ok
+test_redacts_known_secret_formats (test_textsafety_evidence.TextSafetyTests.test_redacts_known_secret_formats) ... ok
+test_sanitize_removes_bidi_zero_width_ansi_and_controls (test_textsafety_evidence.TextSafetyTests.test_sanitize_removes_bidi_zero_width_ansi_and_controls) ... ok
+test_absence_requires_searched (test_validation.PartValidationTests.test_absence_requires_searched) ... ok
+test_assessed_coverage_requires_searches (test_validation.PartValidationTests.test_assessed_coverage_requires_searches) ... ok
+test_business_decision_needs_decisions (test_validation.PartValidationTests.test_business_decision_needs_decisions) ... ok
+test_control_state_rules (test_validation.PartValidationTests.test_control_state_rules) ... ok
+test_informational_cannot_block (test_validation.PartValidationTests.test_informational_cannot_block) ... ok
+test_legal_classification_needs_specific_questions (test_validation.PartValidationTests.test_legal_classification_needs_specific_questions) ... ok
+test_legal_finding_requires_legal_human_review (test_validation.PartValidationTests.test_legal_finding_requires_legal_human_review) ... ok
+test_legal_overclaim_rejected_but_quoted_claim_allowed (test_validation.PartValidationTests.test_legal_overclaim_rejected_but_quoted_claim_allowed) ... ok
+test_located_evidence_requires_quote (test_validation.PartValidationTests.test_located_evidence_requires_quote) ... ok
+test_missing_counterevidence_fails (test_validation.PartValidationTests.test_missing_counterevidence_fails) ... ok
+test_path_traversal_rejected (test_validation.PartValidationTests.test_path_traversal_rejected) ... ok
+test_rule_must_match_domain (test_validation.PartValidationTests.test_rule_must_match_domain) ... ok
+test_run_dir_validation_reports_missing_files (test_validation.PartValidationTests.test_run_dir_validation_reports_missing_files) ... ok
+test_vague_title_rejected (test_validation.PartValidationTests.test_vague_title_rejected) ... ok
+test_valid_part_passes (test_validation.PartValidationTests.test_valid_part_passes) ... ok
+test_violation_and_enforceability_conclusions_rejected (test_validation.PartValidationTests.test_violation_and_enforceability_conclusions_rejected) ... ok
+test_agreement_on_valid_and_invalid_documents (test_validation.SchemaAgreementTests.test_agreement_on_valid_and_invalid_documents) ... ok
+
+----------------------------------------------------------------------
+Ran 61 tests in 0.168s
+
+OK
+exit code: 0
+
+== python3 tools/sync_agents.py --check
+exit code: 0
+
+== python3 tools/lint_plugin.py (with the private leak denylist configured)
+note: private denylist applied (4 terms)
+lint passed
+exit code: 0
+
+== claude plugin validate --strict plugins/fairtide
+Validating plugin manifest: /home/user/project-guardian/plugins/fairtide/.claude-plugin/plugin.json
+
+√ Validation passed
+exit code: 0
