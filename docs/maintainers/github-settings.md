@@ -1,12 +1,12 @@
 # GitHub settings to switch on
 
-Status: **saved for later, not yet applied.** Apply these before the repository goes public or accepts its first outside contribution, whichever comes first.
+Status: **saved for later, not yet applied.** The repository is already public (checked 2026-10-04), so apply these soon, and before accepting the first outside contribution. The two most urgent are private vulnerability reporting, because `SECURITY.md` already sends reporters there, and the description fix.
 
 As of 2026-10-04. GitHub moves these menus from time to time; if a path below no longer matches, search the repository settings for the setting's name. A repository admin applies them in the GitHub web UI.
 
-While the repository is private, some of these need a paid GitHub plan (rulesets, secret scanning), and private vulnerability reporting is offered only for public repositories. They are all free once the repository is public.
+All of these are free for public repositories. If the repository is ever made private, rulesets and secret scanning need a paid GitHub plan, and private vulnerability reporting is not offered.
 
-## 1. Before going public
+## 1. Repository basics
 
 - **Description and topics** (repository home page, gear icon next to "About").
   - The current description overclaims: it says the project will "enforce secure development practices" and "protect applications and data". Seaworthy finds and documents risks; it does not enforce or guarantee anything.
