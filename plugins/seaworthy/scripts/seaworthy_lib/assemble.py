@@ -7,24 +7,22 @@ from . import catalog, constants, validate
 from .jsonio import load_json
 
 
-def _remap_part_ids(part, taken):
-    """Prefix colliding local IDs with the agent name and rewrite references inside the part."""
+def _namespace_part_ids(part, taken, errors):
+    """Prefix every local ID with the agent name ("appsec.A1") and rewrite references inside the part.
+
+    Verifier verdicts always use the namespaced form, so IDs never depend on merge order.
+    """
+    agent = part["agent"]
     mapping = {}
     for item in part["findings"] + part["positive_controls"]:
-        lid = item["local_id"]
-        if lid in taken or lid in mapping.values():
-            new = "%s.%s" % (part["agent"], lid)
-            n = 2
-            while new in taken:
-                new = "%s.%s.%d" % (part["agent"], lid, n)
-                n += 1
-            mapping[lid] = new
-            item["local_id"] = new
-        taken.add(item["local_id"])
-    if mapping:
-        for c in part["controls"]:
-            c["related_findings"] = [mapping.get(r, r) for r in c.get("related_findings") or []]
-    return mapping
+        new = "%s.%s" % (agent, item["local_id"])
+        if new in taken:
+            errors.append("duplicate local_id %s across part files" % new)
+        mapping[item["local_id"]] = new
+        item["local_id"] = new
+        taken.add(new)
+    for c in part["controls"]:
+        c["related_findings"] = [mapping.get(r, r) for r in c.get("related_findings") or []]
 
 
 def _merge_control(existing, incoming, agent):
@@ -52,14 +50,21 @@ def assemble(run_dir):
     verification = load_json(ver_path) if os.path.exists(ver_path) else {"verdicts": [], "remediation_checks": []}
 
     taken = set()
+    agents_seen = set()
     findings, positives, unverified = [], [], []
     controls = {}
     coverage = {}
     notes, truncation = [], list(inventory.get("truncation") or [])
     for part in parts:
         part = copy.deepcopy(part)
-        _remap_part_ids(part, taken)
         agent = part["agent"]
+        if agent in agents_seen:
+            raise ValueError("two part files declare agent %r; each agent's results must be saved once" % agent)
+        agents_seen.add(agent)
+        dup_errors = []
+        _namespace_part_ids(part, taken, dup_errors)
+        if dup_errors:
+            raise ValueError("; ".join(dup_errors))
         for f in part["findings"]:
             f["source_agent"] = agent
             findings.append(f)

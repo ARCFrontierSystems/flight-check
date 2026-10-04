@@ -90,8 +90,8 @@ def check_pdf_structure(data):
 class EndToEndTests(unittest.TestCase):
     def test_finalize_report_and_gate(self):
         verification = {"verdicts": [
-            {"local_id": "F1", "verdict": "CONFIRMED", "notes": "Re-read lines 11-12; concatenation confirmed and no escaping upstream."},
-            {"local_id": "F2", "verdict": "CONFIRMED", "notes": "Flag-only deletion confirmed against policy line 3."},
+            {"local_id": "appsec.F1", "verdict": "CONFIRMED", "notes": "Re-read lines 11-12; concatenation confirmed and no escaping upstream."},
+            {"local_id": "appsec.F2", "verdict": "CONFIRMED", "notes": "Flag-only deletion confirmed against policy line 3."},
         ]}
         tmp, run_dir, ledger_path, code, out = finalized_run(verification)
         self.assertEqual(code, 0, out)
@@ -130,13 +130,13 @@ class EndToEndTests(unittest.TestCase):
                                    evidence=[{"kind": "code", "path": "src/store.py", "start_line": 5, "end_line": 6,
                                               "quote": "os.system('rm ' + user_input)"}])
         part = helpers.all_controls_resolved(helpers.base_part([helpers.sql_finding(), helpers.deletion_finding(), fake]))
-        verification = {"verdicts": [{"local_id": "F1", "verdict": "REJECTED",
+        verification = {"verdicts": [{"local_id": "appsec.F1", "verdict": "REJECTED",
                                       "notes": "Callers validate the term against an allowlist before calling search_notes."}]}
         tmp, run_dir, ledger_path, code, out = finalized_run(verification, parts=[part])
         self.assertEqual(code, 0, out)
         final = read_json(os.path.join(run_dir, "audit.final.json"))
-        self.assertEqual([f["local_id"] for f in final["rejected_findings"]], ["F1"])
-        fab = next(f for f in final["findings"] if f["local_id"] == "F3")
+        self.assertEqual([f["local_id"] for f in final["rejected_findings"]], ["appsec.F1"])
+        fab = next(f for f in final["findings"] if f["local_id"] == "appsec.F3")
         self.assertEqual(fab["evidence_check"], "FAILED")
         self.assertEqual(fab["effective_confidence"], "UNVERIFIED")
         # fabricated HIGH finding cannot be trusted -> insufficient evidence, not a confident block

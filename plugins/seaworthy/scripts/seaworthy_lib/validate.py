@@ -216,6 +216,8 @@ def validate_run_dir(run_dir):
     files = part_files(run_dir)
     if not files:
         errors.append("no part-*.json files found; domain agents' results must be saved before finalizing")
+    agents = {}
+    namespaced = set()
     for path in files:
         name = os.path.basename(path)
         try:
@@ -223,12 +225,29 @@ def validate_run_dir(run_dir):
         except InputError as exc:
             errors.append(str(exc))
             continue
+        before = len(errors)
         check_part(part, name, errors, warnings)
+        if len(errors) == before:
+            if part["agent"] in agents:
+                errors.append("%s: agent %r already reported in %s" % (name, part["agent"], agents[part["agent"]]))
+            agents[part["agent"]] = name
+            for item in part["findings"]:
+                namespaced.add("%s.%s" % (part["agent"], item["local_id"]))
     verification = load("verification.json", required=False)
     if verification is not None:
-        for e in minischema.validate_def(verification, schema, "verification"):
-            errors.append("verification.json: %s" % e)
+        ver_errors = minischema.validate_def(verification, schema, "verification")
+        errors.extend("verification.json: %s" % e for e in ver_errors)
+        if not ver_errors and namespaced:
+            for v in verification["verdicts"]:
+                if v["local_id"] not in namespaced:
+                    errors.append("verification.json: verdict for %r matches no finding; use <agent>.<local_id>, e.g. appsec.A1" % v["local_id"])
+            if v_missing(verification, namespaced):
+                warnings.append("verification.json: no verdict for %s" % ", ".join(sorted(v_missing(verification, namespaced))))
     return errors, warnings
+
+
+def v_missing(verification, namespaced):
+    return namespaced - {v["local_id"] for v in verification["verdicts"]}
 
 
 def validate_summary(summary, final):
