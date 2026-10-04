@@ -144,6 +144,34 @@ class EndToEndTests(unittest.TestCase):
         inj = next(c for c in final["controls"] if c["id"] == "APPSEC-INJECTION")
         self.assertEqual(inj["state"], "UNVERIFIED")
 
+    def test_duplicate_findings_are_merged(self):
+        main = helpers.all_controls_resolved(helpers.base_part())
+        dup = helpers.deletion_finding(local_id="D1", legal=dict(helpers.deletion_finding()["legal"],
+                                       questions=["Should the backup retention schedule be disclosed separately from the 30-day deletion commitment?"]))
+        second = {"agent": "data", "coverage": [], "controls": [], "findings": [dup], "positive_controls": [], "unverified_areas": []}
+        verification = {"verdicts": [
+            {"local_id": "appsec.F1", "verdict": "CONFIRMED", "notes": "Concatenation confirmed on lines 11-12."},
+            {"local_id": "appsec.F2", "verdict": "CONFIRMED", "notes": "Flag-only deletion confirmed against the policy."},
+            {"local_id": "data.D1", "verdict": "DUPLICATE", "duplicate_of": "appsec.F2", "notes": "Same deletion contradiction, same lines."},
+        ]}
+        tmp, run_dir, ledger_path, code, out = finalized_run(verification, parts=[main, second])
+        self.assertEqual(code, 0, out)
+        final = read_json(os.path.join(run_dir, "audit.final.json"))
+        self.assertEqual(len(final["findings"]), 2)
+        self.assertEqual([f["local_id"] for f in final["duplicate_findings"]], ["data.D1"])
+        kept = next(f for f in final["findings"] if f["local_id"] == "appsec.F2")
+        self.assertEqual(kept["also_reported_by"][0]["local_id"], "data.D1")
+        self.assertEqual(len(kept["legal"]["questions"]), 3)
+
+    def test_bad_duplicate_reference_is_rejected(self):
+        main = helpers.all_controls_resolved(helpers.base_part())
+        verification = {"verdicts": [{"local_id": "appsec.F1", "verdict": "DUPLICATE", "duplicate_of": "appsec.F1", "notes": "points at itself, invalid"}]}
+        tmp = tempfile.mkdtemp()
+        run_dir = helpers.write_run(parts=[main], verification=verification, base=tmp)
+        code, out = run_cli("finalize", run_dir, "--root", helpers.FIXTURE_ROOT, "--ledger", os.path.join(tmp, "l.json"))
+        self.assertEqual(code, 1)
+        self.assertTrue(any("duplicate_of" in e for e in out["errors"]))
+
     def test_invalid_run_writes_nothing(self):
         bad = helpers.base_part([helpers.sql_finding(counterevidence=[])])
         tmp = tempfile.mkdtemp()
@@ -220,6 +248,26 @@ class EndToEndTests(unittest.TestCase):
         code, out = run_cli("ledger", "show", "--ledger", ledger_path)
         self.assertEqual(code, 0)
         self.assertEqual(len(out["entries"]), 2)
+
+
+class ListingCommandTests(unittest.TestCase):
+    def test_runs_findings_and_inventory_reuse(self):
+        tmp, run_dir, ledger_path, code, out = finalized_run()
+        base = os.path.dirname(run_dir)
+        code, out = run_cli("runs", "--base", base)
+        self.assertEqual(code, 0)
+        self.assertEqual(out["latest_finalized"], run_dir)
+        self.assertEqual(out["runs"][0]["gate"], constants.GATE_NOT_READY)
+        code, out = run_cli("findings", run_dir, "--legal")
+        self.assertEqual(code, 0)
+        self.assertEqual([f["legal"]["classification"] for f in out["findings"]], ["POLICY/IMPLEMENTATION CONTRADICTION"])
+        code, out = run_cli("findings", run_dir, "--ids", "SW-0001,SW-9999", "--detail")
+        self.assertEqual(code, 1)
+        self.assertEqual(out["not_found"], ["SW-9999"])
+        self.assertIn("quotes", out["findings"][0])
+        code, out = run_cli("init-run", "--base", base, "--suffix", "reaudit", "--inventory-from", run_dir, "--now", "2026-10-05T09:00:00Z")
+        self.assertEqual(code, 0, out)
+        self.assertTrue(os.path.exists(os.path.join(out["run_dir"], "inventory.json")))
 
 
 if __name__ == "__main__":

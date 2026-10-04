@@ -21,7 +21,7 @@ The question: **"Based on the evidence available in this project, what could pre
 6. **Never reproduce secrets.** Agents mask them; keep them masked.
 7. **Do not invent findings, evidence, or summaries.** You may transcribe, validate, and organize what the agents and the script return. You must not add findings of your own.
 
-`SW` below means: `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py`. Run it exactly that way. It is pre-approved for this skill. Do not run any other shell command.
+`SW` below means: `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py`. Run it exactly that way. Do not run any other shell command. The script is pre-approved only while this skill's first turn lasts. After the agents return, the user may be asked to approve it, and in non-interactive sessions it is denied unless allowed in settings. If a call is denied, do not try another way. Tell the user to allow exactly `Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/seaworthy.py *)` (for example by choosing "always allow" at the prompt, or by adding it to `permissions.allow` in their settings), and that the partial results stay in the run directory, and re-running `/seaworthy:audit` afterwards starts a complete new run. Then follow "If the script cannot run".
 
 ## 0. Parse the request
 

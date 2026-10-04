@@ -238,9 +238,21 @@ def validate_run_dir(run_dir):
         ver_errors = minischema.validate_def(verification, schema, "verification")
         errors.extend("verification.json: %s" % e for e in ver_errors)
         if not ver_errors and namespaced:
+            dup_targets = {}
             for v in verification["verdicts"]:
                 if v["local_id"] not in namespaced:
                     errors.append("verification.json: verdict for %r matches no finding; use <agent>.<local_id>, e.g. appsec.A1" % v["local_id"])
+                if v["verdict"] == "DUPLICATE":
+                    target = v.get("duplicate_of")
+                    if not target or target not in namespaced or target == v["local_id"]:
+                        errors.append("verification.json: DUPLICATE verdict for %r needs duplicate_of naming another finding" % v["local_id"])
+                    else:
+                        dup_targets[v["local_id"]] = target
+                elif v.get("duplicate_of"):
+                    errors.append("verification.json: duplicate_of is only allowed with a DUPLICATE verdict (%r)" % v["local_id"])
+            for src, target in dup_targets.items():
+                if target in dup_targets:
+                    errors.append("verification.json: %r is marked duplicate of %r, which is itself a duplicate" % (src, target))
             if v_missing(verification, namespaced):
                 warnings.append("verification.json: no verdict for %s" % ", ".join(sorted(v_missing(verification, namespaced))))
     return errors, warnings

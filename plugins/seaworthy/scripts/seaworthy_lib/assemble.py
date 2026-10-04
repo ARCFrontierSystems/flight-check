@@ -126,8 +126,27 @@ def assemble(run_dir):
             continue
         verdicts[v["local_id"]] = v
 
-    kept, rejected = [], []
+    kept, rejected, duplicates = [], [], []
+    dup_map = {lid: v["duplicate_of"] for lid, v in verdicts.items() if v["verdict"] == "DUPLICATE" and v.get("duplicate_of") in by_id}
+    for lid, target in dup_map.items():
+        dup, keep = by_id[lid], by_id[target]
+        keep.setdefault("also_reported_by", []).append({"local_id": lid, "domain": dup["domain"], "title": dup["title"]})
+        if dup.get("legal") and not keep.get("legal"):
+            keep["legal"] = dup["legal"]
+            keep["human_review"] = dup["human_review"]
+        elif dup.get("legal") and keep.get("legal"):
+            qs = keep["legal"].setdefault("questions", [])
+            for q in dup["legal"].get("questions") or []:
+                if q not in qs:
+                    qs.append(q)
+        for ce in dup["counterevidence"]:
+            if ce not in keep["counterevidence"]:
+                keep["counterevidence"].append(ce)
     for f in findings:
+        if f["local_id"] in dup_map:
+            f["verification"] = {"verifier_verdict": "DUPLICATE", "notes": verdicts[f["local_id"]]["notes"], "duplicate_of": dup_map[f["local_id"]]}
+            duplicates.append(f)
+            continue
         v = verdicts.get(f["local_id"])
         f["verification"] = {"verifier_verdict": v["verdict"] if v else "NOT_REVIEWED", "notes": v["notes"] if v else ""}
         if v and v.get("counterevidence"):
@@ -151,6 +170,9 @@ def assemble(run_dir):
         warnings.append("No verifier verdicts were recorded; findings are marked NOT_REVIEWED.")
 
     rejected_ids = {f["local_id"] for f in rejected}
+    for c in controls.values():
+        if c.get("related_findings"):
+            c["related_findings"] = sorted({dup_map.get(r, r) for r in c["related_findings"]})
     known = catalog.control_by_id()
     final_controls = []
     for c in catalog.controls():
@@ -186,6 +208,7 @@ def assemble(run_dir):
         "controls": final_controls,
         "findings": kept,
         "rejected_findings": rejected,
+        "duplicate_findings": duplicates,
         "positive_controls": positives,
         "unverified_areas": unverified,
         "remediation_checks": verification.get("remediation_checks", []),

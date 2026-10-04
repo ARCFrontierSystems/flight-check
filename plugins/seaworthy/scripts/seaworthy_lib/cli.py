@@ -81,6 +81,12 @@ def cmd_init_run(args):
     if os.path.exists(run_dir):
         return _fail("run directory already exists: %s" % run_dir)
     os.makedirs(run_dir)
+    if args.inventory_from:
+        src = os.path.join(os.path.abspath(args.inventory_from), "inventory.json")
+        try:
+            dump_json(os.path.join(run_dir, "inventory.json"), load_json(src))
+        except InputError as exc:
+            return _fail("cannot reuse inventory: %s" % exc)
     marker = os.path.join(base, ".gitignore")
     if not os.path.exists(marker):
         write_text(marker, "# Seaworthy run output can quote project files; do not commit it.\n*\n")
@@ -233,6 +239,60 @@ def cmd_packet(args):
     return 0
 
 
+def cmd_runs(args):
+    base = os.path.abspath(args.base)
+    runs = []
+    if os.path.isdir(base):
+        for name in sorted(os.listdir(base)):
+            run_dir = os.path.join(base, name)
+            if not re.fullmatch(r"[0-9]{8}T[0-9]{6}Z(-[a-z0-9]{1,12})?", name) or not os.path.isdir(run_dir):
+                continue
+            entry = {"run_id": name, "run_dir": run_dir, "finalized": False}
+            final_path = os.path.join(run_dir, "audit.final.json")
+            if os.path.exists(final_path):
+                try:
+                    final = load_json(final_path)
+                    entry.update({"finalized": True, "mode": final["run"]["mode"], "trust_tier": final["run"]["trust_tier"],
+                                  "gate": final["gate"]["decision"], "findings": len(final["findings"]),
+                                  "report": os.path.exists(os.path.join(run_dir, "report.md"))})
+                except (InputError, KeyError):
+                    entry["error"] = "unreadable audit.final.json"
+            runs.append(entry)
+    latest = next((r for r in reversed(runs) if r["finalized"]), None)
+    _print({"ok": True, "runs": runs, "latest_finalized": latest["run_dir"] if latest else None})
+    return 0
+
+
+def cmd_findings(args):
+    try:
+        final = finalize.load_final(args.run_dir)
+    except InputError as exc:
+        return _fail(str(exc))
+    wanted = set(args.ids.split(",")) if args.ids else None
+    out = []
+    for f in final["findings"]:
+        if wanted is not None and f["id"] not in wanted:
+            continue
+        if args.legal and not f.get("legal"):
+            continue
+        item = {"id": f["id"], "title": f["title"], "domain": f["domain"], "severity": f["severity"],
+                "confidence": f["effective_confidence"], "status": f["status"], "release_blocking": f["release_blocking_effective"],
+                "evidence": [{"path": ev.get("path"), "lines": "%s-%s" % (ev.get("start_line"), ev.get("end_line")) if ev.get("start_line") else None,
+                              "kind": ev.get("kind"), "check": ev.get("check")} for ev in f["evidence"]],
+                "affected_components": f["affected_components"], "remediation": f["remediation"]}
+        if args.detail:
+            item.update({"explanation": f["explanation"], "impact": f["impact"], "rule": f["rule"],
+                         "quotes": [ev.get("quote") for ev in f["evidence"] if ev.get("quote")]})
+        if f.get("legal"):
+            item["legal"] = {"classification": f["legal"]["classification"], "status": f.get("legal_status"),
+                             "questions": f["legal"].get("questions") or [], "decisions_needed": f["legal"].get("decisions_needed") or []}
+        out.append(item)
+    missing = sorted(wanted - {i["id"] for i in out}) if wanted else []
+    _print({"ok": not missing, "run_id": final["run"]["run_id"], "gate": final["gate"]["decision"], "findings": out,
+            "not_found": missing})
+    return 0 if not missing else 1
+
+
 def cmd_schema_check(args):
     """Validate an arbitrary JSON document against a named definition (useful for CI consumers)."""
     try:
@@ -256,8 +316,20 @@ def build_parser():
     s.add_argument("--base", required=True, help="directory that holds run directories")
     s.add_argument("--root", help="audit root, used to read the current git commit from .git files")
     s.add_argument("--suffix")
+    s.add_argument("--inventory-from", help="copy inventory.json from this earlier run directory (targeted re-audits)")
     s.add_argument("--now")
     s.set_defaults(func=cmd_init_run)
+
+    s = sub.add_parser("runs", help="list run directories and their ship decisions")
+    s.add_argument("--base", required=True)
+    s.set_defaults(func=cmd_runs)
+
+    s = sub.add_parser("findings", help="print a compact list of findings from a finalized run")
+    s.add_argument("run_dir")
+    s.add_argument("--ids", help="comma-separated finding IDs")
+    s.add_argument("--legal", action="store_true", help="only findings with a legal/business classification")
+    s.add_argument("--detail", action="store_true", help="include explanation, impact, and quotes")
+    s.set_defaults(func=cmd_findings)
 
     s = sub.add_parser("validate", help="validate agent outputs in a run directory")
     s.add_argument("run_dir")

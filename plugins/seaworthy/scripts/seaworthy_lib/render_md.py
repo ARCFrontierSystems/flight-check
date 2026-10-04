@@ -157,6 +157,9 @@ def _finding_block(f):
     if f["verification"].get("notes"):
         lines.append("")
         lines.append("**Verifier notes.** " + md_block(f["verification"]["notes"]))
+    if f.get("also_reported_by"):
+        lines.append("")
+        lines.append("**Also reported (merged duplicates):** " + "; ".join("%s (%s): %s" % (d["local_id"], catalog.domain_title(d["domain"]), md(d["title"])) for d in f["also_reported_by"]))
     if f.get("accepted_risk"):
         a = f["accepted_risk"]
         lines.append("")
@@ -373,6 +376,12 @@ def render(final, summary):
     else:
         out.append("None.")
     out.append("")
+    if final.get("duplicate_findings"):
+        out.append("## Appendix B2. Findings merged as duplicates")
+        out.append("")
+        for f in final["duplicate_findings"]:
+            out.append("- %s merged into %s: %s" % (f["local_id"], f["verification"].get("duplicate_of", "?"), md(f["title"])))
+        out.append("")
     if final.get("truncation") or final["validation"].get("warnings"):
         out.append("## Appendix C. Coverage limits and warnings")
         out.append("")

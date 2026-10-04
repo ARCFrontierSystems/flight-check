@@ -1,0 +1,93 @@
+#!/usr/bin/env python3
+"""Run a blind Seaworthy audit of a test application in a disposable copy.
+
+The application directory is copied to a fresh temporary directory, so the audit can
+never see a ground-truth manifest, scoring scripts, or anything else stored next to the
+application. The audit runs headless with only Read/Grep/Glob for the agents, writes
+restricted to the copy's .seaworthy/ directory, and Seaworthy's own script pre-approved
+by the skill. Results are copied to --out.
+
+Usage:
+    python3 tools/blindtest/run_audit.py --app path/to/app --out results/run1 [--budget 40] [--evidence f.json ...]
+
+Development-only; never shipped in the plugin.
+"""
+
+import argparse
+import json
+import os
+import shutil
+import subprocess
+import sys
+import tempfile
+
+REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+PLUGIN = os.path.join(REPO, "plugins", "seaworthy")
+EXCLUDE = {".git", "ground-truth", "manifest.json", ".seaworthy"}
+
+
+def main(argv=None):
+    p = argparse.ArgumentParser()
+    p.add_argument("--app", required=True, help="application directory to audit (must not contain the answer key)")
+    p.add_argument("--out", required=True)
+    p.add_argument("--budget", type=float, default=40.0, help="--max-budget-usd for the headless run")
+    p.add_argument("--evidence", action="append", default=[], help="imported evidence file(s), copied into the target")
+    p.add_argument("--model")
+    p.add_argument("--keep", action="store_true", help="keep the temporary copy")
+    args = p.parse_args(argv)
+
+    app = os.path.abspath(args.app)
+    for name in os.listdir(app):
+        if name.lower() in ("manifest.json", "ground-truth", "ground_truth", "answers", "expected"):
+            sys.exit("refusing: %s looks like ground truth inside the application directory" % name)
+
+    work = tempfile.mkdtemp(prefix="seaworthy-blind-")
+    target = os.path.join(work, os.path.basename(app.rstrip("/")) or "app")
+    shutil.copytree(app, target, ignore=lambda d, names: [n for n in names if n in EXCLUDE])
+    evidence_args = []
+    if args.evidence:
+        ev_dir = os.path.join(target, ".seaworthy", "evidence")
+        os.makedirs(ev_dir)
+        for ev in args.evidence:
+            shutil.copy(ev, ev_dir)
+            evidence_args.append(os.path.join(".seaworthy", "evidence", os.path.basename(ev)))
+
+    script = os.path.join(PLUGIN, "scripts", "seaworthy.py")
+    settings = {"permissions": {"allow": ["Edit(/%s/.seaworthy/**)" % target, "Bash(python3 %s *)" % script]}}
+    settings_path = os.path.join(work, "settings.json")
+    with open(settings_path, "w") as fh:
+        json.dump(settings, fh)
+    prompt = "/seaworthy:audit"
+    if evidence_args:
+        prompt += " --evidence " + " ".join(evidence_args)
+    cmd = ["claude", "-p", prompt, "--plugin-dir", PLUGIN, "--tools", "Read,Write,Agent,Bash,Glob,Grep",
+           "--permission-mode", "dontAsk", "--settings", settings_path, "--strict-mcp-config",
+           "--output-format", "json", "--max-budget-usd", str(args.budget), "--no-session-persistence"]
+    if args.model:
+        cmd += ["--model", args.model]
+    print("auditing copy at %s" % target)
+    proc = subprocess.run(cmd, cwd=target, stdin=subprocess.DEVNULL, capture_output=True, text=True)
+    os.makedirs(args.out, exist_ok=True)
+    with open(os.path.join(args.out, "claude-output.json"), "w") as fh:
+        fh.write(proc.stdout)
+    with open(os.path.join(args.out, "claude-stderr.txt"), "w") as fh:
+        fh.write(proc.stderr)
+    runs = os.path.join(target, ".seaworthy", "runs")
+    copied = []
+    if os.path.isdir(runs):
+        for name in sorted(os.listdir(runs)):
+            src = os.path.join(runs, name)
+            if os.path.isdir(src):
+                shutil.copytree(src, os.path.join(args.out, name), dirs_exist_ok=True)
+                copied.append(name)
+    ledger = os.path.join(target, ".seaworthy", "ledger.json")
+    if os.path.exists(ledger):
+        shutil.copy(ledger, os.path.join(args.out, "ledger.json"))
+    if not args.keep:
+        shutil.rmtree(work, ignore_errors=True)
+    print(json.dumps({"exit_code": proc.returncode, "runs": copied, "out": os.path.abspath(args.out)}, indent=2))
+    return 0 if copied else 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

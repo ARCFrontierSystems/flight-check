@@ -55,7 +55,7 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
     now, today = _now(now_iso)
     cache = evidence.FileCache()
 
-    for f in audit["findings"] + audit["rejected_findings"]:
+    for f in audit["findings"] + audit["rejected_findings"] + audit["duplicate_findings"]:
         f["evidence_check"] = evidence.annotate(f["evidence"], root, cache)
     kept_positive, unconfirmed_positive = [], []
     for p in audit["positive_controls"]:
@@ -102,6 +102,7 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         "controls": audit["controls"],
         "findings": audit["findings"],
         "rejected_findings": audit["rejected_findings"],
+        "duplicate_findings": audit["duplicate_findings"],
         "positive_controls": audit["positive_controls"],
         "unconfirmed_positive_controls": unconfirmed_positive,
         "unverified_areas": audit["unverified_areas"],

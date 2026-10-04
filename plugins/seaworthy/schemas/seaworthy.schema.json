@@ -258,7 +258,8 @@
             "additionalProperties": false,
             "properties": {
               "local_id": {"$ref": "#/$defs/localId"},
-              "verdict": {"type": "string", "enum": ["CONFIRMED", "DOWNGRADED", "REJECTED", "NEEDS_HUMAN"]},
+              "verdict": {"type": "string", "enum": ["CONFIRMED", "DOWNGRADED", "REJECTED", "NEEDS_HUMAN", "DUPLICATE"]},
+              "duplicate_of": {"$ref": "#/$defs/localId"},
               "notes": {"type": "string", "minLength": 10, "maxLength": 3000},
               "adjusted_severity": {"$ref": "#/$defs/severity"},
               "adjusted_confidence": {"$ref": "#/$defs/confidence"},
