@@ -20,6 +20,8 @@ First development version. Not yet blind-tested or released.
   - **Full audits verify pending fixes.** Every full audit asks the verifier to check findings recorded as REMEDIATED; before, only a targeted re-audit could move them to VERIFIED.
   - **Authorization control wording.** `AUTHZ-SERVER-SIDE` now applies to projects that serve multiple users or principals. Tool permission settings are not authorization in this sense, which kept the control's applicability, and with it the ship decision, from changing between runs.
   - **Agent retries.** A retry after a validation error launches a new agent rather than trying to message the earlier one.
+  - **Remediation checks always apply.** A verifier's explicit check of a recorded fix now updates the ledger even when the finding's domain was not assessed in that run; before, it was silently ignored.
+  - **Agent contracts.** The inventory agent must quote a line for every file it cites, and the verifier's contract lists the allowed evidence kinds; both had caused validation retries.
 - Renamed the project from Seaworthy (originally Project Guardian) to **Fairtide**: plugin id `fairtide`, commands `/fairtide:*`, script `fairtide.py`, working directory `.fairtide/`, finding IDs `FT-0001`, and the CI secret `FAIRTIDE_LEAK_DENYLIST`. Nothing had been released under the old names.
 
 - `/fairtide:audit`: evidence-first audit across 19 domains, with an inventory agent, nine read-only domain agents, a verifier, mechanical evidence checking, stable finding IDs, regression tracking, and a deterministic ship gate. Writes a 33-section `report.md` and machine-readable `audit.final.json`.

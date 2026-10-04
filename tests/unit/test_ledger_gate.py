@@ -126,6 +126,19 @@ class LedgerTests(unittest.TestCase):
         with self.assertRaises(ledger.LedgerError):
             ledger.close(led, "FT-0001", "looks fine", helpers.NOW)
 
+    def test_remediation_check_applies_even_when_domain_not_assessed(self):
+        for result, expected in (("FIXED_VERIFIED", "VERIFIED"), ("NOT_FIXED", "OPEN")):
+            led = ledger.new_ledger("t")
+            a11y = helpers.sql_finding(domain="accessibility", rule="accessibility.untagged-pdf", control_ids=[])
+            ledger.merge(led, audit_with([a11y], "20261001T000000Z"), helpers.NOW, TODAY)
+            ledger.record_remediation(led, "FT-0001", "added language", ["pdf.py"], helpers.NOW)
+            check = {"finding_id": "FT-0001", "result": result, "notes": "re-read pdf.py"}
+            changes = ledger.merge(led, audit_with([], "20261005T000000Z", checks=[check]), helpers.NOW, TODAY)
+            self.assertEqual(ledger.find_entry(led, "FT-0001")[1]["status"], expected, result)
+            self.assertNotIn("FT-0001", changes["not_assessed_open"])
+            if result == "NOT_FIXED":
+                self.assertIn("FT-0001", changes["inconsistent_remediation"])
+
     def test_run_cannot_be_merged_twice(self):
         led = ledger.new_ledger("t")
         a = audit_with([helpers.sql_finding()], "20261001T000000Z")

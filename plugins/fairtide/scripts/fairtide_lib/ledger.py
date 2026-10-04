@@ -198,18 +198,22 @@ def merge(led, audit, now_iso, today):
         check = checks.get(e["id"])
         status = e["status"]
         if status in ("OPEN", "REGRESSION", "REMEDIATED", "NOT_REPRODUCED"):
-            if coverage.get(e["domain"]) != "ASSESSED":
-                lifecycle["not_assessed_open"].append(e["id"])
-                continue
+            # An explicit remediation check is applied even when the finding's domain was not assessed
+            # in this run: the verifier read the current code for exactly this finding.
             if status == "REMEDIATED" and check and check["result"] == "FIXED_VERIFIED":
                 e["status"] = "VERIFIED"
                 e["history"].append(_event(now_iso, "VERIFIED", "fairtide", "re-audit verified the fix: %s" % check["notes"], run_id))
                 lifecycle["verified_this_run"].append(e["id"])
-            elif check and check["result"] == "NOT_FIXED":
+                continue
+            if check and check["result"] == "NOT_FIXED":
                 e["status"] = "OPEN"
                 e["history"].append(_event(now_iso, "OPEN", "fairtide", "verifier reports the fix is not effective: %s" % check["notes"], run_id))
                 lifecycle["inconsistent_remediation"].append(e["id"])
-            elif status == "REMEDIATED":
+                continue
+            if coverage.get(e["domain"]) != "ASSESSED":
+                lifecycle["not_assessed_open"].append(e["id"])
+                continue
+            if status == "REMEDIATED":
                 lifecycle["remediated_pending"].append(e["id"])
             elif status in ("OPEN", "REGRESSION"):
                 e["status"] = "NOT_REPRODUCED"

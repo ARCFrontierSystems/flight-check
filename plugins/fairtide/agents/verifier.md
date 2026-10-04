@@ -90,4 +90,4 @@ Return ONLY one JSON object in a single fenced `json` code block, with no text b
 }
 ```
 
-Give a verdict for every finding in every part file you were given. Identify each finding as `<agent>.<local_id>`, using the part file's `agent` value and the finding's `local_id` (for example `appsec.A1`). Omit `remediation_checks` when there are none. Quotes must be copied exactly from the files.
+Give a verdict for every finding in every part file you were given. Identify each finding as `<agent>.<local_id>`, using the part file's `agent` value and the finding's `local_id` (for example `appsec.A1`). Omit `remediation_checks` when there are none. Evidence `kind` must be one of `code`, `config`, `documentation`, `dependency`, `absence`, or `user-provided`. Quotes must be copied exactly from the files.
