@@ -8,6 +8,14 @@ This project is named **Seaworthy**. Plugin id: `seaworthy`.
 - "DevGuard" was a short-lived interim name, dropped because of the OWASP DevGuard project. It also means Seaworthy.
 - The GitHub repository is still named `project-guardian`; that is the same project.
 - Seaworthy is unrelated to other projects that share the name (for example the Kubernetes health CLI or the Docker test harness called "seaworthy").
+- A rename away from "Seaworthy" is under consideration because a similar product uses that name. Do not rename anything until the user chooses a new name. After that, every earlier name ("Project Guardian", "DevGuard", "Seaworthy") refers to the new one.
+
+## Saved for later
+
+The user asked to keep these until they ask for them. When they do, point them to the file, or provide its contents. Do not act on either one before then.
+
+- Blind-test protocol: `docs/blind-test-protocol.md`, for Phase 5, which runs Seaworthy blind against the separate private testbed repository.
+- GitHub repository settings to switch on: `docs/maintainers/github-settings.md`.
 
 ## Repository layout
 
