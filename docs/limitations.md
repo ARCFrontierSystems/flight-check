@@ -1,21 +1,21 @@
 # Limitations
 
-Seaworthy is designed to make it harder to ship software without understanding its risks. It cannot make software safe, and it can be wrong. Known limitations:
+Fairtide is designed to make it harder to ship software without understanding its risks. It cannot make software safe, and it can be wrong. Known limitations:
 
 ## Analysis scope
 
-- **Static and read-only.** Seaworthy reads code, configuration, and documentation. It does not run the application or its tests, scan deployed infrastructure, or inspect cloud consoles, dashboards, or provider settings. Anything that depends on runtime or external state is reported as UNVERIFIED unless you import evidence.
-- **Offline.** Seaworthy does not query vulnerability databases. Known-vulnerability status of dependencies stays UNVERIFIED unless you import scanner output for the audited revision (`--evidence`).
+- **Static and read-only.** Fairtide reads code, configuration, and documentation. It does not run the application or its tests, scan deployed infrastructure, or inspect cloud consoles, dashboards, or provider settings. Anything that depends on runtime or external state is reported as UNVERIFIED unless you import evidence.
+- **Offline.** Fairtide does not query vulnerability databases. Known-vulnerability status of dependencies stays UNVERIFIED unless you import scanner output for the audited revision (`--evidence`).
 - **Git history and artifacts.** Secrets or licensed material in version-control history, build artifacts, or CI logs are not examined unless imported as evidence.
 - **Accessibility.** Static analysis can find missing names, labels, and structural problems. Contrast in context, focus order, and screen-reader behavior need runtime testing.
-- **Large repositories.** Agents work within turn and context limits. Very large projects may be only partly examined; Seaworthy records what it could not examine in coverage notes.
+- **Large repositories.** Agents work within turn and context limits. Very large projects may be only partly examined; Fairtide records what it could not examine in coverage notes.
 
 ## Model behavior
 
 - **False negatives.** Agents can miss issues, especially ones that span many files or depend on subtle framework behavior.
 - **False positives.** The false-positive defense and the verifier reduce false positives but do not eliminate them.
 - **Non-determinism.** Two audits of the same code can differ. The ledger flags findings that appear or disappear between runs, so differences are visible rather than silent.
-- **Prompt injection.** Audited content can try to manipulate the auditor, either to suppress findings or to cause actions. Seaworthy's agents are read-only and treat content as data, but no current approach fully prevents prompt injection. Use the [hardened procedure](hardened-mode.md) for untrusted code.
+- **Prompt injection.** Audited content can try to manipulate the auditor, either to suppress findings or to cause actions. Fairtide's agents are read-only and treat content as data, but no current approach fully prevents prompt injection. Use the [hardened procedure](hardened-mode.md) for untrusted code.
 
 ## Legal and compliance
 

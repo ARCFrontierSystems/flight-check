@@ -5,7 +5,7 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import helpers  # noqa: E402
-from seaworthy_lib import evidence, render_md, textsafety  # noqa: E402
+from fairtide_lib import evidence, render_md, textsafety  # noqa: E402
 
 
 class TextSafetyTests(unittest.TestCase):

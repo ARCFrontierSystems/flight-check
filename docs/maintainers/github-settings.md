@@ -9,13 +9,13 @@ All of these are free for public repositories. If the repository is ever made pr
 ## 1. Repository basics
 
 - **Description and topics** (repository home page, gear icon next to "About").
-  - The current description overclaims: it says the project will "enforce secure development practices" and "protect applications and data". Seaworthy finds and documents risks; it does not enforce or guarantee anything.
+  - The current description overclaims: it says the project will "enforce secure development practices" and "protect applications and data". Fairtide finds and documents risks; it does not enforce or guarantee anything.
   - Suggested description: "Evidence-based ship-readiness audits for Claude Code projects. Finds and documents risks; does not certify security or legal compliance."
   - Suggested topics: `claude-code`, `claude-code-plugin`, `security-audit`, `code-review`, `release-readiness`, `accessibility`, `privacy`.
 - **Private vulnerability reporting** (Settings → Advanced Security or Code security → Private vulnerability reporting → Enable). `SECURITY.md` tells reporters to use it, so it must be on.
 - **Secret scanning and push protection** (same settings page, Secret Protection). Push protection blocks a push that contains a recognized credential.
-- **Dependabot alerts** (same page). Seaworthy has no runtime dependencies, but the workflow uses GitHub Actions. Optionally add `.github/dependabot.yml` with the `github-actions` ecosystem, so pinned action SHAs get update pull requests.
-- **Repository secret `SEAWORTHY_LEAK_DENYLIST`** (Settings → Secrets and variables → Actions → New repository secret).
+- **Dependabot alerts** (same page). Fairtide has no runtime dependencies, but the workflow uses GitHub Actions. Optionally add `.github/dependabot.yml` with the `github-actions` ecosystem, so pinned action SHAs get update pull requests.
+- **Repository secret `FAIRTIDE_LEAK_DENYLIST`** (Settings → Secrets and variables → Actions → New repository secret).
   - Value: the private denylist, one term per line. Never commit it or paste it into issues, pull requests, or logs.
   - CI writes it to a temporary file for `tools/lint_plugin.py`. Without the secret, for example on pull requests from forks, which never receive secrets, that check is skipped; the hashed canaries in `tools/leak-hashes.txt` still run.
 - **Unused features** (Settings → General → Features). Turn off the wiki, since documentation lives in `docs/`. Leave Discussions and Projects off unless you plan to use them.
@@ -62,11 +62,13 @@ Once maintainers are settled, add `.github/CODEOWNERS`. Replace the placeholder 
 
 Then turn on "Require review from Code Owners" in the default-branch ruleset. With a single maintainer this adds nothing, so it can wait.
 
-## 6. After the product name is decided
+## 6. Finish the rename to Fairtide
 
-- Rename the repository (Settings → General → Repository name). GitHub redirects old URLs, but update the clone and `marketplace add` instructions in `README.md` and `docs/installation.md` anyway.
-- Update the description and topics from section 1 to use the new name.
-- If the plugin id changes, existing users must reinstall. Note it in `CHANGELOG.md`.
+The product is now named Fairtide; the repository is still named `project-guardian`.
+
+- Rename the repository to `fairtide` (Settings → General → Repository name). GitHub redirects old URLs, but then update `ARCFrontierSystems/project-guardian` in `README.md`, `docs/installation.md`, and the `$id` in `plugins/fairtide/schemas/fairtide.schema.json`.
+- Use the Fairtide description and topics from section 1.
+- Create the CI secret as `FAIRTIDE_LEAK_DENYLIST` (the old `SEAWORTHY_LEAK_DENYLIST` name is no longer read).
 
 ## Checklist
 
@@ -74,10 +76,10 @@ Then turn on "Require review from Code Owners" in the default-branch ruleset. Wi
 - [ ] Private vulnerability reporting on
 - [ ] Secret scanning and push protection on
 - [ ] Dependabot alerts on (optional: `dependabot.yml` for Actions)
-- [ ] `SEAWORTHY_LEAK_DENYLIST` secret added
+- [ ] `FAIRTIDE_LEAK_DENYLIST` secret added
 - [ ] Wiki off
 - [ ] Default-branch ruleset active with the three required checks
 - [ ] Tag ruleset for `v*` active
 - [ ] Actions: GitHub-only actions, read-only token, fork approval required
 - [ ] CODEOWNERS (when there is more than one maintainer)
-- [ ] Repository renamed (after the name decision)
+- [ ] Repository renamed to `fairtide`

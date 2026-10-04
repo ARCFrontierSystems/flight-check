@@ -1,13 +1,13 @@
 # Blind-test protocol
 
-Seaworthy is evaluated against deliberately constructed synthetic applications whose answers are hidden from the auditor. This document is the contract between this repository and the separate **testbed** repository and Claude project that hold the test applications.
+Fairtide is evaluated against deliberately constructed synthetic applications whose answers are hidden from the auditor. This document is the contract between this repository and the separate **testbed** repository and Claude project that hold the test applications.
 
 ## Separation rules
 
-1. **Separate repository and project.** Test applications and their ground truth live in a separate, private repository, authored in a separate Claude project. The author must not have Seaworthy's skill or agent text in context, and must work from the issue classes below, never from Seaworthy's prompts.
+1. **Separate repository and project.** Test applications and their ground truth live in a separate, private repository, authored in a separate Claude project. The author must not have Fairtide's skill or agent text in context, and must work from the issue classes below, never from Fairtide's prompts.
 2. **No answers in the target.** The audited directory contains only the application. The ground-truth manifest, notes, and expected findings live outside it. `tools/blindtest/run_audit.py` copies the application to a fresh temporary directory before auditing and refuses to run if the directory looks like it contains answers.
-3. **No feedback into the skill as specifics.** After scoring, Seaworthy may be improved only in general terms (procedures, issue classes, search strategies). Fixture-specific identifiers, file names, routes, or wording must never enter `plugins/`. The leak gate (`tools/lint_plugin.py`) checks hashed fixture identifiers listed in `tools/leak-hashes.txt`.
-4. **Held-out fixtures.** Keep at least one fixture that is never used while improving Seaworthy and is scored only at release time. If a release scores clearly better on the development fixtures than on the held-out one, treat that as a sign of overfitting.
+3. **No feedback into the skill as specifics.** After scoring, Fairtide may be improved only in general terms (procedures, issue classes, search strategies). Fixture-specific identifiers, file names, routes, or wording must never enter `plugins/`. The leak gate (`tools/lint_plugin.py`) checks hashed fixture identifiers listed in `tools/leak-hashes.txt`.
+4. **Held-out fixtures.** Keep at least one fixture that is never used while improving Fairtide and is scored only at release time. If a release scores clearly better on the development fixtures than on the held-out one, treat that as a sign of overfitting.
 5. **Canaries.** Put a unique random string in each fixture, for example in a comment. Add its SHA-256 hash to `tools/leak-hashes.txt`, so a leak into the plugin fails CI.
 
 ## What a test application should contain
@@ -65,7 +65,7 @@ Store it outside the application, for example `ground-truth/manifest.json` next 
 }
 ```
 
-- **`tier`:** `must` for issues Seaworthy is expected to find; `stretch` for hard ones.
+- **`tier`:** `must` for issues Fairtide is expected to find; `stretch` for hard ones.
 - **`legal`:** set it on issues where legal or business classification is part of the expected result.
 
 ## Running a blind test
@@ -79,7 +79,7 @@ python3 tools/blindtest/score.py --final results/testbed-A-run1/<run_id>/audit.f
   --markdown results/testbed-A-run1/score.md
 ```
 
-Then exercise the Legal Review Assistant on the same run: run `/seaworthy:legal-packet` against the run directory, inspect the PDF, and score its questions (below).
+Then exercise the Legal Review Assistant on the same run: run `/fairtide:legal-packet` against the run directory, inspect the PDF, and score its questions (below).
 
 ## What is measured
 

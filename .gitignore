@@ -1,8 +1,8 @@
-# Seaworthy run output when auditing this repository itself (reports may contain quoted findings)
-.seaworthy/runs/
-.seaworthy/packets/
+# Fairtide run output when auditing this repository itself (reports may contain quoted findings)
+.fairtide/runs/
+.fairtide/packets/
 # Local leak-gate denylist (never commit; see CONTRIBUTING.md)
-.seaworthy-denylist*
+.fairtide-denylist*
 # Python
 __pycache__/
 *.pyc

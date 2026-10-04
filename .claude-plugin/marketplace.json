@@ -6,8 +6,8 @@
   "description": "Plugins published by ARC Frontier Systems.",
   "plugins": [
     {
-      "name": "seaworthy",
-      "source": "./plugins/seaworthy",
+      "name": "fairtide",
+      "source": "./plugins/fairtide",
       "description": "Evidence-first ship-readiness audit for any software project, with a Legal Review Assistant and Attorney Review Packet.",
       "category": "security"
     }

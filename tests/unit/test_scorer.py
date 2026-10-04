@@ -41,12 +41,12 @@ MANIFEST = {
 class ScorerTests(unittest.TestCase):
     def test_matching_decoys_unlisted_and_metrics(self):
         findings = [
-            finding("SW-1", "authorization", "src/a.ts", 44, 47),
-            finding("SW-2", "privacy", "docs/p.md", 2, 4, severity="HIGH",
+            finding("FT-1", "authorization", "src/a.ts", 44, 47),
+            finding("FT-2", "privacy", "docs/p.md", 2, 4, severity="HIGH",
                     legal={"classification": "POLICY/IMPLEMENTATION CONTRADICTION", "questions": ["q?"]}),
-            finding("SW-3", "application-security", "src/db.ts", 12, 13),
-            finding("SW-4", "testing", "src/other.ts", 1, 2, check="FAILED"),
-            finding("SW-5", "authorization", "src/a.ts", 45, 46),  # second finding on same issue -> unlisted
+            finding("FT-3", "application-security", "src/db.ts", 12, 13),
+            finding("FT-4", "testing", "src/other.ts", 1, 2, check="FAILED"),
+            finding("FT-5", "authorization", "src/a.ts", 45, 46),  # second finding on same issue -> unlisted
         ]
         r = score.score(final_with(findings), MANIFEST)
         self.assertEqual(r["counts"]["true_positives"], 2)
@@ -55,7 +55,7 @@ class ScorerTests(unittest.TestCase):
         self.assertAlmostEqual(r["recall"], 0.667, places=3)
         self.assertEqual(r["must_recall"], 1.0)
         self.assertEqual(r["decoy_false_positive_rate"], 1.0)
-        self.assertEqual(r["fabricated_evidence_findings"], ["SW-4"])
+        self.assertEqual(r["fabricated_evidence_findings"], ["FT-4"])
         self.assertEqual(r["legal"], {"issues": 1, "classification_correct": 1, "with_questions": 1})
         self.assertEqual(r["severity_exact"], 0.5)
         self.assertEqual(r["severity_within_tolerance"], 1.0)
@@ -64,7 +64,7 @@ class ScorerTests(unittest.TestCase):
         self.assertIn("GT-3", md)
 
     def test_domain_mismatch_is_not_a_match(self):
-        r = score.score(final_with([finding("SW-1", "testing", "src/a.ts", 44, 47)]), MANIFEST)
+        r = score.score(final_with([finding("FT-1", "testing", "src/a.ts", 44, 47)]), MANIFEST)
         self.assertEqual(r["counts"]["true_positives"], 0)
 
     def test_manifest_validation(self):

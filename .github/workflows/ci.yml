@@ -23,7 +23,7 @@ jobs:
       - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python }}
-      - name: Install test-only tools (not used by Seaworthy at runtime)
+      - name: Install test-only tools (not used by Fairtide at runtime)
         run: |
           sudo apt-get update -q
           sudo apt-get install -y --no-install-recommends poppler-utils
@@ -32,11 +32,11 @@ jobs:
         run: python -m unittest discover -s tests/unit -p 'test_*.py' -v
       - name: Lint
         env:
-          PRIVATE_DENYLIST: ${{ secrets.SEAWORTHY_LEAK_DENYLIST }}
+          PRIVATE_DENYLIST: ${{ secrets.FAIRTIDE_LEAK_DENYLIST }}
         run: |
           if [ -n "$PRIVATE_DENYLIST" ]; then
             printf '%s\n' "$PRIVATE_DENYLIST" > "$RUNNER_TEMP/denylist.txt"
-            export SEAWORTHY_LEAK_DENYLIST="$RUNNER_TEMP/denylist.txt"
+            export FAIRTIDE_LEAK_DENYLIST="$RUNNER_TEMP/denylist.txt"
           fi
           python tools/lint_plugin.py
 
@@ -54,5 +54,5 @@ jobs:
         run: npm install -g @anthropic-ai/claude-code@2.1.289
       - name: Validate plugin and marketplace
         run: |
-          claude plugin validate --strict plugins/seaworthy
+          claude plugin validate --strict plugins/fairtide
           claude plugin validate --strict .

@@ -105,7 +105,7 @@ Return ONLY one JSON object in a single fenced `json` code block, with no text b
 Output rules:
 
 - Evidence `kind` must be one of: `code`, `config`, `documentation`, `dependency`, `absence`, `user-provided`. `human_review.types` (plural, a list) may contain `legal`, `security`, `privacy`, `accessibility`, `compliance`, `business`.
-- Paths are relative to the audit root. Quotes must be copied exactly from the cited lines: at most about 12 lines, `...` to skip lines, no added line numbers. Seaworthy mechanically checks every quote against the file. A quote that does not match makes the finding untrustworthy.
+- Paths are relative to the audit root. Quotes must be copied exactly from the cited lines: at most about 12 lines, `...` to skip lines, no added line numbers. Fairtide mechanically checks every quote against the file. A quote that does not match makes the finding untrustworthy.
 - Leave out optional keys you do not use (`legal`, `standards`, `control_ids`, `confidence_rationale`, `release_blocking_rationale`, `rationale`, `missing_evidence`, `evidence`, `related_findings`). Never use `null`.
 - A control is VERIFIED only with positive evidence. NOT_MET must list `related_findings`. UNVERIFIED must give `missing_evidence`. NOT_APPLICABLE needs a `rationale` and evidence (absence evidence describing your searches is fine).
 - ASSESSED coverage must list the searches you actually ran.

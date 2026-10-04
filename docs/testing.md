@@ -1,6 +1,6 @@
 # Testing
 
-Seaworthy is tested at four levels.
+Fairtide is tested at four levels.
 
 ## 1. Deterministic tooling: unit tests (every commit)
 
@@ -24,7 +24,7 @@ CI runs them on Python 3.9 and 3.12.
 ```bash
 python3 tools/sync_agents.py --check
 python3 tools/lint_plugin.py
-claude plugin validate --strict plugins/seaworthy
+claude plugin validate --strict plugins/fairtide
 ```
 
 These enforce:
@@ -34,7 +34,7 @@ These enforce:
 - No invisible or bidirectional Unicode anywhere.
 - Consistency between catalogs, the schema, and the code.
 - Generated agent blocks in sync with their sources.
-- The leak gate (`SEAWORTHY_LEAK_DENYLIST` for private names, and `tools/leak-hashes.txt` for fixture identifiers).
+- The leak gate (`FAIRTIDE_LEAK_DENYLIST` for private names, and `tools/leak-hashes.txt` for fixture identifiers).
 
 ## 3. Smoke tests (during development)
 
@@ -46,4 +46,4 @@ Detection quality is measured against synthetic applications in a separate repos
 
 ## Self-audit
 
-Before each release, Seaworthy audits its own repository with `/seaworthy:audit`. The report is published under `docs/audits/`.
+Before each release, Fairtide audits its own repository with `/fairtide:audit`. The report is published under `docs/audits/`.

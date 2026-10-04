@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Run a blind Seaworthy audit of a test application in a disposable copy.
+"""Run a blind Fairtide audit of a test application in a disposable copy.
 
 The application directory is copied to a fresh temporary directory, so the audit can
 never see a ground-truth manifest, scoring scripts, or anything else stored next to the
 application. The audit runs headless with only Read/Grep/Glob for the agents, writes
-restricted to the copy's .seaworthy/ directory, and Seaworthy's own script pre-approved
+restricted to the copy's .fairtide/ directory, and Fairtide's own script pre-approved
 by the skill. Results are copied to --out.
 
 Usage:
@@ -22,8 +22,8 @@ import sys
 import tempfile
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-PLUGIN = os.path.join(REPO, "plugins", "seaworthy")
-EXCLUDE = {".git", "ground-truth", "manifest.json", ".seaworthy"}
+PLUGIN = os.path.join(REPO, "plugins", "fairtide")
+EXCLUDE = {".git", "ground-truth", "manifest.json", ".fairtide"}
 
 
 def main(argv=None):
@@ -41,23 +41,23 @@ def main(argv=None):
         if name.lower() in ("manifest.json", "ground-truth", "ground_truth", "answers", "expected"):
             sys.exit("refusing: %s looks like ground truth inside the application directory" % name)
 
-    work = tempfile.mkdtemp(prefix="seaworthy-blind-")
+    work = tempfile.mkdtemp(prefix="fairtide-blind-")
     target = os.path.join(work, os.path.basename(app.rstrip("/")) or "app")
     shutil.copytree(app, target, ignore=lambda d, names: [n for n in names if n in EXCLUDE])
     evidence_args = []
     if args.evidence:
-        ev_dir = os.path.join(target, ".seaworthy", "evidence")
+        ev_dir = os.path.join(target, ".fairtide", "evidence")
         os.makedirs(ev_dir)
         for ev in args.evidence:
             shutil.copy(ev, ev_dir)
-            evidence_args.append(os.path.join(".seaworthy", "evidence", os.path.basename(ev)))
+            evidence_args.append(os.path.join(".fairtide", "evidence", os.path.basename(ev)))
 
-    script = os.path.join(PLUGIN, "scripts", "seaworthy.py")
-    settings = {"permissions": {"allow": ["Edit(/%s/.seaworthy/**)" % target, "Bash(python3 %s *)" % script]}}
+    script = os.path.join(PLUGIN, "scripts", "fairtide.py")
+    settings = {"permissions": {"allow": ["Edit(/%s/.fairtide/**)" % target, "Bash(python3 %s *)" % script]}}
     settings_path = os.path.join(work, "settings.json")
     with open(settings_path, "w") as fh:
         json.dump(settings, fh)
-    prompt = "/seaworthy:audit"
+    prompt = "/fairtide:audit"
     if evidence_args:
         prompt += " --evidence " + " ".join(evidence_args)
     cmd = ["claude", "-p", prompt, "--plugin-dir", PLUGIN, "--tools", "Read,Write,Agent,Bash,Glob,Grep",
@@ -72,7 +72,7 @@ def main(argv=None):
         fh.write(proc.stdout)
     with open(os.path.join(args.out, "claude-stderr.txt"), "w") as fh:
         fh.write(proc.stderr)
-    runs = os.path.join(target, ".seaworthy", "runs")
+    runs = os.path.join(target, ".fairtide", "runs")
     copied = []
     if os.path.isdir(runs):
         for name in sorted(os.listdir(runs)):
@@ -80,7 +80,7 @@ def main(argv=None):
             if os.path.isdir(src):
                 shutil.copytree(src, os.path.join(args.out, name), dirs_exist_ok=True)
                 copied.append(name)
-    ledger = os.path.join(target, ".seaworthy", "ledger.json")
+    ledger = os.path.join(target, ".fairtide", "ledger.json")
     if os.path.exists(ledger):
         shutil.copy(ledger, os.path.join(args.out, "ledger.json"))
     if not args.keep:

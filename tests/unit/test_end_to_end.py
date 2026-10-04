@@ -14,7 +14,7 @@ import zlib
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import helpers  # noqa: E402
-from seaworthy_lib import catalog, cli, constants, minischema, render_md  # noqa: E402
+from fairtide_lib import catalog, cli, constants, minischema, render_md  # noqa: E402
 
 
 def read_json(path):
@@ -44,7 +44,7 @@ def run_cli(*argv):
 
 
 def finalized_run(verification=None, parts=None):
-    tmp = tempfile.mkdtemp(prefix="seaworthy-e2e-")
+    tmp = tempfile.mkdtemp(prefix="fairtide-e2e-")
     part = helpers.all_controls_resolved(helpers.base_part())
     run_dir = helpers.write_run(parts=parts or [part], verification=verification, base=tmp)
     ledger_path = os.path.join(tmp, "ledger.json")
@@ -99,7 +99,7 @@ class EndToEndTests(unittest.TestCase):
         final = read_json(os.path.join(run_dir, "audit.final.json"))
         self.assertEqual(minischema.validate_def(final, catalog.schema(), "auditFinal"), [])
         ids = {f["rule"]: f["id"] for f in final["findings"]}
-        self.assertEqual(sorted(ids.values()), ["SW-0001", "SW-0002"])
+        self.assertEqual(sorted(ids.values()), ["FT-0001", "FT-0002"])
         sql = next(f for f in final["findings"] if f["rule"] == "application-security.sql-injection")
         self.assertEqual(sql["evidence_check"], "PASSED")
         self.assertTrue(sql["release_blocking_effective"])
@@ -220,7 +220,7 @@ class EndToEndTests(unittest.TestCase):
             "overall_summary": "One policy/implementation contradiction about account deletion needs counsel's input before the deletion approach is finalized.",
             "finding_ids": [legal_id],
             "per_finding": {legal_id: {"relevant_decisions": ["Whether to keep a 30-day deletion commitment."],
-                                       "follow_up": ["Record counsel's decision with /seaworthy:track."]}},
+                                       "follow_up": ["Record counsel's decision with /fairtide:track."]}},
         }
         req_path = os.path.join(tmp, "req.json")
         write_json(req_path, req)
@@ -236,7 +236,7 @@ class EndToEndTests(unittest.TestCase):
         text = pdf_text(pdf_path)
         if text is not None:
             flat = " ".join(text.split())
-            self.assertIn("SEAWORTHY — ATTORNEY REVIEW PACKET", flat)
+            self.assertIn("FAIRTIDE — ATTORNEY REVIEW PACKET", flat)
             self.assertIn(" ".join(constants.PACKET_DISCLAIMER.split()), flat)
             self.assertIn(legal_id, flat)
             self.assertIn("Questions for qualified counsel", flat)
@@ -266,10 +266,10 @@ class EndToEndTests(unittest.TestCase):
         self.assertTrue(os.path.isdir(out["run_dir"]))
         self.assertTrue(os.path.exists(os.path.join(tmp, "runs", ".gitignore")))
         tmp2, run_dir, ledger_path, code, out = finalized_run()
-        code, out = run_cli("ledger", "accept", "--ledger", ledger_path, "--ref", "SW-0001", "--risk", "r risk", "--reason", "",
+        code, out = run_cli("ledger", "accept", "--ledger", ledger_path, "--ref", "FT-0001", "--risk", "r risk", "--reason", "",
                             "--owner", "o", "--date", "2026-10-01", "--scope", "scope", "--compensating-controls", "none")
         self.assertEqual(code, 1)
-        code, out = run_cli("ledger", "legal", "--ledger", ledger_path, "--id", "SW-0002", "--status", "DECISION_RECEIVED",
+        code, out = run_cli("ledger", "legal", "--ledger", ledger_path, "--id", "FT-0002", "--status", "DECISION_RECEIVED",
                             "--note", "", "--source", "user")
         self.assertEqual(code, 1)
         code, out = run_cli("ledger", "show", "--ledger", ledger_path)
@@ -288,9 +288,9 @@ class ListingCommandTests(unittest.TestCase):
         code, out = run_cli("findings", run_dir, "--legal")
         self.assertEqual(code, 0)
         self.assertEqual([f["legal"]["classification"] for f in out["findings"]], ["POLICY/IMPLEMENTATION CONTRADICTION"])
-        code, out = run_cli("findings", run_dir, "--ids", "SW-0001,SW-9999", "--detail")
+        code, out = run_cli("findings", run_dir, "--ids", "FT-0001,FT-9999", "--detail")
         self.assertEqual(code, 1)
-        self.assertEqual(out["not_found"], ["SW-9999"])
+        self.assertEqual(out["not_found"], ["FT-9999"])
         self.assertIn("quotes", out["findings"][0])
         code, out = run_cli("init-run", "--base", base, "--suffix", "reaudit", "--inventory-from", run_dir, "--now", "2026-10-05T09:00:00Z")
         self.assertEqual(code, 0, out)
