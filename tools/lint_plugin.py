@@ -59,6 +59,13 @@ def walk(base, skip_dirs=(".git",)):
             yield os.path.join(dirpath, fn)
 
 
+# Subcommands a skill may pre-approve. Commands that record the user's own decisions
+# (ledger accept, revoke, legal, close) are deliberately absent: they must always prompt.
+PREAPPROVABLE_SUBCOMMANDS = {"version", "init-run", "validate", "finalize", "render", "gate", "runs", "findings",
+                             "packet", "schema-check", "ledger show", "ledger remediate"}
+PREAPPROVAL = re.compile(r"Bash\(python3 \$\{CLAUDE_PLUGIN_ROOT\}/scripts/fairtide\.py ((?:ledger )?[a-z-]+) \*\)")
+
+
 def parse_frontmatter(path):
     with open(path, encoding="utf-8") as fh:
         text = fh.read()
@@ -112,6 +119,14 @@ def check_frontmatter_and_bodies():
                 err("frontmatter", "%s: allowed-tools may pre-approve only Fairtide's own script, found %r" % (rel(path), tool))
             elif tool in ("Bash", "Bash(*)", "WebFetch", "WebSearch") or tool.startswith("mcp__"):
                 err("frontmatter", "%s: allowed-tools must not pre-approve %r" % (rel(path), tool))
+            elif tool.startswith("Bash("):
+                m = PREAPPROVAL.fullmatch(tool)
+                if not m:
+                    err("frontmatter", "%s: pre-approve one named subcommand per entry, as "
+                        "Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py <subcommand> *); found %r" % (rel(path), tool))
+                elif m.group(1) not in PREAPPROVABLE_SUBCOMMANDS:
+                    err("frontmatter", "%s: %r must not be pre-approved; commands that record the user's decisions "
+                        "must always raise a permission prompt" % (rel(path), m.group(1)))
     agents_dir = os.path.join(PLUGIN, "agents")
     for fn in sorted(os.listdir(agents_dir)) if os.path.isdir(agents_dir) else []:
         path = os.path.join(agents_dir, fn)
@@ -283,10 +298,26 @@ def _tokens(text):
     return {t.lower() for t in re.findall(r"[A-Za-z0-9][A-Za-z0-9_.-]{2,}", text)}
 
 
+def leak_scan_files():
+    """Every file that is or could next be committed: tracked files plus untracked files that are not ignored.
+
+    The leak rules cover the whole repository, not only the shipped plugin. Ignored paths (for
+    example .fairtide/runs/, which can quote audited projects) are local and never committed.
+    """
+    try:
+        out = subprocess.run(["git", "-C", REPO, "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
+                             capture_output=True, check=True).stdout.decode("utf-8", "replace")
+        files = [os.path.join(REPO, f) for f in out.split("\0") if f]
+    except (OSError, subprocess.CalledProcessError):
+        files = list(walk(REPO, skip_dirs=(".git", "runs")))
+    hashes_file = os.path.join(REPO, "tools", "leak-hashes.txt")
+    return [p for p in files if os.path.isfile(p) and os.path.splitext(p)[1].lower() in TEXT_SUFFIXES
+            and os.path.abspath(p) != hashes_file]
+
+
 def check_leaks():
-    shipped = [p for p in walk(PLUGIN) if os.path.splitext(p)[1].lower() in TEXT_SUFFIXES]
     texts = {}
-    for p in shipped:
+    for p in leak_scan_files():
         try:
             texts[p] = open(p, encoding="utf-8").read()
         except UnicodeDecodeError:
@@ -298,7 +329,9 @@ def check_leaks():
             line = line.strip()
             if line and not line.startswith("#"):
                 hashes.add(line.lower())
-    if hashes:
+    if not hashes:
+        notes.append("fixture canary list is empty (tools/leak-hashes.txt); add hashes when blind-test fixtures exist")
+    else:
         for p, text in texts.items():
             for tok in _tokens(text):
                 if hashlib.sha256(tok.encode("utf-8")).hexdigest() in hashes:
@@ -310,7 +343,7 @@ def check_leaks():
             for term in terms:
                 if re.search(r"(?i)(?<![A-Za-z0-9])%s(?![A-Za-z0-9])" % re.escape(term), text):
                     err("leak", "%s contains a private denylisted term (term #%d)" % (rel(p), terms.index(term) + 1))
-        notes.append("private denylist applied (%d terms)" % len(terms))
+        notes.append("private denylist applied (%d terms) to %d files" % (len(terms), len(texts)))
     else:
         notes.append("private denylist not applied (set FAIRTIDE_LEAK_DENYLIST to a local file; never commit it)")
 

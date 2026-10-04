@@ -88,8 +88,21 @@ Details: [docs/methodology.md](docs/methodology.md).
 ## Privacy and data handling
 
 - **No telemetry, no network.** Fairtide adds no telemetry, and its script makes no network connections.
-- **Model provider.** The content Fairtide's agents read is processed by your Claude Code session's model provider under your existing Claude Code configuration, like any other Claude Code task.
+- **Model provider.** The content Fairtide's agents read is processed by your Claude Code session's model provider under your existing Claude Code configuration, like any other Claude Code task. That includes anything in the audited files: source code, configuration, fixtures, seed data, logs, and any personal, health, payment, or other regulated or confidential data they contain.
+- **Before auditing sensitive material,** check that your organization permits sending it to that provider. To keep files out of an audit, audit a subdirectory (`/fairtide:audit path/to/subdir`) or a copy of the project without them. Fairtide masks likely secrets in what it writes, but the agents still read the original files.
 - **Local files.** Fairtide masks likely secrets in its output files, but your conversation history follows Claude Code's own retention settings.
+
+## Usage and cost
+
+An audit runs up to eleven agent tasks (inventory, up to nine domain agents, and a verifier), each reading part of the project, so usage grows with project size and with the number of applicable domains. Fairtide sets no token limit of its own; your Claude Code plan or provider settings govern spend.
+
+For reference, Fairtide's self-audit of its own repository (about 600 KB of text, ten agent tasks plus one retry) took about six minutes. The agents used roughly 800,000 input tokens and 50,000 output tokens, and the coordinating session about 1.6 million input tokens; most input tokens in both were cache reads. Treat these as an order of magnitude, not a quote. Prices depend on your plan and model.
+
+To limit usage:
+- Restrict the audit to the domains you need with `--domains`. The other domains are then reported as not assessed, so the ship gate stays blocked.
+- Audit a subdirectory.
+- For headless runs, set a spending cap with `claude -p ... --max-budget-usd <amount>`.
+- Check your plan's usage page after the first audit.
 
 ## Disclaimer
 

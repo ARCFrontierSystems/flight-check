@@ -9,10 +9,17 @@ Precedence (first match wins; every applicable condition is still reported):
   4. READY WITH ACCEPTED RISKS       valid user-accepted risks are in effect
   5. READY FOR RELEASE
 
+Accepted risks are counted only when they were recorded before the run started, so nothing
+recorded while an audit is in progress can change that audit's decision. Accepted CRITICAL
+findings never lift a block: they are treated exactly like open CRITICAL findings.
+
 "Effective confidence" is UNVERIFIED when mechanical evidence checking failed, so a
 finding whose quotes cannot be found in the cited files cannot drive a CRITICAL
 block, but it does prevent a READY decision until a human resolves it.
 """
+
+import datetime
+import re
 
 from . import constants
 from .ledger import acceptance_problems
@@ -40,12 +47,53 @@ def release_blocking_effective(finding):
     return bool(finding.get("release_blocking")) and sev != "INFORMATIONAL"
 
 
+_ISO = re.compile(r"^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$")
+
+
+def run_started_at(run):
+    """Earliest credible start time of a run, as YYYY-MM-DDTHH:MM:SSZ, or None.
+
+    The run ID is created by init-run from the clock; run.json's started_at is copied from
+    init-run's output. Taking the earlier of the two keeps a later-looking run.json from
+    widening the window in which acceptances count.
+    """
+    candidates = []
+    m = re.match(r"^(\d{8}T\d{6}Z)", (run or {}).get("run_id", ""))
+    if m:
+        dt = datetime.datetime.strptime(m.group(1), "%Y%m%dT%H%M%SZ")
+        candidates.append(dt.strftime("%Y-%m-%dT%H:%M:%SZ"))
+    started = (run or {}).get("started_at")
+    if isinstance(started, str) and _ISO.match(started):
+        candidates.append(started)
+    return min(candidates) if candidates else None
+
+
+def _acceptance_timing_problem(acc, started):
+    if started is None:
+        return None
+    recorded = (acc or {}).get("recorded_at")
+    if not isinstance(recorded, str) or not _ISO.match(recorded):
+        return "has no valid recording time"
+    if recorded >= started:
+        return "was recorded at %s, after this run started (%s); it counts from the next run" % (recorded, started)
+    return None
+
+
 def decide(audit, ledger, today, lifecycle=None):
     lifecycle = lifecycle or {}
-    open_findings, accepted_findings = [], []
+    started = run_started_at(audit.get("run"))
+    open_findings, accepted_findings, accepted_critical, not_counted = [], [], [], []
     for f in audit["findings"]:
         if f.get("status") == "ACCEPTED_RISK" and not acceptance_problems(f.get("accepted_risk"), today):
-            accepted_findings.append(f)
+            timing = _acceptance_timing_problem(f.get("accepted_risk"), started)
+            if timing:
+                not_counted.append("Acceptance of %s %s." % (f["id"], timing))
+                open_findings.append(f)
+            elif f["severity"] == "CRITICAL":
+                accepted_critical.append(f["id"])
+                open_findings.append(f)
+            else:
+                accepted_findings.append(f)
         else:
             open_findings.append(f)
 
@@ -60,8 +108,11 @@ def decide(audit, ledger, today, lifecycle=None):
             continue
         acc = acceptances.get(c["id"])
         if acc and not acceptance_problems(acc, today):
-            accepted_controls.append(c["id"])
-            continue
+            timing = _acceptance_timing_problem(acc, started)
+            if not timing:
+                accepted_controls.append(c["id"])
+                continue
+            not_counted.append("Acceptance of control %s %s." % (c["id"], timing))
         insufficient.append("Release-critical control %s is UNVERIFIED: %s" % (c["id"], c.get("missing_evidence") or "no evidence"))
     for cov in audit["coverage"]:
         if cov["status"] == "NOT_ASSESSED":
@@ -102,6 +153,10 @@ def decide(audit, ledger, today, lifecycle=None):
     if accepted_findings or accepted_controls:
         refs = [f["id"] for f in accepted_findings] + accepted_controls
         reasons.append("User-accepted risks in effect: %s." % ", ".join(refs))
+    if accepted_critical:
+        reasons.append("Accepted CRITICAL finding(s) still block release: %s. Accepting a CRITICAL risk records the decision but never lifts the block." % ", ".join(accepted_critical))
+    for note in not_counted:
+        reasons.append(note)
     if decision == constants.GATE_READY:
         reasons.append("No open release-blocking findings, no unverified release-critical controls, and every domain was assessed or shown not applicable.")
 
@@ -113,6 +168,9 @@ def decide(audit, ledger, today, lifecycle=None):
         "insufficient_evidence": insufficient,
         "accepted_findings": [f["id"] for f in accepted_findings],
         "accepted_controls": accepted_controls,
+        "accepted_critical_findings": accepted_critical,
+        "acceptances_not_counted": not_counted,
+        "run_started_at": started,
         "scope_statement": SCOPE_STATEMENT,
         "exit_code": constants.GATE_EXIT_CODES[decision],
     }

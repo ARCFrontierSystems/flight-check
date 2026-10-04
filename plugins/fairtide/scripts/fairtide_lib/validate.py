@@ -130,7 +130,9 @@ def check_control(c, where, errors, warnings, part_finding_ids=None):
         for ref in c.get("related_findings") or []:
             if ref not in part_finding_ids:
                 errors.append("%s.related_findings: %r is not a finding in this file" % (where, ref))
-    for field in ("rationale", "missing_evidence"):
+    if c.get("how_to_verify") and state != "UNVERIFIED":
+        errors.append("%s: how_to_verify belongs only on UNVERIFIED controls" % where)
+    for field in ("rationale", "missing_evidence", "how_to_verify"):
         if c.get(field):
             _guard_text(c[field], "%s.%s" % (where, field), errors, warnings)
 

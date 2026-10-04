@@ -46,4 +46,6 @@ Detection quality is measured against synthetic applications in a separate repos
 
 ## Self-audit
 
-Before each release, Fairtide audits its own repository with `/fairtide:audit`. The report is published under `docs/audits/`.
+Before each release, Fairtide audits its own repository with `/fairtide:audit`. A summary and review of each self-audit is committed under `docs/audits/`, and the ledger at `.fairtide/ledger.json` records finding IDs and decisions over time. Full 33-section reports are not committed to this repository: Fairtide audits this repository, and the next self-audit would read an earlier report as project content and could cite it instead of the code. Attach full reports to the release instead.
+
+Headless runs (`claude -p`) can print a first result while the agents are still working, then a final one after the report is rendered. Read results from the run directory (`audit.final.json`, `report.md`), not from the first message printed.

@@ -81,6 +81,25 @@ class EvidenceCheckTests(unittest.TestCase):
         ev = {"kind": "code", "path": "link.txt", "start_line": 1, "end_line": 1, "quote": "outside data"}
         self.assertEqual(evidence.check_item(ev, d, evidence.FileCache()), "OUT_OF_ROOT")
 
+    def test_html_escaped_quote_is_decoded_once_and_restored(self):
+        d = tempfile.mkdtemp()
+        with open(os.path.join(d, "a.py"), "w") as fh:
+            fh.write("x = 1\nif a < b && c > d:\n    pass\nlabel = \"&lt;tag&gt;\"\n")
+        ev = {"kind": "code", "path": "a.py", "start_line": 2, "end_line": 2, "quote": "if a &lt; b &amp;&amp; c &gt; d:"}
+        self.assertEqual(evidence.check_item(ev, d, evidence.FileCache()), "OK")
+        self.assertEqual(ev["quote"], "if a < b && c > d:")
+        self.assertIn("HTML entities", ev["note"])
+        # text that really contains entities matches as given and is left untouched
+        ev = {"kind": "code", "path": "a.py", "start_line": 4, "end_line": 4, "quote": "label = \"&lt;tag&gt;\""}
+        self.assertEqual(evidence.check_item(ev, d, evidence.FileCache()), "OK")
+        self.assertNotIn("note", ev)
+        # double-escaped in transit: decoded once, it matches the file's literal entities
+        ev = {"kind": "code", "path": "a.py", "start_line": 4, "end_line": 4, "quote": "label = \"&amp;lt;tag&amp;gt;\""}
+        self.assertEqual(evidence.check_item(ev, d, evidence.FileCache()), "OK")
+        # decoding never rescues a quote that is simply not there
+        ev = {"kind": "code", "path": "a.py", "start_line": 2, "end_line": 2, "quote": "if a &lt; z:"}
+        self.assertEqual(evidence.check_item(ev, d, evidence.FileCache()), "QUOTE_MISMATCH")
+
     def test_summary_values(self):
         self.assertEqual(evidence.summarize(["OK", "NOT_CHECKED"]), "PASSED")
         self.assertEqual(evidence.summarize(["OK", "QUOTE_MISMATCH"]), "FAILED")

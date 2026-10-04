@@ -289,7 +289,10 @@ def render(final, summary):
             for c in final["controls"]:
                 if c["state"] == "UNVERIFIED":
                     cat = catalog.control_by_id().get(c["id"], {})
-                    out.append("- **%s**: %s Evidence that would establish it: %s" % (c["id"], md(c.get("missing_evidence") or ""), md(cat.get("verified_when", ""))))
+                    line = "- **%s**: %s Evidence that would establish it: %s" % (c["id"], md(c.get("missing_evidence") or ""), md(cat.get("verified_when", "")))
+                    if c.get("how_to_verify"):
+                        line += " How to supply it: %s" % md(c["how_to_verify"])
+                    out.append(line)
                     items += 1
             for f in failed:
                 bad = [ev for ev in f["evidence"] if ev.get("check") not in ("OK", "NOT_CHECKED")]
@@ -310,6 +313,14 @@ def render(final, summary):
             if acc:
                 out.append("")
                 out.append("Risks currently accepted by a user decision: %s." % ", ".join(acc))
+            if g.get("accepted_critical_findings"):
+                out.append("")
+                out.append("Accepted CRITICAL findings, which still block release: %s." % ", ".join(g["accepted_critical_findings"]))
+            if g.get("acceptances_not_counted"):
+                out.append("")
+                out.append("Acceptances not counted in this run:")
+                for note in g["acceptances_not_counted"]:
+                    out.append("- " + md(note))
         elif num == "28":
             prio = (summary or {}).get("remediation_priority") or []
             if prio:

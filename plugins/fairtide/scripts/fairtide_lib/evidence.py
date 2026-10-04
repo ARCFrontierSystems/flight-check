@@ -6,8 +6,13 @@ checks, without executing anything, that:
   * the file exists and the cited lines exist,
   * the quoted text appears within the cited lines (whitespace-insensitive;
     redaction markers and "..." act as gaps).
+
+Agent replies can reach the coordinating session with <, > and & HTML-escaped. A quote
+that matches only after decoding HTML entities once is accepted, its text is restored to
+what the file contains, and a note records the decoding.
 """
 
+import html
 import os
 import re
 
@@ -19,6 +24,7 @@ LINE_TOLERANCE = 2
 OK = "OK"
 FAILURES = ("OUT_OF_ROOT", "FILE_MISSING", "LINES_OUT_OF_RANGE", "QUOTE_MISMATCH")
 UNCHECKED = ("NOT_CHECKED", "UNCHECKABLE_QUOTE", "FILE_TOO_LARGE", "NOT_TEXT")
+DECODED_NOTE = "Quote matched after decoding HTML entities added in transit; shown as it appears in the file."
 
 _GAP = re.compile(r"\[REDACTED(?::[^\]\n]{0,40})?\]|\.\.\.|…")
 _WS = re.compile(r"\s+")
@@ -91,7 +97,14 @@ def check_item(ev, root, cache):
         return "LINES_OUT_OF_RANGE"
     lo = max(0, start - 1 - LINE_TOLERANCE)
     hi = min(len(lines), end + LINE_TOLERANCE)
-    result = quote_matches(ev["quote"], "\n".join(lines[lo:hi]))
+    window = "\n".join(lines[lo:hi])
+    result = quote_matches(ev["quote"], window)
+    if result is False:
+        decoded = html.unescape(ev["quote"])
+        if decoded != ev["quote"] and quote_matches(decoded, window):
+            ev["quote"] = decoded
+            ev["note"] = ((ev.get("note") or "") + " " + DECODED_NOTE).strip()[:2000]
+            return OK
     if result is None:
         return "UNCHECKABLE_QUOTE"
     return OK if result else "QUOTE_MISMATCH"

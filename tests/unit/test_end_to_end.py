@@ -87,6 +87,15 @@ def check_pdf_structure(data):
     return count
 
 
+class PdfLanguageTests(unittest.TestCase):
+    def test_language_tag_is_validated(self):
+        from fairtide_lib import pdf
+        self.assertIn(b"/Lang (de-CH)", pdf.Document("t", lang="de-CH").to_bytes())
+        for bad in ("en) /OpenAction", "", "english language"):
+            with self.assertRaises(ValueError):
+                pdf.Document("t", lang=bad)
+
+
 class EndToEndTests(unittest.TestCase):
     def test_finalize_report_and_gate(self):
         verification = {"verdicts": [
@@ -229,6 +238,8 @@ class EndToEndTests(unittest.TestCase):
         self.assertEqual(code, 0, out)
         data = read_text(pdf_path, "rb")
         check_pdf_structure(data)
+        self.assertIn(b"/Lang (en)", data)
+        self.assertIn(b"/DisplayDocTitle true", data)
         self.assertGreaterEqual(out["pages"], 3)
         self.assertEqual(out["replaced_characters"], 1)  # the snowman cannot be represented
         md = read_text(out["markdown"])

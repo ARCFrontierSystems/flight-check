@@ -121,7 +121,7 @@ def build(final, request, ledger=None, generated_at=None, page_size="letter"):
 
     doc = pdf.Document(TITLE, page_size=page_size, header="Fairtide — Attorney Review Packet — %s" % project,
                        footer="Not legal advice. Organizes technical findings and questions for qualified counsel.",
-                       creation=generated_at)
+                       creation=generated_at, lang=request.get("language") or "en")
     doc.heading(TITLE, level=0)
     rows = [("Fairtide version", VERSION), ("Date generated", date_text), ("Project identifier", project)]
     if request.get("prepared_for"):

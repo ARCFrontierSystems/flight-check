@@ -165,7 +165,7 @@ Return ONLY one JSON object in a single fenced `json` code block, with no text b
   "controls": [
     {"id": "<CONTROL-ID>", "state": "VERIFIED", "rationale": "...", "evidence": [{"kind": "code", "path": "src/db/client.ts", "start_line": 12, "end_line": 14, "quote": "exact lines"}]},
     {"id": "<CONTROL-ID>", "state": "NOT_MET", "related_findings": ["A1"]},
-    {"id": "<CONTROL-ID>", "state": "UNVERIFIED", "missing_evidence": "What would establish it."},
+    {"id": "<CONTROL-ID>", "state": "UNVERIFIED", "missing_evidence": "What would establish it.", "how_to_verify": "Optional: how the user can supply that evidence."},
     {"id": "<CONTROL-ID>", "state": "NOT_APPLICABLE", "rationale": "Why it does not apply.", "evidence": [{"kind": "absence", "searched": "What you searched for and where."}]}
   ],
   "findings": [
@@ -211,9 +211,10 @@ Output rules:
 
 - Evidence `kind` must be one of: `code`, `config`, `documentation`, `dependency`, `absence`, `user-provided`. `human_review.types` (plural, a list) may contain `legal`, `security`, `privacy`, `accessibility`, `compliance`, `business`.
 - Paths are relative to the audit root. Quotes must be copied exactly from the cited lines: at most about 12 lines, `...` to skip lines, no added line numbers. Fairtide mechanically checks every quote against the file. A quote that does not match makes the finding untrustworthy.
-- Leave out optional keys you do not use (`legal`, `standards`, `control_ids`, `confidence_rationale`, `release_blocking_rationale`, `rationale`, `missing_evidence`, `evidence`, `related_findings`). Never use `null`.
-- A control is VERIFIED only with positive evidence. NOT_MET must list `related_findings`. UNVERIFIED must give `missing_evidence`. NOT_APPLICABLE needs a `rationale` and evidence (absence evidence describing your searches is fine).
+- Leave out optional keys you do not use (`legal`, `standards`, `control_ids`, `confidence_rationale`, `release_blocking_rationale`, `rationale`, `missing_evidence`, `how_to_verify`, `evidence`, `related_findings`). Never use `null`.
+- A control is VERIFIED only with positive evidence. NOT_MET must list `related_findings`. UNVERIFIED must give `missing_evidence` and may add `how_to_verify` (only UNVERIFIED controls may have it). NOT_APPLICABLE needs a `rationale` and evidence (absence evidence describing your searches is fine).
 - ASSESSED coverage must list the searches you actually ran.
 - If a domain has no problems, show that through coverage, controls, and positive controls. Never invent findings.
+- **One issue per finding.** Report unrelated problems as separate findings, even when they sit in the same file or share a theme, so each can be fixed, accepted, or reviewed on its own.
 - Use `local_id` values that are unique within your output. Every NOT_MET control's `related_findings` must refer to findings in your output.
 <!-- END GENERATED: domain-output-contract -->

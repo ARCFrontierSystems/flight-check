@@ -48,11 +48,18 @@ claude --plugin-dir /path/to/project-guardian/plugins/fairtide
 
 ## Allowing Fairtide's script
 
-Fairtide runs `python3 <plugin directory>/scripts/fairtide.py` to validate results, check evidence, and compute the ship gate. Claude Code asks you to approve it; choose "always allow" for that command to avoid repeated prompts. For non-interactive runs, add this to your settings' `permissions.allow`:
+Fairtide runs `python3 <plugin directory>/scripts/fairtide.py` to validate results, check evidence, and compute the ship gate. Each skill pre-approves only the subcommands it needs during its first turn; after that, Claude Code asks you. To avoid repeated prompts, or for non-interactive runs, allow the audit subcommands in your settings' `permissions.allow`:
 
 ```json
-"Bash(python3 /absolute/path/to/plugins/fairtide/scripts/fairtide.py *)"
+"Bash(python3 /absolute/path/to/plugins/fairtide/scripts/fairtide.py init-run *)",
+"Bash(python3 /absolute/path/to/plugins/fairtide/scripts/fairtide.py validate *)",
+"Bash(python3 /absolute/path/to/plugins/fairtide/scripts/fairtide.py finalize *)",
+"Bash(python3 /absolute/path/to/plugins/fairtide/scripts/fairtide.py render *)"
 ```
+
+Add `runs`, `findings`, and `packet` the same way if you build Attorney Review Packets non-interactively.
+
+**Do not allow `fairtide.py ledger accept`, `revoke`, `legal`, or `close`, and do not allow `fairtide.py *`.** Those commands record decisions only you can make: accepted risks, counsel decisions, and closures. Their permission prompt is part of your confirmation, so a skill can never record one without you seeing it.
 
 The script never makes network connections and never runs your project's code. The repository lint rejects any import of network or process modules in it.
 

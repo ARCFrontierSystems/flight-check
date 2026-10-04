@@ -32,13 +32,18 @@ Inside the audit, Fairtide's agents can only Read, Grep, and Glob. They treat al
      "permissions": {
        "additionalDirectories": ["/abs/target", "/abs/out"],
        "allow": [
-         "Bash(python3 /abs/plugin/scripts/fairtide.py *)",
-         "Edit(//abs/out/**)"
+         "Bash(python3 /abs/plugin/scripts/fairtide.py init-run *)",
+         "Bash(python3 /abs/plugin/scripts/fairtide.py validate *)",
+         "Bash(python3 /abs/plugin/scripts/fairtide.py finalize *)",
+         "Bash(python3 /abs/plugin/scripts/fairtide.py render *)",
+         "Edit(//abs/out/runs/**)"
        ],
        "deny": [
          "WebFetch",
          "WebSearch",
-         "Edit(//abs/target/**)"
+         "Edit(//abs/target/**)",
+         "Edit(//abs/out/ledger.json)",
+         "Bash(python3 /abs/plugin/scripts/fairtide.py ledger *)"
        ]
      },
      "claudeMdExcludes": [
@@ -54,7 +59,8 @@ Inside the audit, Fairtide's agents can only Read, Grep, and Glob. They treat al
 
    What each part does:
    - **`additionalDirectories`** in a settings file grants file access without loading that directory's Claude configuration. Do not use `--add-dir` for the target; it loads the target's skills and other configuration.
-   - **`Edit(...)` rules** govern all file-writing tools: the allow rule permits writing only to the output directory, and the deny rule blocks writes into the target.
+   - **`Edit(...)` rules** govern all file-writing tools: the allow rule permits writing only to the run directories under the output directory, and the deny rules block writes into the target and direct edits of the ledger. Fairtide's script writes the ledger itself.
+   - **The `Bash` rules** allow only the four script subcommands an audit needs and deny the `ledger` commands, which record decisions only you should make. An audit of untrusted code never needs them.
    - **`claudeMdExcludes`** keeps the target's instruction files out of context. The patterns must be absolute.
    - **The remaining settings** stop target skills from running shell commands, disable hooks, and keep auto memory from persisting anything learned from the target.
 

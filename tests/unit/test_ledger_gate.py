@@ -171,8 +171,72 @@ class GateTests(unittest.TestCase):
         self.assertEqual(d["decision"], constants.GATE_INSUFFICIENT)
         led["control_acceptances"]["SUPPLY-KNOWN-VULNS"] = {
             "risk": "deps unscanned", "reason": "scanner rollout pending", "owner": "Eng lead", "date": "2026-10-01",
-            "scope": "this release", "compensating_controls": "lockfile pinned", "source": "user", "recorded_at": helpers.NOW}
+            "scope": "this release", "compensating_controls": "lockfile pinned", "source": "user", "recorded_at": "2026-10-03T09:00:00Z"}
         self.assertEqual(gate.decide(a, led, TODAY)["decision"], constants.GATE_READY_ACCEPTED)
+
+    def test_acceptance_recorded_during_the_run_does_not_count(self):
+        controls = [{"id": c["id"], "state": "UNVERIFIED" if c["id"] == "SUPPLY-KNOWN-VULNS" else "NOT_APPLICABLE",
+                     "release_critical": c["release_critical"], "domain": c["domain"], "missing_evidence": "no scan"} for c in catalog.controls()]
+        a, led = self._final([], controls=controls)
+        acc = {"risk": "deps unscanned", "reason": "scanner rollout pending", "owner": "Eng lead", "date": "2026-10-01",
+               "scope": "this release", "compensating_controls": "lockfile pinned", "source": "user"}
+        for recorded in ("2026-10-04T12:00:00Z", "2026-10-04T12:30:00Z", None):
+            led["control_acceptances"]["SUPPLY-KNOWN-VULNS"] = dict(acc, recorded_at=recorded) if recorded else dict(acc)
+            d = gate.decide(a, led, TODAY)
+            self.assertEqual(d["decision"], constants.GATE_INSUFFICIENT, recorded)
+            self.assertEqual(d["accepted_controls"], [])
+            self.assertTrue(any("SUPPLY-KNOWN-VULNS" in r for r in d["acceptances_not_counted"]), d["reasons"])
+
+    def test_late_finding_acceptance_keeps_the_finding_open(self):
+        led = ledger.new_ledger("t")
+        ledger.merge(led, audit_with([helpers.sql_finding()], "20261001T000000Z"), helpers.NOW, TODAY)
+        fields = {"risk": "sql risk", "reason": "internal tool", "owner": "Eng lead", "date": "2026-10-04",
+                  "scope": "admin page", "compensating_controls": "VPN only"}
+        ledger.accept(led, "FT-0001", fields, "2026-10-04T12:05:00Z", TODAY)
+        a = audit_with([helpers.sql_finding()], "20261004T120000Z")
+        ledger.merge(led, a, "2026-10-04T12:10:00Z", TODAY)
+        a["findings"][0]["evidence_check"] = "PASSED"
+        d = gate.decide(a, led, TODAY)
+        self.assertEqual(d["decision"], constants.GATE_NOT_READY)
+        self.assertEqual(d["accepted_findings"], [])
+        self.assertTrue(any("after this run started" in r for r in d["reasons"]))
+
+    def test_timely_finding_acceptance_counts(self):
+        led = ledger.new_ledger("t")
+        ledger.merge(led, audit_with([helpers.sql_finding()], "20261001T000000Z"), helpers.NOW, TODAY)
+        fields = {"risk": "sql risk", "reason": "internal tool", "owner": "Eng lead", "date": "2026-10-02",
+                  "scope": "admin page", "compensating_controls": "VPN only"}
+        ledger.accept(led, "FT-0001", fields, "2026-10-02T08:00:00Z", TODAY)
+        a = audit_with([helpers.sql_finding()], "20261004T120000Z")
+        ledger.merge(led, a, "2026-10-04T12:10:00Z", TODAY)
+        a["findings"][0]["evidence_check"] = "PASSED"
+        d = gate.decide(a, led, TODAY)
+        self.assertEqual(d["decision"], constants.GATE_READY_ACCEPTED)
+        self.assertEqual(d["accepted_findings"], ["FT-0001"])
+
+    def test_accepted_critical_finding_still_blocks(self):
+        led = ledger.new_ledger("t")
+        ledger.merge(led, audit_with([helpers.sql_finding(severity="CRITICAL")], "20261001T000000Z"), helpers.NOW, TODAY)
+        fields = {"risk": "sql risk", "reason": "deadline", "owner": "Eng lead", "date": "2026-10-02",
+                  "scope": "everything", "compensating_controls": "none"}
+        ledger.accept(led, "FT-0001", fields, "2026-10-02T08:00:00Z", TODAY)
+        a = audit_with([helpers.sql_finding(severity="CRITICAL")], "20261004T120000Z")
+        ledger.merge(led, a, "2026-10-04T12:10:00Z", TODAY)
+        a["findings"][0]["evidence_check"] = "PASSED"
+        d = gate.decide(a, led, TODAY)
+        self.assertEqual(d["decision"], constants.GATE_CRITICAL)
+        self.assertEqual(d["accepted_critical_findings"], ["FT-0001"])
+        self.assertEqual(d["accepted_findings"], [])
+        self.assertTrue(any("never lifts the block" in r for r in d["reasons"]))
+
+    def test_run_start_uses_the_earlier_of_run_id_and_run_json(self):
+        self.assertEqual(gate.run_started_at({"run_id": "20261004T120000Z"}), "2026-10-04T12:00:00Z")
+        self.assertEqual(gate.run_started_at({"run_id": "20261004T120000Z-reaudit", "started_at": "2026-10-05T00:00:00Z"}),
+                         "2026-10-04T12:00:00Z")
+        self.assertEqual(gate.run_started_at({"run_id": "20261004T120000Z", "started_at": "2026-10-04T11:00:00Z"}),
+                         "2026-10-04T11:00:00Z")
+        self.assertEqual(gate.run_started_at({"run_id": "20261004T120000Z", "started_at": "yesterday"}), "2026-10-04T12:00:00Z")
+        self.assertIsNone(gate.run_started_at({}))
 
     def test_unassessed_domain_blocks(self):
         a, led = self._final([], coverage_status="NOT_ASSESSED")

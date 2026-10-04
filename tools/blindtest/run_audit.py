@@ -4,8 +4,8 @@
 The application directory is copied to a fresh temporary directory, so the audit can
 never see a ground-truth manifest, scoring scripts, or anything else stored next to the
 application. The audit runs headless with only Read/Grep/Glob for the agents, writes
-restricted to the copy's .fairtide/ directory, and Fairtide's own script pre-approved
-by the skill. Results are copied to --out.
+restricted to the copy's .fairtide/runs/ directory, and only the script subcommands an audit
+needs allowed (never the ledger commands that record user decisions). Results are copied to --out.
 
 Usage:
     python3 tools/blindtest/run_audit.py --app path/to/app --out results/run1 [--budget 40] [--evidence f.json ...]
@@ -53,7 +53,13 @@ def main(argv=None):
             evidence_args.append(os.path.join(".fairtide", "evidence", os.path.basename(ev)))
 
     script = os.path.join(PLUGIN, "scripts", "fairtide.py")
-    settings = {"permissions": {"allow": ["Edit(/%s/.fairtide/**)" % target, "Bash(python3 %s *)" % script]}}
+    # Only the four subcommands an audit needs; never the ledger commands that record user decisions.
+    # The ledger is written by the script, so the session itself may write only run directories.
+    settings = {"permissions": {
+        "allow": ["Edit(/%s/.fairtide/runs/**)" % target]
+        + ["Bash(python3 %s %s *)" % (script, sub) for sub in ("init-run", "validate", "finalize", "render")],
+        "deny": ["Edit(/%s/.fairtide/ledger.json)" % target, "Bash(python3 %s ledger *)" % script],
+    }}
     settings_path = os.path.join(work, "settings.json")
     with open(settings_path, "w") as fh:
         json.dump(settings, fh)

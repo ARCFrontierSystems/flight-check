@@ -28,3 +28,4 @@ Fairtide is designed to make it harder to ship software without understanding it
 - **Evidence checking proves location, not meaning.** It confirms that cited text exists at the cited location. It cannot prove that the text means what the finding claims; the verifier and human review address that.
 - **The ship gate depends on its inputs.** The gate is deterministic given its inputs, but those inputs come from model judgments about severity, confidence, and control states.
 - **PDF fonts.** The Attorney Review Packet uses the standard PDF fonts. Characters outside Western European scripts are replaced in the PDF and disclosed. The accompanying Markdown file keeps the original text.
+- **PDF accessibility.** The packet PDF declares its language and title, but it is not tagged, so screen readers may read it in the wrong order or miss its structure. The Markdown file written next to it has the same content and is the accessible version.

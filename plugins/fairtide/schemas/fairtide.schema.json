@@ -105,6 +105,7 @@
         "state": {"type": "string", "enum": ["VERIFIED", "NOT_MET", "UNVERIFIED", "NOT_APPLICABLE"]},
         "rationale": {"type": "string", "maxLength": 2000},
         "missing_evidence": {"type": "string", "maxLength": 2000},
+        "how_to_verify": {"type": "string", "maxLength": 1500},
         "evidence": {"$ref": "#/$defs/evidenceList"},
         "related_findings": {"type": "array", "items": {"$ref": "#/$defs/localId"}, "maxItems": 30}
       }
@@ -323,7 +324,7 @@
       "additionalProperties": false,
       "properties": {
         "project_identifier": {"type": "string", "minLength": 1, "maxLength": 200},
-        "prepared_for": {"type": "string", "maxLength": 200},
+        "prepared_for": {"type": "string", "maxLength": 200}, "language": {"type": "string", "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8}){0,4}$"},
         "executive_summary": {"type": "string", "minLength": 40, "maxLength": 6000},
         "overall_summary": {"type": "string", "minLength": 40, "maxLength": 6000},
         "finding_ids": {"type": "array", "items": {"type": "string", "pattern": "^FT-[0-9]{4,}$"}, "minItems": 1, "maxItems": 100},

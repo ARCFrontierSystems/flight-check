@@ -3,7 +3,7 @@ name: remediate
 description: Fix authorized Fairtide findings in your own project, then re-audit to verify the fixes.
 argument-hint: "FT-0001[,FT-0002 ...] [--run RUN_DIR]"
 disable-model-invocation: true
-allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py *)
+allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py runs *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py findings *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py init-run *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py validate *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py finalize *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py render *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py ledger remediate *)
 disallowed-tools: WebFetch, WebSearch, Skill
 ---
 

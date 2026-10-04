@@ -7,6 +7,7 @@ replaced characters is reported so documents can disclose it.
 """
 
 import datetime
+import re
 import unicodedata
 import zlib
 
@@ -118,9 +119,15 @@ def wrap(text, font, size, max_width, stats=None):
     return lines
 
 
+LANG_TAG = re.compile(r"^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8}){0,4}$")
+
+
 class Document(object):
-    def __init__(self, title, page_size="letter", margin=54.0, header=None, footer=None, creation=None):
+    def __init__(self, title, page_size="letter", margin=54.0, header=None, footer=None, creation=None, lang="en"):
+        if not LANG_TAG.match(lang or ""):
+            raise ValueError("language must be a BCP 47 tag such as en or en-US")
         self.title = title
+        self.lang = lang
         self.width, self.height = PAGE_SIZES[page_size]
         self.margin = margin
         self.header = header
@@ -343,7 +350,10 @@ class Document(object):
             page_no = add(("<< /Type /Page /Parent %d 0 R /MediaBox [0 0 %.2f %.2f] /Resources << /Font << %s >> >> /Contents %d 0 R >>"
                            % (pages_no, self.width, self.height, font_res, content_no)).encode("ascii"))
             page_nos.append(page_no)
-        objects[catalog_no - 1] = ("<< /Type /Catalog /Pages %d 0 R >>" % pages_no).encode("ascii")
+        # Declare the document language and show the title in the viewer's window bar (assistive
+        # technology announces both). The PDF is not tagged; the Markdown copy is the accessible version.
+        objects[catalog_no - 1] = ("<< /Type /Catalog /Pages %d 0 R /Lang (%s) /ViewerPreferences << /DisplayDocTitle true >> >>"
+                                   % (pages_no, self.lang)).encode("ascii")
         objects[pages_no - 1] = ("<< /Type /Pages /Kids [%s] /Count %d >>" % (" ".join("%d 0 R" % n for n in page_nos), total)).encode("ascii")
         stamp = self.creation.strftime("D:%Y%m%d%H%M%SZ")
         # Document metadata uses PDFDocEncoding, not WinAnsi; UTF-16BE with a BOM represents any title exactly.

@@ -24,6 +24,15 @@ class PartValidationTests(unittest.TestCase):
     def test_valid_part_passes(self):
         self.assertEqual(part_errors(helpers.base_part()), [])
 
+    def test_how_to_verify_only_on_unverified_controls(self):
+        part = helpers.base_part()
+        part["controls"].append({"id": "SUPPLY-KNOWN-VULNS", "state": "UNVERIFIED", "missing_evidence": "No scanner output was imported.",
+                                 "how_to_verify": "Import pip-audit JSON for the audited revision with --evidence."})
+        self.assertEqual(part_errors(part), [])
+        part["controls"][-1]["state"] = "VERIFIED"
+        part["controls"][-1]["rationale"] = "Scanned."
+        self.assertTrue(any("how_to_verify belongs only on UNVERIFIED" in e for e in part_errors(part)))
+
     def test_missing_counterevidence_fails(self):
         part = helpers.base_part([helpers.sql_finding(counterevidence=[])])
         part["controls"] = []

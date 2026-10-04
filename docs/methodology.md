@@ -53,6 +53,12 @@ Computed in `fairtide_lib/gate.py`. The first matching rule wins; every applicab
 4. **READY WITH ACCEPTED RISKS:** valid, unexpired, user-recorded acceptances are in effect.
 5. **READY FOR RELEASE:** none of the above.
 
+Two rules limit what an acceptance can do:
+- **An accepted CRITICAL finding still blocks.** It is treated exactly like an open CRITICAL finding; the acceptance is recorded and shown, but never lifts the block.
+- **Acceptances count only from the next run.** An acceptance recorded after a run started is not counted for that run. The run's start is the earlier of its script-generated run ID and the `started_at` in `run.json`. Nothing recorded while an audit is in progress, by anyone, can change that audit's decision.
+
+Commands that record decisions (`ledger accept`, `revoke`, `legal`, `close`) are never pre-approved by a skill, so each one raises a permission prompt that the user must approve. The repository lint enforces this.
+
 Every decision carries a scope statement: it reflects only the evidence examined.
 
 ## Ledger and regressions

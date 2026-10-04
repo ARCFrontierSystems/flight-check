@@ -3,13 +3,15 @@ name: track
 description: Record your decisions on Fairtide findings (accepted risks, legal review status, closures) and show status.
 argument-hint: "[status | FT-0001 <what happened> | accept FT-0001 | revoke FT-0001 | close FT-0001] [--out DIR]"
 disable-model-invocation: true
-allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py *)
+allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py ledger show *)
 disallowed-tools: WebFetch, WebSearch, Edit, NotebookEdit, Skill
 ---
 
 # Fairtide tracking
 
 Records decisions **only the user can make**. Fairtide never accepts a risk, never records a counsel decision, and never closes a finding on its own initiative.
+
+Only `ledger show` is pre-approved. Every command that records a decision (`ledger accept`, `revoke`, `legal`, `close`) raises a Claude Code permission prompt, so the user approves each one explicitly. Never ask the user to pre-allow those commands in their settings, and never try another way to record a decision when a prompt is declined.
 
 Run Fairtide's script only as a single plain command that starts exactly with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py`, as in the examples below. Never use shell variables, `cd`, `&&`, pipes, or redirection around it; only that exact form is pre-approved. Run no other shell commands. Do not modify project files.
 
@@ -61,7 +63,8 @@ Explain how accepted risks affect the gate:
 - They stay visible in every report.
 - The best possible gate becomes "READY WITH ACCEPTED RISKS".
 - An acceptance stops counting when its review date passes.
-- A critical risk should rarely, if ever, be accepted. Say so if the user tries.
+- **An accepted CRITICAL finding still blocks release.** The acceptance is recorded and shown, but the decision stays BLOCKED — CRITICAL RISK. Say so before recording one.
+- An acceptance counts from the next audit run onwards; it never changes a run that had already started when it was recorded.
 
 To revoke: `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py ledger revoke --ledger <ledger> --ref <ref> --note "<user's reason>"`.
 

@@ -3,7 +3,7 @@ name: audit
 description: Evidence-first ship-readiness audit: security, privacy, legal/business, compliance readiness, accessibility, reliability, production readiness. Deterministic ship gate and report.
 argument-hint: "[path] [--untrusted] [--out DIR] [--context FILE] [--evidence FILE ...] [--domains a,b]"
 disable-model-invocation: true
-allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py *)
+allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py init-run *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py validate *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py finalize *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py render *)
 disallowed-tools: WebFetch, WebSearch, Edit, NotebookEdit, Skill
 ---
 
@@ -20,8 +20,9 @@ The question: **"Based on the evidence available in this project, what could pre
 5. **No legal advice.** Use "potential legal risk", "legal review recommended", "counsel should determine applicability", "business decision required".
 6. **Never reproduce secrets.** Agents mask them; keep them masked.
 7. **Do not invent findings, evidence, or summaries.** You may transcribe, validate, and organize what the agents and the script return. You must not add findings of your own.
+8. **Never record decisions.** Do not run any `ledger` command during an audit. Accepting risks, recording counsel decisions, and closing findings belong to the user, through `/fairtide:track`. An acceptance recorded after this run started does not count for this run's ship decision anyway.
 
-Run Fairtide's script only as a single plain command that starts exactly with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py`, as in the examples below. Never use shell variables, `cd`, `&&`, pipes, or redirection around it; only that exact form is pre-approved. Do not run any other shell command. The script is pre-approved only while this skill's first turn lasts. After the agents return, the user may be asked to approve it, and in non-interactive sessions it is denied unless allowed in settings. If a call is denied, do not try another way. Tell the user to allow exactly `Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py *)` (for example by choosing "always allow" at the prompt, or by adding it to `permissions.allow` in their settings), and that the partial results stay in the run directory, and re-running `/fairtide:audit` afterwards starts a complete new run. Then follow "If the script cannot run".
+Run Fairtide's script only as a single plain command that starts exactly with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py`, as in the examples below. Never use shell variables, `cd`, `&&`, pipes, or redirection around it; only that exact form is pre-approved. Do not run any other shell command. The script is pre-approved only while this skill's first turn lasts. After the agents return, the user may be asked to approve it, and in non-interactive sessions it is denied unless allowed in settings. If a call is denied, do not try another way. Tell the user to allow the four subcommands an audit uses, `Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py init-run *)`, `... validate *`, `... finalize *`, and `... render *` (for example by choosing "always allow" at the prompt, or by adding them to `permissions.allow` in their settings). Tell them that the partial results stay in the run directory and that re-running `/fairtide:audit` afterwards starts a complete new run. Then follow "If the script cannot run".
 
 ## 0. Parse the request
 
@@ -76,7 +77,7 @@ Launch the `fairtide:inventory` agent with the Agent tool, using this prompt:
 
 > Audit root: `<absolute root>`. Scope: `<scope or "entire project">`. Inventory this project and decide domain applicability. Return only the JSON object described in your instructions.
 
-Extract the JSON object from its reply and write it unchanged to `<run_dir>/inventory.json`.
+Extract the JSON object from its reply and write it unchanged to `<run_dir>/inventory.json`. Agent replies can arrive with `<`, `>`, and `&` HTML-escaped (for example `&lt;`); save them exactly as received and do not un-escape them. Fairtide's evidence check accounts for that escaping.
 
 ## 3. Domain audits (in parallel)
 
@@ -103,7 +104,7 @@ Delegation prompt for each agent:
 > Imported evidence files (cite as kind "user-provided" with this path): `<list of path and description, or "none">`
 > Return only the JSON object described in your instructions.
 
-For each reply, extract the JSON object and write it to `<run_dir>/part-<agent>.json` (for example `part-appsec.json`). Set the top-level `"agent"` field to that same short name (for example `"appsec"`). This is the only edit you may make; never change findings or any other content.
+For each reply, extract the JSON object and write it to `<run_dir>/part-<agent>.json` (for example `part-appsec.json`). Set the top-level `"agent"` field to that same short name (for example `"appsec"`). This is the only edit you may make; never change findings, quotes, or any other content, including HTML-escaped characters.
 
 ## 4. Validate
 

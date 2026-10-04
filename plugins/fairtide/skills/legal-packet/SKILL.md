@@ -3,7 +3,7 @@ name: legal-packet
 description: Legal Review Assistant: builds the Attorney Review Packet PDF of findings and questions for counsel. Not legal advice.
 argument-hint: "[FT-0001,FT-0002 | all] [--run RUN_DIR] [--project NAME] [--for NAME] [--a4] [--out DIR]"
 disable-model-invocation: true
-allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py *)
+allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py runs *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py findings *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py packet *)
 disallowed-tools: WebFetch, WebSearch, Edit, NotebookEdit, Skill
 ---
 
@@ -42,6 +42,7 @@ Run Fairtide's script only as a single plain command that starts exactly with `p
 {
   "project_identifier": "<--project value, else the audited project's directory name>",
   "prepared_for": "<--for value; omit if not given>",
+  "language": "<BCP 47 tag of the summaries' language, for example de; omit for English>",
   "executive_summary": "...",
   "overall_summary": "...",
   "finding_ids": ["FT-0003", "FT-0007"],
