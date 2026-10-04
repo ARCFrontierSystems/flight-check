@@ -226,7 +226,7 @@
       "domain": "privacy",
       "title": "README says secrets are masked in all output files, but masking is applied only when rendering Markdown and PDF",
       "severity": "LOW",
-      "status": "OPEN",
+      "status": "REMEDIATED",
       "first_seen_run": "20261004T230555Z",
       "last_seen_run": "20261004T230555Z",
       "history": [
@@ -236,6 +236,12 @@
           "source": "fairtide",
           "note": "first observed",
           "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:17:01Z",
+          "status": "REMEDIATED",
+          "source": "fairtide",
+          "note": "remediation recorded; pending verification by re-audit: Likely secrets are now masked in all agent text when a run is assembled, so audit.final.json and the ledger never hold them; the README states exactly which outputs are masked and that raw agent replies stay in the gitignored run directory."
         }
       ],
       "legal": {
@@ -250,7 +256,19 @@
             "run_id": "20261004T230555Z"
           }
         ]
-      }
+      },
+      "remediations": [
+        {
+          "at": "2026-10-04T23:17:01Z",
+          "note": "Likely secrets are now masked in all agent text when a run is assembled, so audit.final.json and the ledger never hold them; the README states exactly which outputs are masked and that raw agent replies stay in the gitignored run directory.",
+          "files": [
+            "plugins/fairtide/scripts/fairtide_lib/assemble.py",
+            "README.md",
+            "tests/unit/test_end_to_end.py"
+          ],
+          "source": "fairtide"
+        }
+      ]
     },
     "d0da96ebe040b52a": {
       "id": "FT-0008",
