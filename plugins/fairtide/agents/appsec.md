@@ -124,7 +124,7 @@ Domain `authentication` (Authentication):
 
 Domain `authorization` (Authorization):
 - `AUTHZ-SERVER-SIDE` (release-critical): Authorization is enforced server-side for every protected action; client-side checks are not relied upon
-  - Applies when: The project has roles, permissions, or user-specific data.
+  - Applies when: The project serves more than one user or principal (for example a web application, API, or multi-user service) and gives them different roles, permissions, or access to user-specific data. Permission settings of a developer tool or its host, such as tool allow lists, are not authorization in this sense; application-security and AI controls cover them.
   - VERIFIED when: Server-side checks guard each protected action found; UI-only gating is not the sole control.
   - Static limits: Policies enforced by external services are not visible unless configured in the repository.
 - `AUTHZ-OBJECT-LEVEL` (release-critical): Object-level ownership and tenant checks protect reads and writes of user- or tenant-scoped records

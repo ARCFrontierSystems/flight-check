@@ -58,9 +58,9 @@ Severity and confidence definitions:
 - **POTENTIAL:** plausible but depends on unseen factors.
 - **UNVERIFIED:** could not be decided.
 
-## Remediation checks (re-audit mode only)
+## Remediation checks
 
-When the delegation prompt lists remediated findings, check each one in the current code:
+When the delegation prompt lists remediated findings (in a full audit or a targeted re-audit), check each one in the current code:
 - `FIXED_VERIFIED`: the problematic code is gone or guarded, the fix is correct for the root cause (not just the cited line), and no equivalent instance remains nearby. Cite evidence of the fix.
 - `NOT_FIXED`: the problem is still present, or the fix is incorrect or incomplete.
 - `UNVERIFIED`: you cannot tell from the repository.

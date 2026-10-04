@@ -111,7 +111,7 @@ For each reply, extract the JSON object and write it to `<run_dir>/part-<agent>.
 Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py validate <run_dir>`.
 
 If it reports errors in a part file:
-1. Launch that agent again with its previous JSON and the exact error list, asking for a corrected complete JSON object. Overwrite the part file with the corrected output.
+1. Launch that agent again with a new Agent tool call (do not try to message the earlier agent), giving it its previous JSON and the exact error list and asking for a corrected complete JSON object. Overwrite the part file with the corrected output.
 2. Repeat at most twice per agent.
 3. If the output is still invalid, replace that part file with a minimal valid part. Set its `agent`, give each of its domains coverage `NOT_ASSESSED` with rationale "Agent output failed validation after two attempts", and leave all lists empty. Tell the user. The ship gate will then fail safe.
 
@@ -119,11 +119,17 @@ If `inventory.json` is invalid, re-run the inventory agent once with the errors.
 
 ## 5. Verify findings
 
-If any part file contains findings, launch `fairtide:verifier` with:
+**Pending fixes.** If the ledger exists, read it and list every entry whose `status` is `REMEDIATED`: its ID, title, and latest remediation note and files. These are fixes recorded since an earlier audit that no audit has verified yet.
+
+If any part file contains findings, or there are pending fixes, launch `fairtide:verifier` with:
 
 > Run directory: `<run_dir>`. Audit root: `<absolute root>`. Read these Fairtide part files and give a verdict for every finding: `<list of part-*.json paths>`. Identify findings as `<agent>.<local_id>`. Return only the JSON object described in your instructions.
 
-Write its JSON to `<run_dir>/verification.json`. Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py validate <run_dir>` again; if `verification.json` has errors, re-run the verifier once with them. If no findings exist, skip this step.
+When there are pending fixes, add:
+
+> Remediation checks: for each of these findings, decide FIXED_VERIFIED, NOT_FIXED, or UNVERIFIED in the current code: `<ID, title, latest remediation note and files>`.
+
+Write its JSON to `<run_dir>/verification.json`. Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py validate <run_dir>` again; if `verification.json` has errors, re-run the verifier once with them. If there are no findings and no pending fixes, skip this step.
 
 ## 6. Finalize and gate
 

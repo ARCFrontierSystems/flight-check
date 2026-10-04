@@ -87,6 +87,33 @@ def check_pdf_structure(data):
     return count
 
 
+class SecretMaskingTests(unittest.TestCase):
+    def test_secrets_in_agent_output_never_reach_json_or_ledger(self):
+        # Built at runtime so this repository never contains strings that look like real credentials.
+        key = "AKIA" + "ABCDEFGHIJKLMNOP"
+        tmp = tempfile.mkdtemp(prefix="fairtide-mask-")
+        root = os.path.join(tmp, "root")
+        shutil.copytree(helpers.FIXTURE_ROOT, root)
+        with open(os.path.join(root, "settings.py"), "w", encoding="utf-8") as fh:
+            fh.write("DEBUG = False\nAWS_KEY = '%s'\n" % key)
+        leak = helpers.sql_finding(
+            local_id="F3", rule="application-security.hardcoded-credential", title="Hard-coded cloud key %s in settings" % key,
+            explanation="settings.py assigns the cloud key %s directly in source." % key, control_ids=["APPSEC-SECRETS"],
+            evidence=[{"kind": "code", "path": "settings.py", "start_line": 2, "end_line": 2, "quote": "AWS_KEY = '%s'" % key}])
+        part = helpers.all_controls_resolved(helpers.base_part([helpers.sql_finding(), helpers.deletion_finding(), leak]))
+        run_dir = helpers.write_run(parts=[part], base=tmp)
+        ledger_path = os.path.join(tmp, "ledger.json")
+        code, out = run_cli("finalize", run_dir, "--root", root, "--ledger", ledger_path, "--now", helpers.NOW)
+        self.assertEqual(code, 0, out)
+        final_text = read_text(os.path.join(run_dir, "audit.final.json"))
+        self.assertNotIn(key, final_text)
+        self.assertNotIn(key, read_text(ledger_path))
+        self.assertIn("[REDACTED", final_text)
+        self.assertTrue(any("Masked" in w for w in out["warnings"]), out["warnings"])
+        masked = [f for f in read_json(os.path.join(run_dir, "audit.final.json"))["findings"] if f["title"].startswith("Hard-coded")]
+        self.assertEqual(masked[0]["evidence_check"], "PASSED")  # the redaction marker acts as a gap
+
+
 class PdfLanguageTests(unittest.TestCase):
     def test_language_tag_is_validated(self):
         from fairtide_lib import pdf

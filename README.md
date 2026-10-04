@@ -90,7 +90,7 @@ Details: [docs/methodology.md](docs/methodology.md).
 - **No telemetry, no network.** Fairtide adds no telemetry, and its script makes no network connections.
 - **Model provider.** The content Fairtide's agents read is processed by your Claude Code session's model provider under your existing Claude Code configuration, like any other Claude Code task. That includes anything in the audited files: source code, configuration, fixtures, seed data, logs, and any personal, health, payment, or other regulated or confidential data they contain.
 - **Before auditing sensitive material,** check that your organization permits sending it to that provider. To keep files out of an audit, audit a subdirectory (`/fairtide:audit path/to/subdir`) or a copy of the project without them. Fairtide masks likely secrets in what it writes, but the agents still read the original files.
-- **Local files.** Fairtide masks likely secrets in its output files, but your conversation history follows Claude Code's own retention settings.
+- **Local files.** Fairtide masks likely secrets in everything it writes from agent results: `report.md`, `audit.final.json`, the ledger, and Attorney Review Packets. The raw agent replies saved in the run directory are kept as received for traceability; run directories are gitignored automatically. Masking is pattern-based, so it can miss unusual secret formats. Your conversation history follows Claude Code's own retention settings.
 
 ## Usage and cost
 

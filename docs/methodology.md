@@ -68,7 +68,7 @@ Every decision carries a scope statement: it reflects only the evidence examined
 Lifecycle transitions:
 - **REGRESSION:** a finding that was VERIFIED or CLOSED is observed again.
 - **NOT_REPRODUCED:** a finding is no longer observed in an assessed domain. It needs your confirmation before it can be closed; it is never silently dropped.
-- **REMEDIATED:** a fix was recorded. It becomes **VERIFIED** only when a re-audit's verifier confirms the fix.
+- **REMEDIATED:** a fix was recorded. It becomes **VERIFIED** only when the verifier of a later audit, full or targeted, checks the current code and confirms the fix. Every full audit checks all pending fixes.
 - **ACCEPTED_RISK:** requires risk, reason, owner, date, scope, and compensating controls, all from the user. It lapses after its review date.
 
 ## Legal Review Assistant

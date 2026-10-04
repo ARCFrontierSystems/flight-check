@@ -15,6 +15,11 @@ First development version. Not yet blind-tested or released.
   - **Attorney Review Packet PDF.** It declares its document language (optional `language` in the packet request) and displays its title. It is still untagged; the Markdown copy is the accessible version.
   - **Leak gate.** The private-name denylist and the fixture canaries now cover every committable file, not only the plugin. The lint notes when no canaries are configured.
   - **Documentation.** Where audited content goes (your model provider), measured usage of an audit and how to limit it, PDF accessibility, and where self-audit reports are published.
+- Changes from the Phase 4 re-audit:
+  - **Secret masking now covers JSON outputs.** Likely secrets are masked in all agent text when a run is assembled, so `audit.final.json` and the ledger never hold them, not only the rendered report and packet (previously the README claimed more than the code did).
+  - **Full audits verify pending fixes.** Every full audit asks the verifier to check findings recorded as REMEDIATED; before, only a targeted re-audit could move them to VERIFIED.
+  - **Authorization control wording.** `AUTHZ-SERVER-SIDE` now applies to projects that serve multiple users or principals. Tool permission settings are not authorization in this sense, which kept the control's applicability, and with it the ship decision, from changing between runs.
+  - **Agent retries.** A retry after a validation error launches a new agent rather than trying to message the earlier one.
 - Renamed the project from Seaworthy (originally Project Guardian) to **Fairtide**: plugin id `fairtide`, commands `/fairtide:*`, script `fairtide.py`, working directory `.fairtide/`, finding IDs `FT-0001`, and the CI secret `FAIRTIDE_LEAK_DENYLIST`. Nothing had been released under the old names.
 
 - `/fairtide:audit`: evidence-first audit across 19 domains, with an inventory agent, nine read-only domain agents, a verifier, mechanical evidence checking, stable finding IDs, regression tracking, and a deterministic ship gate. Writes a 33-section `report.md` and machine-readable `audit.final.json`.

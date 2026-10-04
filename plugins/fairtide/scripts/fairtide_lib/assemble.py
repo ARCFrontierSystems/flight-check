@@ -4,8 +4,41 @@ import copy
 import os
 import re
 
-from . import catalog, constants, validate
+from . import catalog, constants, textsafety, validate
 from .jsonio import load_json
+
+# Structural values (identifiers, enums, paths) are never rewritten by secret masking.
+_UNMASKED_KEYS = {"agent", "local_id", "id", "rule", "domain", "kind", "path", "state", "severity", "confidence",
+                  "classification", "verdict", "result", "finding_id", "duplicate_of", "status", "applicable", "types",
+                  "related_findings", "control_ids"}
+
+
+def mask_secrets(obj, key=None):
+    """Mask likely secrets in every free-text string of agent output, in place. Returns the count.
+
+    Agents are told to mask secrets, but this does it mechanically before anything is written to
+    audit.final.json or the ledger. Quotes keep matching their files: redaction markers act as gaps
+    in the evidence check.
+    """
+    count = 0
+    if isinstance(obj, dict):
+        for k in list(obj):
+            v = obj[k]
+            if isinstance(v, str):
+                if k not in _UNMASKED_KEYS:
+                    obj[k], n = textsafety.redact(v)
+                    count += n
+            else:
+                count += mask_secrets(v, k)
+    elif isinstance(obj, list):
+        for i, v in enumerate(obj):
+            if isinstance(v, str):
+                if key not in _UNMASKED_KEYS:
+                    obj[i], n = textsafety.redact(v)
+                    count += n
+            else:
+                count += mask_secrets(v, key)
+    return count
 
 
 def _namespace_part_ids(part, taken, errors):
@@ -61,6 +94,9 @@ def assemble(run_dir):
     parts = [load_json(p) for p in validate.part_files(run_dir)]
     ver_path = os.path.join(run_dir, "verification.json")
     verification = load_json(ver_path) if os.path.exists(ver_path) else {"verdicts": [], "remediation_checks": []}
+    masked = sum(mask_secrets(doc) for doc in [inventory, verification] + parts)
+    if masked:
+        warnings.append("Masked %d likely secret(s) in agent output before writing results." % masked)
 
     taken = set()
     agents_seen = set()
