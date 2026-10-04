@@ -2,6 +2,7 @@
 
 import copy
 import os
+import re
 
 from . import catalog, constants, validate
 from .jsonio import load_json
@@ -23,6 +24,18 @@ def _namespace_part_ids(part, taken, errors):
         taken.add(new)
     for c in part["controls"]:
         c["related_findings"] = [mapping.get(r, r) for r in c.get("related_findings") or []]
+
+
+def _words(text):
+    return set(re.findall(r"[a-z0-9]{3,}", text.lower()))
+
+
+def _similar(a, b, threshold=0.6):
+    """True when two questions substantially repeat each other (word-set Jaccard similarity)."""
+    wa, wb = _words(a), _words(b)
+    if not wa or not wb:
+        return a.strip().lower() == b.strip().lower()
+    return len(wa & wb) / float(len(wa | wb)) >= threshold
 
 
 def _merge_control(existing, incoming, agent):
@@ -137,7 +150,7 @@ def assemble(run_dir):
         elif dup.get("legal") and keep.get("legal"):
             qs = keep["legal"].setdefault("questions", [])
             for q in dup["legal"].get("questions") or []:
-                if q not in qs:
+                if not any(_similar(q, existing) for existing in qs):
                     qs.append(q)
         for ce in dup["counterevidence"]:
             if ce not in keep["counterevidence"]:

@@ -163,6 +163,33 @@ class EndToEndTests(unittest.TestCase):
         self.assertEqual(kept["also_reported_by"][0]["local_id"], "data.D1")
         self.assertEqual(len(kept["legal"]["questions"]), 3)
 
+    def test_near_duplicate_questions_not_merged_twice(self):
+        main = helpers.all_controls_resolved(helpers.base_part())
+        base_q = helpers.deletion_finding()["legal"]["questions"][1]
+        dup = helpers.deletion_finding(local_id="D1", legal=dict(helpers.deletion_finding()["legal"],
+                                       questions=["What retention exceptions, if any, should apply to the deleted user data and to backups?"]))
+        second = {"agent": "data", "coverage": [], "controls": [], "findings": [dup], "positive_controls": [], "unverified_areas": []}
+        verification = {"verdicts": [{"local_id": "data.D1", "verdict": "DUPLICATE", "duplicate_of": "appsec.F2", "notes": "Same deletion contradiction."}]}
+        tmp, run_dir, ledger_path, code, out = finalized_run(verification, parts=[main, second])
+        final = read_json(os.path.join(run_dir, "audit.final.json"))
+        kept = next(f for f in final["findings"] if f["local_id"] == "appsec.F2")
+        self.assertIn(base_q, kept["legal"]["questions"])
+        self.assertEqual(len(kept["legal"]["questions"]), 2)
+
+    def test_agent_field_must_match_file_name(self):
+        part = helpers.all_controls_resolved(helpers.base_part())
+        part["agent"] = "appsec-auditor"
+        tmp = tempfile.mkdtemp()
+        run = helpers.base_run()
+        run_dir = os.path.join(tmp, run["run_id"])
+        os.makedirs(run_dir)
+        write_json(os.path.join(run_dir, "run.json"), run)
+        write_json(os.path.join(run_dir, "inventory.json"), helpers.base_inventory())
+        write_json(os.path.join(run_dir, "part-appsec.json"), part)
+        code, out = run_cli("validate", run_dir)
+        self.assertEqual(code, 1)
+        self.assertTrue(any("file name says 'appsec'" in e for e in out["errors"]), out["errors"])
+
     def test_bad_duplicate_reference_is_rejected(self):
         main = helpers.all_controls_resolved(helpers.base_part())
         verification = {"verdicts": [{"local_id": "appsec.F1", "verdict": "DUPLICATE", "duplicate_of": "appsec.F1", "notes": "points at itself, invalid"}]}

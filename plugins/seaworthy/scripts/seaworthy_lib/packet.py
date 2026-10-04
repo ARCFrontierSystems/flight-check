@@ -134,7 +134,7 @@ def build(final, request, ledger=None, generated_at=None, page_size="letter"):
     doc.heading("Review summary", level=2)
     doc.table(["Finding", "Classification", "Severity", "Confidence", "Review status"],
               [[f["id"], f["legal"]["classification"], f["severity"], f["effective_confidence"], (f.get("legal_status") or "OPEN").replace("_", " ")] for f in findings],
-              [0.13, 0.33, 0.15, 0.17, 0.22])
+              [0.11, 0.35, 0.18, 0.15, 0.21])
     doc.heading("Executive summary", level=1)
     doc.paragraph(_clean(request["executive_summary"]))
     doc.heading("Overall legal / business review summary", level=1)

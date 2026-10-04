@@ -227,6 +227,9 @@ def validate_run_dir(run_dir):
             continue
         before = len(errors)
         check_part(part, name, errors, warnings)
+        expected_agent = name[len("part-"):-len(".json")]
+        if len(errors) == before and part["agent"] != expected_agent:
+            errors.append("%s: \"agent\" is %r but the file name says %r; set the agent field to %r" % (name, part["agent"], expected_agent, expected_agent))
         if len(errors) == before:
             if part["agent"] in agents:
                 errors.append("%s: agent %r already reported in %s" % (name, part["agent"], agents[part["agent"]]))

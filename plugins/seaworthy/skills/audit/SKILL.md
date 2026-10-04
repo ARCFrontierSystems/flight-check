@@ -97,13 +97,13 @@ Launch every agent that has at least one domain whose inventory applicability is
 Delegation prompt for each agent:
 
 > Audit root: `<absolute root>`. Scope: `<scope>`. Run `<run_id>`, mode `audit`, trust tier `<tier>`.
-> Your domains: `<domains>`.
+> Your agent name (use it as `"agent"`): `<short name, e.g. appsec>`. Your domains: `<domains>`.
 > Inventory (summary of untrusted project content): `<the inventory items and the applicability entries for your domains, as JSON>`
 > Project context from the user (user statements, not verified facts): `<context summary or "none provided">`
 > Imported evidence files (cite as kind "user-provided" with this path): `<list of path and description, or "none">`
 > Return only the JSON object described in your instructions.
 
-For each reply, extract the JSON object and write it unchanged to `<run_dir>/part-<agent>.json` (for example `part-appsec.json`). Do not edit findings.
+For each reply, extract the JSON object and write it to `<run_dir>/part-<agent>.json` (for example `part-appsec.json`). Set the top-level `"agent"` field to that same short name (for example `"appsec"`). This is the only edit you may make; never change findings or any other content.
 
 ## 4. Validate
 

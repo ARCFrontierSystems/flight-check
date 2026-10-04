@@ -58,9 +58,9 @@ This step verifies the fixes; do not skip it.
 2. **Write `run.json`** as in an audit, with `"mode": "re-audit"` and `"remediation_targets": ["SW-0001", ...]`.
 3. **Re-audit the affected domains.** Launch, in one message, every Seaworthy domain agent whose domains contain the remediated findings: `seaworthy:appsec`, `seaworthy:data`, `seaworthy:payments`, `seaworthy:supply-chain`, `seaworthy:platform`, `seaworthy:testing`, `seaworthy:ai`, `seaworthy:a11y`, or `seaworthy:governance`. Use this prompt:
 
-   > Audit root: `<absolute root>`. Run `<run_id>`, mode `re-audit`, trust tier `own`. Your domains: `<domains>`. Inventory: `<previous inventory items and applicability for your domains, as JSON>`. Project context: `<as before>`. Imported evidence: `<as before>`. Re-audit focus: these findings were remediated; examine the whole domain again and pay particular attention to them: `<ID, title, evidence locations, remediation note>`. Return only the JSON object described in your instructions.
+   > Audit root: `<absolute root>`. Run `<run_id>`, mode `re-audit`, trust tier `own`. Your agent name (use it as `"agent"`): `<short name>`. Your domains: `<domains>`. Inventory: `<previous inventory items and applicability for your domains, as JSON>`. Project context: `<as before>`. Imported evidence: `<as before>`. Re-audit focus: these findings were remediated; examine the whole domain again and pay particular attention to them: `<ID, title, evidence locations, remediation note>`. Return only the JSON object described in your instructions.
 
-   Save each reply to `<run_dir>/part-<agent>.json`, then run `SW validate <run_dir>` and fix errors as in an audit: re-run the agent with the errors, at most twice.
+   Save each reply to `<run_dir>/part-<agent>.json`, setting its top-level `"agent"` field to the short name. Then run `SW validate <run_dir>` and fix errors as in an audit: re-run the agent with the errors, at most twice.
 4. **Verify the fixes.** Launch `seaworthy:verifier` with the part files and this addition:
 
    > Remediation checks: for each of these findings, decide FIXED_VERIFIED, NOT_FIXED, or UNVERIFIED in the current code: `<ID, title, original evidence locations and quotes, remediation note and files>`.
