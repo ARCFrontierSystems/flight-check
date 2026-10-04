@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "next_id": 3,
+  "next_id": 9,
   "entries": {
     "23182de0fc497035": {
       "id": "FT-0001",
@@ -62,7 +62,7 @@
       "domain": "legal-business",
       "title": "Public marketplace plugin has no terms of use, and its repository, marketplace and schema identifiers still use the former name 'project-guardian'",
       "severity": "INFORMATIONAL",
-      "status": "OPEN",
+      "status": "NOT_REPRODUCED",
       "first_seen_run": "20261004T223431Z",
       "last_seen_run": "20261004T223431Z",
       "history": [
@@ -72,6 +72,13 @@
           "source": "fairtide",
           "note": "first observed",
           "run_id": "20261004T223431Z"
+        },
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "NOT_REPRODUCED",
+          "source": "fairtide",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T230555Z"
         }
       ],
       "legal": {
@@ -87,6 +94,184 @@
           }
         ]
       }
+    },
+    "322e7d04eae0e68b": {
+      "id": "FT-0003",
+      "fingerprint": "322e7d04eae0e68b",
+      "match_key": "legal-business.name-and-identifier-inconsistency|docs/maintainers/github-settings.md",
+      "rule": "legal-business.name-and-identifier-inconsistency",
+      "domain": "legal-business",
+      "title": "Product name Fairtide differs from repository, marketplace and schema identifiers (project-guardian), with no recorded name-clearance decision",
+      "severity": "INFORMATIONAL",
+      "status": "OPEN",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "fairtide",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        }
+      ],
+      "legal": {
+        "classification": "BUSINESS DECISION REQUIRED",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T23:14:06Z",
+            "status": "OPEN",
+            "source": "fairtide",
+            "note": "classified BUSINESS DECISION REQUIRED",
+            "run_id": "20261004T230555Z"
+          }
+        ]
+      }
+    },
+    "08a1e6f628d3ca50": {
+      "id": "FT-0004",
+      "fingerprint": "08a1e6f628d3ca50",
+      "match_key": "legal-business.no-contributor-licensing-statement|contributing.md",
+      "rule": "legal-business.no-contributor-licensing-statement",
+      "domain": "legal-business",
+      "title": "CONTRIBUTING.md does not state the license or terms under which contributions are accepted",
+      "severity": "INFORMATIONAL",
+      "status": "OPEN",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "fairtide",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        }
+      ],
+      "legal": {
+        "classification": "BUSINESS DECISION REQUIRED",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T23:14:06Z",
+            "status": "OPEN",
+            "source": "fairtide",
+            "note": "classified BUSINESS DECISION REQUIRED",
+            "run_id": "20261004T230555Z"
+          }
+        ]
+      }
+    },
+    "7df675a2e8ee5b37": {
+      "id": "FT-0005",
+      "fingerprint": "7df675a2e8ee5b37",
+      "match_key": "legal-business.no-terms-or-governing-law|README.md",
+      "rule": "legal-business.no-terms-or-governing-law",
+      "domain": "legal-business",
+      "title": "Public plugin that produces legal-adjacent output has only Apache-2.0 and disclaimers, with no terms of use or governing-law decision",
+      "severity": "INFORMATIONAL",
+      "status": "OPEN",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "fairtide",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        }
+      ],
+      "legal": {
+        "classification": "LEGAL REVIEW REQUIRED",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T23:14:06Z",
+            "status": "OPEN",
+            "source": "fairtide",
+            "note": "classified LEGAL REVIEW REQUIRED",
+            "run_id": "20261004T230555Z"
+          }
+        ]
+      }
+    },
+    "04eca0a73cf7bdc2": {
+      "id": "FT-0006",
+      "fingerprint": "04eca0a73cf7bdc2",
+      "match_key": "operational-readiness.vulnerability-reporting-channel-not-enabled|SECURITY.md",
+      "rule": "operational-readiness.vulnerability-reporting-channel-not-enabled",
+      "domain": "operational-readiness",
+      "title": "SECURITY.md directs reporters to private vulnerability reporting, which maintainer docs say is not yet enabled",
+      "severity": "LOW",
+      "status": "OPEN",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "fairtide",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        }
+      ]
+    },
+    "12d63ea1baf611d6": {
+      "id": "FT-0007",
+      "fingerprint": "12d63ea1baf611d6",
+      "match_key": "privacy.output-masking-claim-broader-than-implementation|README.md",
+      "rule": "privacy.output-masking-claim-broader-than-implementation",
+      "domain": "privacy",
+      "title": "README says secrets are masked in all output files, but masking is applied only when rendering Markdown and PDF",
+      "severity": "LOW",
+      "status": "OPEN",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "fairtide",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        }
+      ],
+      "legal": {
+        "classification": "POLICY/IMPLEMENTATION CONTRADICTION",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T23:14:06Z",
+            "status": "OPEN",
+            "source": "fairtide",
+            "note": "classified POLICY/IMPLEMENTATION CONTRADICTION",
+            "run_id": "20261004T230555Z"
+          }
+        ]
+      }
+    },
+    "d0da96ebe040b52a": {
+      "id": "FT-0008",
+      "fingerprint": "d0da96ebe040b52a",
+      "match_key": "supply-chain.ci-tools-not-locked|.github/workflows/ci.yml",
+      "rule": "supply-chain.ci-tools-not-locked",
+      "domain": "supply-chain",
+      "title": "CI installs test and validation tools without lockfiles (jsonschema transitive deps, npm global, apt)",
+      "severity": "INFORMATIONAL",
+      "status": "OPEN",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "fairtide",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        }
+      ]
     }
   },
   "control_acceptances": {},
@@ -94,6 +279,12 @@
     {
       "run_id": "20261004T223431Z",
       "at": "2026-10-04T22:40:25Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    },
+    {
+      "run_id": "20261004T230555Z",
+      "at": "2026-10-04T23:14:06Z",
       "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
       "mode": "audit"
     }
