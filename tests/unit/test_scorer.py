@@ -67,6 +67,22 @@ class ScorerTests(unittest.TestCase):
         r = score.score(final_with([finding("FT-1", "testing", "src/a.ts", 44, 47)]), MANIFEST)
         self.assertEqual(r["counts"]["true_positives"], 0)
 
+    def test_stability_summary_across_runs(self):
+        import stability
+        findings_a = [finding("SW-1", "authorization", "src/a.ts", 44, 47), finding("SW-3", "application-security", "src/db.ts", 12, 13)]
+        findings_b = [finding("SW-9", "reliability", "src/jobs.ts", 2, 3)]
+        runs = [score.score(final_with(findings_a), MANIFEST), score.score(final_with(findings_b), MANIFEST)]
+        r = stability.summarize(runs)
+        self.assertEqual(r["runs"], 2)
+        self.assertEqual(r["detection_frequency"], {"GT-1": 1, "GT-2": 0, "GT-3": 1})
+        self.assertEqual((r["detected_in_every_run"], r["detected_in_some_runs"], r["never_detected"]), (0, 2, 1))
+        self.assertEqual(r["must_never_detected"], 1)
+        self.assertEqual(r["mean_pairwise_jaccard_of_detected_sets"], 0.0)
+        self.assertEqual(r["metrics"]["decoy_false_positive_rate"], {"mean": 0.5, "min": 0.0, "max": 1.0})
+        self.assertIn("2 runs", stability.to_markdown(r))
+        with self.assertRaises(ValueError):
+            stability.summarize([runs[0], dict(runs[1], fixture={"name": "other"})])
+
     def test_manifest_validation(self):
         bad = {"issues": [{"id": "X", "domains": [], "severity": "SEVERE", "locations": []}]}
         self.assertTrue(score.validate_manifest(bad))
