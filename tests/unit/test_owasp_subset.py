@@ -45,7 +45,10 @@ class OwaspSubsetTests(unittest.TestCase):
             out = os.path.join(tempfile.mkdtemp(), "fixture")
             self.assertEqual(owasp_subset.main(["--benchmark", bench, "--out", out, "--per-class", "2", "--seed", "s"]), 0)
             outs.append(out)
-        manifests = [json.load(open(os.path.join(o, "ground-truth", "manifest.json"))) for o in outs]
+        manifests = []
+        for o in outs:
+            with open(os.path.join(o, "ground-truth", "manifest.json"), encoding="utf-8") as fh:
+                manifests.append(json.load(fh))
         m = manifests[0]
         self.assertEqual(score.validate_manifest(m), [])
         self.assertEqual(len(m["issues"]), 2 * len(owasp_subset.CATEGORIES))

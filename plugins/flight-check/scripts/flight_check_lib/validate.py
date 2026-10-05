@@ -88,7 +88,8 @@ def check_finding(f, where, errors, warnings):
         if cls != "INFORMATIONAL":
             types = hr.get("types") or []
             if not hr["required"] or not ({"legal", "business"} & set(types)):
-                errors.append("%s: a %s finding must set human_review.required with type legal or business" % (where, cls))
+                warnings.append("%s: a %s finding should set human_review.required with type legal or business; "
+                                "Flight Check adds it when the run is assembled" % (where, cls))
         for i, q in enumerate(legal.get("questions") or []):
             qw = "%s.legal.questions[%d]" % (where, i)
             if not q.rstrip().endswith("?"):

@@ -33,6 +33,29 @@ class PartValidationTests(unittest.TestCase):
         part["controls"][-1]["rationale"] = "Scanned."
         self.assertTrue(any("how_to_verify belongs only on UNVERIFIED" in e for e in part_errors(part)))
 
+    def test_legal_classification_without_review_flag_is_warned_and_fixed_at_assembly(self):
+        from flight_check_lib import assemble
+        f = helpers.deletion_finding()
+        f["human_review"] = {"required": True, "types": ["privacy"], "reason": "Deletion behavior."}
+        errors, warnings = [], []
+        validate.check_part(helpers.base_part([helpers.sql_finding(), f]), "part-test.json", errors, warnings)
+        self.assertEqual(errors, [])
+        self.assertTrue(any("adds it when the run is assembled" in w for w in warnings))
+        self.assertTrue(assemble.require_legal_review(f))
+        self.assertTrue(f["human_review"]["required"])
+        self.assertIn("legal", f["human_review"]["types"])
+        self.assertIn("privacy", f["human_review"]["types"])
+        self.assertFalse(assemble.require_legal_review(f))  # idempotent
+        biz = helpers.deletion_finding(legal={"classification": "BUSINESS DECISION REQUIRED", "why_review": "Pricing choice.",
+                                              "decisions_needed": ["Which refund window applies?"]},
+                                       human_review={"required": False})
+        self.assertTrue(assemble.require_legal_review(biz))
+        self.assertEqual(biz["human_review"]["types"], ["business"])
+        self.assertTrue(biz["human_review"]["reason"])
+        plain = helpers.sql_finding()
+        self.assertFalse(assemble.require_legal_review(plain))
+        self.assertEqual(plain["human_review"], {"required": False})
+
     def test_missing_counterevidence_fails(self):
         part = helpers.base_part([helpers.sql_finding(counterevidence=[])])
         part["controls"] = []
@@ -97,11 +120,14 @@ class PartValidationTests(unittest.TestCase):
         f["legal"]["questions"] = ["Counsel should determine the retention exceptions for backups"]
         self.assertTrue(any("ending in '?'" in e for e in part_errors(part)))
 
-    def test_legal_finding_requires_legal_human_review(self):
+    def test_legal_finding_without_review_flag_is_a_warning_not_an_error(self):
         f = helpers.deletion_finding(human_review={"required": False})
         part = helpers.base_part([f])
         part["controls"] = []
-        self.assertTrue(any("human_review.required" in e for e in part_errors(part)))
+        errors, warnings = [], []
+        validate.check_part(part, "part-test.json", errors, warnings)
+        self.assertFalse(any("human_review.required" in e for e in errors))
+        self.assertTrue(any("human_review.required" in w for w in warnings))
 
     def test_business_decision_needs_decisions(self):
         f = helpers.deletion_finding()

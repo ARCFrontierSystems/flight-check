@@ -59,6 +59,30 @@ def _namespace_part_ids(part, taken, errors):
         c["related_findings"] = [mapping.get(r, r) for r in c.get("related_findings") or []]
 
 
+def require_legal_review(finding):
+    """A legal or business classification other than INFORMATIONAL always means human review.
+
+    Agents sometimes set the classification but tag only their own review type (for example
+    privacy). The review requirement follows from the classification, so it is added here; this
+    can only add review, never remove it. Returns True when the finding was changed.
+    """
+    cls = (finding.get("legal") or {}).get("classification")
+    if not cls or cls == "INFORMATIONAL":
+        return False
+    hr = finding.setdefault("human_review", {"required": True})
+    wanted = "business" if cls == "BUSINESS DECISION REQUIRED" else "legal"
+    types = list(hr.get("types") or [])
+    changed = not hr.get("required") or not ({"legal", "business"} & set(types))
+    if changed:
+        hr["required"] = True
+        if wanted not in types:
+            types.append(wanted)
+        hr["types"] = types
+        if not hr.get("reason"):
+            hr["reason"] = "Classified %s, which needs review by the owner or counsel." % cls
+    return changed
+
+
 def _words(text):
     return set(re.findall(r"[a-z0-9]{3,}", text.lower()))
 
@@ -116,6 +140,8 @@ def assemble(run_dir):
             raise ValueError("; ".join(dup_errors))
         for f in part["findings"]:
             f["source_agent"] = agent
+            if require_legal_review(f):
+                warnings.append("%s: added the legal or business review flag that its classification requires" % f["local_id"])
             findings.append(f)
         for pc in part["positive_controls"]:
             pc["source_agent"] = agent

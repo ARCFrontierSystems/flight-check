@@ -73,9 +73,12 @@ def main(argv=None):
         if name.lower() in ("manifest.json", "ground-truth", "ground_truth", "answers", "expected"):
             sys.exit("refusing: %s looks like ground truth inside the application directory" % name)
 
-    work = tempfile.mkdtemp(prefix="flight-check-blind-")
-    target = os.path.join(work, os.path.basename(app.rstrip("/")) or "app")
-    shutil.copytree(app, target, ignore=lambda d, names: [n for n in names if n in EXCLUDE])
+    # The copy is the temporary directory itself, not a subdirectory of it. In Phase 5, agents sometimes
+    # dropped a trailing subdirectory from the audit root; with no subdirectory there is nothing to drop.
+    # Settings live in a separate temporary directory outside the audited copy.
+    work = tempfile.mkdtemp(prefix="flight-check-settings-")
+    target = tempfile.mkdtemp(prefix="flight-check-blind-")
+    shutil.copytree(app, target, ignore=lambda d, names: [n for n in names if n in EXCLUDE], dirs_exist_ok=True)
     evidence_args = []
     if args.evidence:
         ev_dir = os.path.join(target, ".flight-check", "evidence")
@@ -125,6 +128,7 @@ def main(argv=None):
         shutil.copy(ledger, os.path.join(args.out, "ledger.json"))
     if not args.keep:
         shutil.rmtree(work, ignore_errors=True)
+        shutil.rmtree(target, ignore_errors=True)
     print(json.dumps({"exit_code": proc.returncode, "runs": copied, "out": os.path.abspath(args.out),
                       "denied_tool_calls": len(summary["denied_tool_calls"]), "final_result": (summary["final_result"] or "")[:300]}, indent=2))
     return 0 if copied else 1

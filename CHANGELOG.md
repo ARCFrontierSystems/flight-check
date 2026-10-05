@@ -7,6 +7,10 @@ All notable changes are recorded here. Versions follow [Semantic Versioning](htt
 First development version. Not yet blind-tested or released.
 
 - Renamed the project from Fairtide to **Flight Check**: plugin id `flight-check`, commands `/flight-check:*`, script `flight_check.py`, working directory `.flight-check/`, finding IDs `FC-0001` (existing ledger IDs `FT-` became `FC-` with the same numbers), packet title "FLIGHT CHECK — ATTORNEY REVIEW PACKET", and the CI secret `FLIGHT_CHECK_LEAK_DENYLIST`. Nothing had been released under the old names.
+- Changes from the Phase 5 blind tests:
+  - **Audit root paths.** Agents build every path from the audit root exactly as given, and the audit skill reuses `run_dir` and the root verbatim. Agents had dropped the last directory of the root, Claude Code refused those reads, and one run stalled before finalize.
+  - **Legal review flag.** A finding with a legal or business classification always gets the matching human-review flag when the run is assembled. A missing flag is now a warning instead of a validation retry; the flag can only add review.
+  - **Blind-test tooling.** The runner streams every event to a log, reports denied tool calls, and audits a copy placed at the top of its temporary directory. `owasp_subset.py` builds a balanced OWASP Benchmark sample for the security domains outside this repository, and `stability.py` summarizes repeated runs.
 - Changes from the first self-audit (see `docs/audits/2026-10-04-self-audit.md`):
   - **Decisions only you make now always prompt.** Each skill pre-approves only the script subcommands it needs. `ledger accept`, `revoke`, `legal`, and `close` are never pre-approved, and the lint enforces this. The headless runner and the hardened-mode settings allow only the audit subcommands and deny the ledger commands.
   - **Acceptances count only from the next run.** An acceptance recorded after a run started does not count for that run's ship decision.
