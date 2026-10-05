@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/ARCFrontierSystems/project-guardian/plugins/flight-check/schemas/flight-check.schema.json",
+  "$id": "https://github.com/ARCFrontierSystems/flight-check/plugins/flight-check/schemas/flight-check.schema.json",
   "title": "Flight Check data formats",
   "description": "Definitions for every file Flight Check reads or writes. Validate a document against #/$defs/<name>.",
   "$defs": {

@@ -8,14 +8,14 @@
 ## Personal use (all projects on your machine)
 
 ```bash
-claude plugin marketplace add ARCFrontierSystems/project-guardian
+claude plugin marketplace add ARCFrontierSystems/flight-check
 claude plugin install flight-check@arc-frontier-systems
 ```
 
 Or, inside a Claude Code session:
 
 ```
-/plugin marketplace add ARCFrontierSystems/project-guardian
+/plugin marketplace add ARCFrontierSystems/flight-check
 /plugin install flight-check@arc-frontier-systems
 ```
 
@@ -29,7 +29,7 @@ To offer Flight Check to everyone working in a repository, commit `.claude/setti
 {
   "extraKnownMarketplaces": {
     "arc-frontier-systems": {
-      "source": {"source": "github", "repo": "ARCFrontierSystems/project-guardian"}
+      "source": {"source": "github", "repo": "ARCFrontierSystems/flight-check"}
     }
   },
   "enabledPlugins": {
@@ -41,9 +41,9 @@ To offer Flight Check to everyone working in a repository, commit `.claude/setti
 ## Try it without installing
 
 ```bash
-git clone https://github.com/ARCFrontierSystems/project-guardian.git
+git clone https://github.com/ARCFrontierSystems/flight-check.git
 cd /path/to/your/project
-claude --plugin-dir /path/to/project-guardian/plugins/flight-check
+claude --plugin-dir /path/to/flight-check/plugins/flight-check
 ```
 
 ## Allowing Flight Check's script

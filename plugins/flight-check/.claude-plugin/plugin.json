@@ -6,8 +6,8 @@
   "author": {
     "name": "ARC Frontier Systems"
   },
-  "homepage": "https://github.com/ARCFrontierSystems/project-guardian",
-  "repository": "https://github.com/ARCFrontierSystems/project-guardian",
+  "homepage": "https://github.com/ARCFrontierSystems/flight-check",
+  "repository": "https://github.com/ARCFrontierSystems/flight-check",
   "license": "Apache-2.0",
   "keywords": [
     "audit",

@@ -1,6 +1,6 @@
 # Flight Check (Claude Code plugin)
 
-Evidence-first ship-readiness audits for any software project. Full documentation: https://github.com/ARCFrontierSystems/project-guardian
+Evidence-first ship-readiness audits for any software project. Full documentation: https://github.com/ARCFrontierSystems/flight-check
 
 ## Commands
 

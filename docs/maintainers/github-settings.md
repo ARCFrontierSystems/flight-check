@@ -62,13 +62,12 @@ Once maintainers are settled, add `.github/CODEOWNERS`. Replace the placeholder 
 
 Then turn on "Require review from Code Owners" in the default-branch ruleset. With a single maintainer this adds nothing, so it can wait.
 
-## 6. Finish the rename to Flight Check
+## 6. After the rename to Flight Check
 
-The product is now named Flight Check; the repository is still named `project-guardian`.
+The repository is now `ARCFrontierSystems/flight-check`; GitHub redirects the old `project-guardian` URLs, and the install instructions, plugin metadata, and schema ID use the new name.
 
-- Rename the repository to `flight-check` (Settings → General → Repository name). GitHub redirects old URLs, but then update `ARCFrontierSystems/project-guardian` in `README.md`, `docs/installation.md`, and the `$id` in `plugins/flight-check/schemas/flight-check.schema.json`.
 - Use the Flight Check description and topics from section 1.
-- Create the CI secret as `FLIGHT_CHECK_LEAK_DENYLIST` (the old `SEAWORTHY_LEAK_DENYLIST` name is no longer read).
+- Create the CI secret as `FLIGHT_CHECK_LEAK_DENYLIST`. The older `FAIRTIDE_LEAK_DENYLIST` and `SEAWORTHY_LEAK_DENYLIST` names are no longer read.
 
 ## Checklist
 
@@ -82,4 +81,4 @@ The product is now named Flight Check; the repository is still named `project-gu
 - [ ] Tag ruleset for `v*` active
 - [ ] Actions: GitHub-only actions, read-only token, fork approval required
 - [ ] CODEOWNERS (when there is more than one maintainer)
-- [ ] Repository renamed to `flight-check`
+- [x] Repository renamed to `flight-check`

@@ -43,11 +43,11 @@ It examines security, privacy, legal/business risk, compliance readiness, access
 From Claude Code's command line:
 
 ```bash
-claude plugin marketplace add ARCFrontierSystems/project-guardian
+claude plugin marketplace add ARCFrontierSystems/flight-check
 claude plugin install flight-check@arc-frontier-systems
 ```
 
-Or inside a Claude Code session: `/plugin marketplace add ARCFrontierSystems/project-guardian`, then `/plugin install flight-check@arc-frontier-systems`. To try Flight Check without installing it, clone this repository and start Claude Code with `claude --plugin-dir ./plugins/flight-check`. See [docs/installation.md](docs/installation.md) for team setup, updates, and removal.
+Or inside a Claude Code session: `/plugin marketplace add ARCFrontierSystems/flight-check`, then `/plugin install flight-check@arc-frontier-systems`. To try Flight Check without installing it, clone this repository and start Claude Code with `claude --plugin-dir ./plugins/flight-check`. See [docs/installation.md](docs/installation.md) for team setup, updates, and removal.
 
 ## Use
 
