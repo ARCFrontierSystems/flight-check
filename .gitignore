@@ -1,8 +1,8 @@
-# Fairtide run output when auditing this repository itself (reports may contain quoted findings)
-.fairtide/runs/
-.fairtide/packets/
+# Flight Check run output when auditing this repository itself (reports may contain quoted findings)
+.flight-check/runs/
+.flight-check/packets/
 # Local leak-gate denylist (never commit; see CONTRIBUTING.md)
-.fairtide-denylist*
+.flight-check-denylist*
 # Python
 __pycache__/
 *.pyc

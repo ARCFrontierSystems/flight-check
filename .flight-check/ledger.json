@@ -1,0 +1,379 @@
+{
+  "schema_version": "1.0",
+  "next_id": 9,
+  "entries": {
+    "23182de0fc497035": {
+      "id": "FC-0001",
+      "fingerprint": "23182de0fc497035",
+      "match_key": "accessibility.untagged-pdf-output|plugins/flight-check/scripts/flight_check_lib/pdf.py",
+      "rule": "accessibility.untagged-pdf-output",
+      "domain": "accessibility",
+      "title": "Generated attorney review packet PDF is untagged and has no document language (pdf.py to_bytes)",
+      "severity": "LOW",
+      "status": "REMEDIATED",
+      "first_seen_run": "20261004T223431Z",
+      "last_seen_run": "20261004T223431Z",
+      "history": [
+        {
+          "at": "2026-10-04T22:40:25Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T223431Z"
+        },
+        {
+          "at": "2026-10-04T23:05:24Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: Partial fix: the packet PDF now declares its document language (/Lang) and displays its title (/ViewerPreferences DisplayDocTitle); docs/limitations.md states that the PDF is untagged and that the Markdown copy is the accessible version. Full PDF tagging is not implemented."
+        }
+      ],
+      "legal": {
+        "classification": "BUSINESS DECISION REQUIRED",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T22:40:25Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified BUSINESS DECISION REQUIRED",
+            "run_id": "20261004T223431Z"
+          }
+        ]
+      },
+      "remediations": [
+        {
+          "at": "2026-10-04T23:05:24Z",
+          "note": "Partial fix: the packet PDF now declares its document language (/Lang) and displays its title (/ViewerPreferences DisplayDocTitle); docs/limitations.md states that the PDF is untagged and that the Markdown copy is the accessible version. Full PDF tagging is not implemented.",
+          "files": [
+            "plugins/flight-check/scripts/flight_check_lib/pdf.py",
+            "plugins/flight-check/scripts/flight_check_lib/packet.py",
+            "docs/limitations.md"
+          ],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "e713f5835e4d758d": {
+      "id": "FC-0002",
+      "fingerprint": "e713f5835e4d758d",
+      "match_key": "legal-business.no-terms-or-naming-decision|CHANGELOG.md",
+      "rule": "legal-business.no-terms-or-naming-decision",
+      "domain": "legal-business",
+      "title": "Public marketplace plugin has no terms of use, and its repository, marketplace and schema identifiers still use the former name 'project-guardian'",
+      "severity": "INFORMATIONAL",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261004T223431Z",
+      "last_seen_run": "20261004T223431Z",
+      "history": [
+        {
+          "at": "2026-10-04T22:40:25Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T223431Z"
+        },
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T230555Z"
+        }
+      ],
+      "legal": {
+        "classification": "LEGAL REVIEW REQUIRED",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T22:40:25Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified LEGAL REVIEW REQUIRED",
+            "run_id": "20261004T223431Z"
+          }
+        ]
+      }
+    },
+    "322e7d04eae0e68b": {
+      "id": "FC-0003",
+      "fingerprint": "322e7d04eae0e68b",
+      "match_key": "legal-business.name-and-identifier-inconsistency|docs/maintainers/github-settings.md",
+      "rule": "legal-business.name-and-identifier-inconsistency",
+      "domain": "legal-business",
+      "title": "Product name Flight Check differs from repository, marketplace and schema identifiers (project-guardian), with no recorded name-clearance decision",
+      "severity": "INFORMATIONAL",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
+        }
+      ],
+      "legal": {
+        "classification": "BUSINESS DECISION REQUIRED",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T23:14:06Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified BUSINESS DECISION REQUIRED",
+            "run_id": "20261004T230555Z"
+          },
+          {
+            "at": "2026-10-04T23:27:15Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "included in attorney review packet attorney-review-packet.pdf"
+          }
+        ]
+      }
+    },
+    "08a1e6f628d3ca50": {
+      "id": "FC-0004",
+      "fingerprint": "08a1e6f628d3ca50",
+      "match_key": "legal-business.no-contributor-licensing-statement|contributing.md",
+      "rule": "legal-business.no-contributor-licensing-statement",
+      "domain": "legal-business",
+      "title": "CONTRIBUTING.md does not state the license or terms under which contributions are accepted",
+      "severity": "INFORMATIONAL",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
+        }
+      ],
+      "legal": {
+        "classification": "BUSINESS DECISION REQUIRED",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T23:14:06Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified BUSINESS DECISION REQUIRED",
+            "run_id": "20261004T230555Z"
+          },
+          {
+            "at": "2026-10-04T23:27:15Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "included in attorney review packet attorney-review-packet.pdf"
+          }
+        ]
+      }
+    },
+    "7df675a2e8ee5b37": {
+      "id": "FC-0005",
+      "fingerprint": "7df675a2e8ee5b37",
+      "match_key": "legal-business.no-terms-or-governing-law|README.md",
+      "rule": "legal-business.no-terms-or-governing-law",
+      "domain": "legal-business",
+      "title": "Public plugin that produces legal-adjacent output has only Apache-2.0 and disclaimers, with no terms of use or governing-law decision",
+      "severity": "INFORMATIONAL",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
+        }
+      ],
+      "legal": {
+        "classification": "LEGAL REVIEW REQUIRED",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T23:14:06Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified LEGAL REVIEW REQUIRED",
+            "run_id": "20261004T230555Z"
+          },
+          {
+            "at": "2026-10-04T23:27:15Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "included in attorney review packet attorney-review-packet.pdf"
+          }
+        ]
+      }
+    },
+    "04eca0a73cf7bdc2": {
+      "id": "FC-0006",
+      "fingerprint": "04eca0a73cf7bdc2",
+      "match_key": "operational-readiness.vulnerability-reporting-channel-not-enabled|SECURITY.md",
+      "rule": "operational-readiness.vulnerability-reporting-channel-not-enabled",
+      "domain": "operational-readiness",
+      "title": "SECURITY.md directs reporters to private vulnerability reporting, which maintainer docs say is not yet enabled",
+      "severity": "LOW",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
+        }
+      ]
+    },
+    "12d63ea1baf611d6": {
+      "id": "FC-0007",
+      "fingerprint": "12d63ea1baf611d6",
+      "match_key": "privacy.output-masking-claim-broader-than-implementation|README.md",
+      "rule": "privacy.output-masking-claim-broader-than-implementation",
+      "domain": "privacy",
+      "title": "README says secrets are masked in all output files, but masking is applied only when rendering Markdown and PDF",
+      "severity": "LOW",
+      "status": "VERIFIED",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:17:01Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: Likely secrets are now masked in all agent text when a run is assembled, so audit.final.json and the ledger never hold them; the README states exactly which outputs are masked and that raw agent replies stay in the gitignored run directory."
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: assemble.py runs mask_secrets over the inventory, the verification output and every part file. This matches the README claim.",
+          "run_id": "20261004T231719Z"
+        }
+      ],
+      "legal": {
+        "classification": "POLICY/IMPLEMENTATION CONTRADICTION",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T23:14:06Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified POLICY/IMPLEMENTATION CONTRADICTION",
+            "run_id": "20261004T230555Z"
+          }
+        ]
+      },
+      "remediations": [
+        {
+          "at": "2026-10-04T23:17:01Z",
+          "note": "Likely secrets are now masked in all agent text when a run is assembled, so audit.final.json and the ledger never hold them; the README states exactly which outputs are masked and that raw agent replies stay in the gitignored run directory.",
+          "files": [
+            "plugins/flight-check/scripts/flight_check_lib/assemble.py",
+            "README.md",
+            "tests/unit/test_end_to_end.py"
+          ],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "d0da96ebe040b52a": {
+      "id": "FC-0008",
+      "fingerprint": "d0da96ebe040b52a",
+      "match_key": "supply-chain.ci-tools-not-locked|.github/workflows/ci.yml",
+      "rule": "supply-chain.ci-tools-not-locked",
+      "domain": "supply-chain",
+      "title": "CI installs test and validation tools without lockfiles (jsonschema transitive deps, npm global, apt)",
+      "severity": "INFORMATIONAL",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
+        }
+      ]
+    }
+  },
+  "control_acceptances": {},
+  "runs": [
+    {
+      "run_id": "20261004T223431Z",
+      "at": "2026-10-04T22:40:25Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    },
+    {
+      "run_id": "20261004T230555Z",
+      "at": "2026-10-04T23:14:06Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    },
+    {
+      "run_id": "20261004T231719Z",
+      "at": "2026-10-04T23:25:26Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    }
+  ],
+  "project": {
+    "name": "project-guardian"
+  }
+}

@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-"""Run a blind Fairtide audit of a test application in a disposable copy.
+"""Run a blind Flight Check audit of a test application in a disposable copy.
 
 The application directory is copied to a fresh temporary directory, so the audit can
 never see a ground-truth manifest, scoring scripts, or anything else stored next to the
 application. The audit runs headless with only Read/Grep/Glob for the agents, writes
-restricted to the copy's .fairtide/runs/ directory, and only the script subcommands an audit
+restricted to the copy's .flight-check/runs/ directory, and only the script subcommands an audit
 needs allowed (never the ledger commands that record user decisions). Results are copied to --out.
 
 Usage:
@@ -22,8 +22,8 @@ import sys
 import tempfile
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
-PLUGIN = os.path.join(REPO, "plugins", "fairtide")
-EXCLUDE = {".git", "ground-truth", "manifest.json", ".fairtide"}
+PLUGIN = os.path.join(REPO, "plugins", "flight-check")
+EXCLUDE = {".git", "ground-truth", "manifest.json", ".flight-check"}
 
 
 def summarize_stream(path):
@@ -73,29 +73,29 @@ def main(argv=None):
         if name.lower() in ("manifest.json", "ground-truth", "ground_truth", "answers", "expected"):
             sys.exit("refusing: %s looks like ground truth inside the application directory" % name)
 
-    work = tempfile.mkdtemp(prefix="fairtide-blind-")
+    work = tempfile.mkdtemp(prefix="flight-check-blind-")
     target = os.path.join(work, os.path.basename(app.rstrip("/")) or "app")
     shutil.copytree(app, target, ignore=lambda d, names: [n for n in names if n in EXCLUDE])
     evidence_args = []
     if args.evidence:
-        ev_dir = os.path.join(target, ".fairtide", "evidence")
+        ev_dir = os.path.join(target, ".flight-check", "evidence")
         os.makedirs(ev_dir)
         for ev in args.evidence:
             shutil.copy(ev, ev_dir)
-            evidence_args.append(os.path.join(".fairtide", "evidence", os.path.basename(ev)))
+            evidence_args.append(os.path.join(".flight-check", "evidence", os.path.basename(ev)))
 
-    script = os.path.join(PLUGIN, "scripts", "fairtide.py")
+    script = os.path.join(PLUGIN, "scripts", "flight_check.py")
     # Only the four subcommands an audit needs; never the ledger commands that record user decisions.
     # The ledger is written by the script, so the session itself may write only run directories.
     settings = {"permissions": {
-        "allow": ["Edit(/%s/.fairtide/runs/**)" % target]
+        "allow": ["Edit(/%s/.flight-check/runs/**)" % target]
         + ["Bash(python3 %s %s *)" % (script, sub) for sub in ("init-run", "validate", "finalize", "render")],
-        "deny": ["Edit(/%s/.fairtide/ledger.json)" % target, "Bash(python3 %s ledger *)" % script],
+        "deny": ["Edit(/%s/.flight-check/ledger.json)" % target, "Bash(python3 %s ledger *)" % script],
     }}
     settings_path = os.path.join(work, "settings.json")
     with open(settings_path, "w") as fh:
         json.dump(settings, fh)
-    prompt = "/fairtide:audit"
+    prompt = "/flight-check:audit"
     if evidence_args:
         prompt += " --evidence " + " ".join(evidence_args)
     # Stream every event to a log so a failed run can be diagnosed (which tool call was denied, and why).
@@ -112,7 +112,7 @@ def main(argv=None):
     summary = summarize_stream(stream_path)
     with open(os.path.join(args.out, "claude-output.json"), "w") as fh:
         json.dump(summary, fh, indent=2)
-    runs = os.path.join(target, ".fairtide", "runs")
+    runs = os.path.join(target, ".flight-check", "runs")
     copied = []
     if os.path.isdir(runs):
         for name in sorted(os.listdir(runs)):
@@ -120,7 +120,7 @@ def main(argv=None):
             if os.path.isdir(src):
                 shutil.copytree(src, os.path.join(args.out, name), dirs_exist_ok=True)
                 copied.append(name)
-    ledger = os.path.join(target, ".fairtide", "ledger.json")
+    ledger = os.path.join(target, ".flight-check", "ledger.json")
     if os.path.exists(ledger):
         shutil.copy(ledger, os.path.join(args.out, "ledger.json"))
     if not args.keep:

@@ -1,4 +1,4 @@
-"""Shared helpers for Fairtide unit tests: build realistic run directories programmatically."""
+"""Shared helpers for Flight Check unit tests: build realistic run directories programmatically."""
 
 import copy
 import json
@@ -7,11 +7,11 @@ import sys
 import tempfile
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-SCRIPTS = os.path.join(REPO, "plugins", "fairtide", "scripts")
+SCRIPTS = os.path.join(REPO, "plugins", "flight-check", "scripts")
 if SCRIPTS not in sys.path:
     sys.path.insert(0, SCRIPTS)
 
-from fairtide_lib import catalog  # noqa: E402
+from flight_check_lib import catalog  # noqa: E402
 
 FIXTURE_ROOT = os.path.join(REPO, "tests", "fixtures", "mini-target")
 NOW = "2026-10-04T12:00:00Z"
@@ -97,7 +97,7 @@ def base_part(findings=None):
             {"id": "PRIV-DELETION", "state": "NOT_MET", "related_findings": ["F2"]},
             {"id": "APPSEC-SECRETS", "state": "VERIFIED", "rationale": "No credentials in tracked files.",
              "evidence": [{"kind": "code", "path": "src/store.py", "start_line": 1, "end_line": 2,
-                           "quote": "\"\"\"Tiny fixture module used by Fairtide's unit tests. Not a real application.\"\"\"\nimport sqlite3"}]},
+                           "quote": "\"\"\"Tiny fixture module used by Flight Check's unit tests. Not a real application.\"\"\"\nimport sqlite3"}]},
         ],
         "findings": findings,
         "positive_controls": [
@@ -127,7 +127,7 @@ def base_run(run_id="20261004T120000Z", mode="audit"):
 
 
 def write_run(parts=None, inventory=None, run=None, verification=None, base=None):
-    base = base or tempfile.mkdtemp(prefix="fairtide-test-")
+    base = base or tempfile.mkdtemp(prefix="flight-check-test-")
     run = run or base_run()
     run_dir = os.path.join(base, run["run_id"])
     os.makedirs(run_dir, exist_ok=True)

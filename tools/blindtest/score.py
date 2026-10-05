@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Score a finalized Fairtide audit against a hidden ground-truth manifest.
+"""Score a finalized Flight Check audit against a hidden ground-truth manifest.
 
 Usage:
     python3 tools/blindtest/score.py --final RUN_DIR/audit.final.json --manifest manifest.json [--json out.json] [--tolerance 5]
@@ -205,7 +205,7 @@ def confidence_table(findings, matches, decoy_fp):
 
 
 def to_markdown(r):
-    lines = ["# Fairtide blind-test score", "",
+    lines = ["# Flight Check blind-test score", "",
              "- Fixture: %s" % r["fixture"].get("name", "?"),
              "- Run: %s; gate: %s%s" % (r["run_id"], r["gate"], (" (expected %s)" % r["expected_gate"]) if r.get("expected_gate") else ""),
              "- Recall: %s (95%% CI %s); must-tier recall: %s" % (r["recall"], r["recall_ci95"], r["must_recall"]),

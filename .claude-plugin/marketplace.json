@@ -6,8 +6,8 @@
   "description": "Plugins published by ARC Frontier Systems.",
   "plugins": [
     {
-      "name": "fairtide",
-      "source": "./plugins/fairtide",
+      "name": "flight-check",
+      "source": "./plugins/flight-check",
       "description": "Evidence-first ship-readiness audit for any software project, with a Legal Review Assistant and Attorney Review Packet.",
       "category": "security"
     }

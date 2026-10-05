@@ -1,20 +1,22 @@
-# Fairtide self-audit, 2026-10-04 (Phase 3)
+# Flight Check self-audit, 2026-10-04 (Phase 3)
+
+> Written when the project was named Fairtide. Names, commands, and finding IDs (`FT-` to `FC-`) were updated after the rename to Flight Check.
 
 **Follow-up:** the fixes and re-audits are recorded in [the Phase 4 record](2026-10-04-phase-4-remediation.md).
 
-Fairtide audited its own repository with `/fairtide:audit`. This page records the result exactly as Fairtide produced it, then a review of that result, including what the audit missed and how the tool behaved. Nothing was fixed in this phase. Fixes are Phase 4 and need the owner's authorization.
+Flight Check audited its own repository with `/flight-check:audit`. This page records the result exactly as Flight Check produced it, then a review of that result, including what the audit missed and how the tool behaved. Nothing was fixed in this phase. Fixes are Phase 4 and need the owner's authorization.
 
 ## How it was run
 
-- **Audited:** commit `3329416` on branch `claude/wizardly-faraday-4u55nr`, the working tree right after the rename to Fairtide.
-- **Command:** a headless `claude -p "/fairtide:audit --evidence .fairtide/evidence/local-checks.txt"`, with the plugin loaded from `plugins/fairtide`. The audit used the own-project trust tier, writes were limited to `.fairtide/`, and Fairtide's script was pre-approved.
-- **Imported evidence:** [`.fairtide/evidence/local-checks.txt`](../../.fairtide/evidence/local-checks.txt). It holds the unit tests, agent sync check, lint, and strict plugin validation, all passing on Python 3.11. Fairtide never runs project code, so test results reach it only as imported evidence.
+- **Audited:** commit `3329416` on branch `claude/wizardly-faraday-4u55nr`, the working tree right after the rename to Flight Check.
+- **Command:** a headless `claude -p "/flight-check:audit --evidence .flight-check/evidence/local-checks.txt"`, with the plugin loaded from `plugins/flight-check`. The audit used the own-project trust tier, writes were limited to `.flight-check/`, and Flight Check's script was pre-approved.
+- **Imported evidence:** [`.flight-check/evidence/local-checks.txt`](../../.flight-check/evidence/local-checks.txt). It holds the unit tests, agent sync check, lint, and strict plugin validation, all passing on Python 3.11. Flight Check never runs project code, so test results reach it only as imported evidence.
 - **Run:** `20261004T223431Z`, about six minutes of wall-clock time.
   - Agents: the inventory agent; eight domain agents, with payments skipped as not applicable; and the verifier.
   - Cost: the CLI reported US$2.43 in both of its result events. That figure probably excludes the subagents, so the real usage is unknown (see T4).
-- **Ledger:** committed at [`.fairtide/ledger.json`](../../.fairtide/ledger.json). The full run output (`report.md`, `audit.final.json`) stays in the gitignored run directory; see "Publishing full reports" below.
+- **Ledger:** committed at [`.flight-check/ledger.json`](../../.flight-check/ledger.json). The full run output (`report.md`, `audit.final.json`) stays in the gitignored run directory; see "Publishing full reports" below.
 
-## Result as produced by Fairtide
+## Result as produced by Flight Check
 
 **Ship decision: BLOCKED — INSUFFICIENT EVIDENCE**
 
@@ -24,8 +26,8 @@ The reason, verbatim: "Release-critical control SUPPLY-KNOWN-VULNS is UNVERIFIED
 
 | ID | Severity and confidence | Verifier | Finding | Legal or business classification |
 |---|---|---|---|---|
-| FT-0001 | LOW, LIKELY | Confirmed | The Attorney Review Packet PDF is untagged and declares no document language (`plugins/fairtide/scripts/fairtide_lib/pdf.py:346`). | Business decision required |
-| FT-0002 | INFORMATIONAL, POTENTIAL (downgraded from LOW, LIKELY) | Downgraded | There are no terms of use beyond the Apache-2.0 license and disclaimers. Repository, marketplace, and schema identifiers still use the former name `project-guardian`. | Legal review required (3 questions for counsel) |
+| FC-0001 | LOW, LIKELY | Confirmed | The Attorney Review Packet PDF is untagged and declares no document language (`plugins/flight-check/scripts/flight_check_lib/pdf.py:346`). | Business decision required |
+| FC-0002 | INFORMATIONAL, POTENTIAL (downgraded from LOW, LIKELY) | Downgraded | There are no terms of use beyond the Apache-2.0 license and disclaimers. Repository, marketplace, and schema identifiers still use the former name `project-guardian`. | Legal review required (3 questions for counsel) |
 
 There were no CRITICAL, HIGH, or MEDIUM findings.
 
@@ -37,7 +39,7 @@ There were no CRITICAL, HIGH, or MEDIUM findings.
 | LEGAL-TERMS | NOT_MET | No terms of use. |
 | LEGAL-GOVERNING-LAW | UNVERIFIED | No governing-law or dispute-resolution decision. |
 | COMP-REGULATED-DATA | UNVERIFIED | Audited project content, which may contain personal or regulated data, goes to the user's model provider. No guidance tells users this. |
-| AI-COST-LIMITS | UNVERIFIED | Fairtide sets no token or cost limits and gives no per-audit cost guidance. |
+| AI-COST-LIMITS | UNVERIFIED | Flight Check sets no token or cost limits and gives no per-audit cost guidance. |
 
 The audit also listed what it did not see: CI results on Python 3.9 and 3.12, a scan of git history for secrets, and the live GitHub repository settings.
 
@@ -54,8 +56,8 @@ The audit also listed what it did not see: CI results on Python 3.9 and 3.12, a 
 
 ## Review of the findings
 
-- **FT-0001: agree.** The PDF catalog has no `/MarkInfo`, `/StructTreeRoot`, or `/Lang`. This was also on the reviewer's independent list. The Markdown copy of the packet is the accessible version, but `docs/limitations.md` does not say so. LOW is the right severity.
-- **FT-0002: partly agree.** It bundles two separate items:
+- **FC-0001: agree.** The PDF catalog has no `/MarkInfo`, `/StructTreeRoot`, or `/Lang`. This was also on the reviewer's independent list. The Markdown copy of the packet is the accessible version, but `docs/limitations.md` does not say so. LOW is the right severity.
+- **FC-0002: partly agree.** It bundles two separate items:
   - The lack of terms beyond Apache-2.0 and the disclaimers. This is a fair question for counsel, because the tool produces legal-adjacent output.
   - The old name in identifiers. This is a rename task already tracked in `docs/maintainers/github-settings.md`, not a legal issue.
 
@@ -68,11 +70,11 @@ The audit also listed what it did not see: CI results on Python 3.9 and 3.12, a 
 
 | # | Issue | Reviewer's severity | Evidence |
 |---|---|---|---|
-| M1 | The audit and legal-packet skills pre-approve every `fairtide.py` subcommand, including `ledger accept`, `ledger legal`, and `ledger close`, which record decisions only the user may make. Only instructions stop the coordinating session from running them, and in headless runs the same rule holds for the whole session. If injected project content survived an agent and persuaded the coordinating session, it could record an "accepted risk" for an existing finding or an unverified control before finalize. That turns BLOCKED or NOT READY into READY WITH ACCEPTED RISKS. Accepted CRITICAL findings are excluded from the critical block. The report would still list the acceptance, and the ledger diff would show it in git, but the guarantee that only a human decides is not enforced mechanically. | MEDIUM | `plugins/fairtide/skills/audit/SKILL.md:6`, `plugins/fairtide/skills/legal-packet/SKILL.md:6`, `plugins/fairtide/scripts/fairtide_lib/cli.py:381`, `:397`, `:415`, `plugins/fairtide/scripts/fairtide_lib/gate.py:45-48`, `tools/blindtest/run_audit.py:56` |
-| M2 | Agent output must be saved unchanged, but nothing checks that it was. In this run the coordinating session did change a quote (see T2). Its change was benign and disclosed. | LOW | `plugins/fairtide/skills/audit/SKILL.md:79`, `:106` |
+| M1 | The audit and legal-packet skills pre-approve every `flight_check.py` subcommand, including `ledger accept`, `ledger legal`, and `ledger close`, which record decisions only the user may make. Only instructions stop the coordinating session from running them, and in headless runs the same rule holds for the whole session. If injected project content survived an agent and persuaded the coordinating session, it could record an "accepted risk" for an existing finding or an unverified control before finalize. That turns BLOCKED or NOT READY into READY WITH ACCEPTED RISKS. Accepted CRITICAL findings are excluded from the critical block. The report would still list the acceptance, and the ledger diff would show it in git, but the guarantee that only a human decides is not enforced mechanically. | MEDIUM | `plugins/flight-check/skills/audit/SKILL.md:6`, `plugins/flight-check/skills/legal-packet/SKILL.md:6`, `plugins/flight-check/scripts/flight_check_lib/cli.py:381`, `:397`, `:415`, `plugins/flight-check/scripts/flight_check_lib/gate.py:45-48`, `tools/blindtest/run_audit.py:56` |
+| M2 | Agent output must be saved unchanged, but nothing checks that it was. In this run the coordinating session did change a quote (see T2). Its change was benign and disclosed. | LOW | `plugins/flight-check/skills/audit/SKILL.md:79`, `:106` |
 | M3 | The private-name leak gate scans only `plugins/`, but the rule forbids private names anywhere in the repository. | LOW | `tools/lint_plugin.py:287`, `CLAUDE.md:33` |
 | M4 | `tools/leak-hashes.txt` contains no hashes yet, so the fixture-identifier check does nothing until the test application exists. | INFORMATIONAL | `tools/leak-hashes.txt` |
-| M5 | The public default branch still has no license and the earlier, overclaiming README, because none of this work is merged. Fairtide audits the checkout it is given, not what is published on `main`. | LOW for the project (outside the audited checkout) | Default branch `main` |
+| M5 | The public default branch still has no license and the earlier, overclaiming README, because none of this work is merged. Flight Check audits the checkout it is given, not what is published on `main`. | LOW for the project (outside the audited checkout) | Default branch `main` |
 
 ## How the tool behaved
 
@@ -86,9 +88,9 @@ The audit also listed what it did not see: CI results on Python 3.9 and 3.12, a 
 ## Limits of this self-audit
 
 - **A single run.** Audits are not deterministic, and a second run may differ.
-- **Shared blind spots.** The same model family built Fairtide and audited it, so they may miss the same things. The Phase 5 blind test, with hidden ground truth, is the real measure of detection quality.
+- **Shared blind spots.** The same model family built Flight Check and audited it, so they may miss the same things. The Phase 5 blind test, with hidden ground truth, is the real measure of detection quality.
 - **Evidence gaps.** There was no vulnerability scan, no scan of git history, and no CI run. CI triggers only on `main` and pull requests, and no pull request exists yet. Separately from the audit, the unit tests were run locally on Python 3.9.23 and 3.13.14: all 61 ran, with 60 passing and 1 skipped.
-- **Publishing full reports.** `docs/testing.md:49` says self-audit reports are published under `docs/audits/`. This page summarizes the report rather than committing the full 33-section version. Fairtide audits this repository, so the next self-audit would read the old report as project content and could cite it instead of the code. Deciding where full reports live (for example, as release assets) is part of Phase 4.
+- **Publishing full reports.** `docs/testing.md:49` says self-audit reports are published under `docs/audits/`. This page summarizes the report rather than committing the full 33-section version. Flight Check audits this repository, so the next self-audit would read the old report as project content and could cite it instead of the code. Deciding where full reports live (for example, as release assets) is part of Phase 4.
 
 ## Proposed Phase 4 work
 
@@ -102,13 +104,13 @@ None of this has started, and it needs authorization.
    Also make finalize ignore acceptances and legal decisions recorded after the run started, so nothing recorded during an audit can change that audit's gate. Separately, the owner should decide whether an accepted CRITICAL finding may ever lift the CRITICAL block.
 2. **T2:** Normalize HTML entities in the quote check, and say "save as received" in the skill.
 3. **T1:** Allow `how_to_verify` on controls and show it in the report.
-4. **FT-0001:** Declare the document language and the title display. Document the Markdown packet as the accessible format in `docs/limitations.md`; full PDF tagging is a larger job.
+4. **FC-0001:** Declare the document language and the title display. Document the Markdown packet as the accessible format in `docs/limitations.md`; full PDF tagging is a larger job.
 5. **COMP-REGULATED-DATA, AI-COST-LIMITS:** Document that audited content goes to the model provider, and the typical cost per audit.
 6. **M3:** Apply the private denylist to all tracked files.
 7. **SUPPLY-KNOWN-VULNS:** Import `pip-audit` and `npm audit` output as evidence, or record an explicit acceptance.
-8. **FT-0002, LEGAL-TERMS, LEGAL-GOVERNING-LAW:** These are business and counsel decisions for the owner. `/fairtide:legal-packet FT-0002` can prepare an Attorney Review Packet.
+8. **FC-0002, LEGAL-TERMS, LEGAL-GOVERNING-LAW:** These are business and counsel decisions for the owner. `/flight-check:legal-packet FC-0002` can prepare an Attorney Review Packet.
 9. **`docs/testing.md`:** Correct the promise about where reports are published.
 
-Then re-audit with `/fairtide:audit` and compare against the ledger.
+Then re-audit with `/flight-check:audit` and compare against the ledger.
 
 This record reflects only the evidence examined. It is not a certification or legal advice.

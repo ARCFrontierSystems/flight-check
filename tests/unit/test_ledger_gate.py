@@ -6,7 +6,7 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import helpers  # noqa: E402
-from fairtide_lib import catalog, constants, fingerprint, gate, ledger  # noqa: E402
+from flight_check_lib import catalog, constants, fingerprint, gate, ledger  # noqa: E402
 
 TODAY = datetime.date(2026, 10, 4)
 
@@ -39,7 +39,7 @@ class LedgerTests(unittest.TestCase):
         a1 = audit_with([helpers.sql_finding()], "20261001T000000Z")
         ledger.merge(led, a1, helpers.NOW, TODAY)
         fid = a1["findings"][0]["id"]
-        self.assertEqual(fid, "FT-0001")
+        self.assertEqual(fid, "FC-0001")
         # not observed in an assessed domain -> NOT_REPRODUCED, never silently dropped
         a2 = audit_with([], "20261002T000000Z")
         changes = ledger.merge(led, a2, helpers.NOW, TODAY)
@@ -60,63 +60,63 @@ class LedgerTests(unittest.TestCase):
         changed["evidence"][0]["quote"] = "query = 'SELECT body FROM notes WHERE body LIKE ' + term"
         a2 = audit_with([changed], "20261002T000000Z")
         ledger.merge(led, a2, helpers.NOW, TODAY)
-        self.assertEqual(a2["findings"][0]["id"], "FT-0001")
+        self.assertEqual(a2["findings"][0]["id"], "FC-0001")
 
     def test_domain_not_assessed_does_not_mark_not_reproduced(self):
         led = ledger.new_ledger("t")
         ledger.merge(led, audit_with([helpers.sql_finding()], "20261001T000000Z"), helpers.NOW, TODAY)
         changes = ledger.merge(led, audit_with([], "20261002T000000Z", coverage_status="NOT_ASSESSED"), helpers.NOW, TODAY)
-        self.assertIn("FT-0001", changes["not_assessed_open"])
-        self.assertEqual(ledger.find_entry(led, "FT-0001")[1]["status"], "OPEN")
+        self.assertIn("FC-0001", changes["not_assessed_open"])
+        self.assertEqual(ledger.find_entry(led, "FC-0001")[1]["status"], "OPEN")
 
     def test_remediation_requires_reaudit_verification(self):
         led = ledger.new_ledger("t")
         ledger.merge(led, audit_with([helpers.sql_finding()], "20261001T000000Z"), helpers.NOW, TODAY)
-        ledger.record_remediation(led, "FT-0001", "parameterized the query", ["src/store.py"], helpers.NOW)
+        ledger.record_remediation(led, "FC-0001", "parameterized the query", ["src/store.py"], helpers.NOW)
         # not observed but no verification -> stays REMEDIATED (pending)
         changes = ledger.merge(led, audit_with([], "20261002T000000Z"), helpers.NOW, TODAY)
-        self.assertIn("FT-0001", changes["remediated_pending"])
-        checks = [{"finding_id": "FT-0001", "result": "FIXED_VERIFIED", "notes": "query now uses a bound parameter"}]
+        self.assertIn("FC-0001", changes["remediated_pending"])
+        checks = [{"finding_id": "FC-0001", "result": "FIXED_VERIFIED", "notes": "query now uses a bound parameter"}]
         changes = ledger.merge(led, audit_with([], "20261003T000000Z", checks=checks), helpers.NOW, TODAY)
-        self.assertIn("FT-0001", changes["verified_this_run"])
-        self.assertEqual(ledger.find_entry(led, "FT-0001")[1]["status"], "VERIFIED")
+        self.assertIn("FC-0001", changes["verified_this_run"])
+        self.assertEqual(ledger.find_entry(led, "FC-0001")[1]["status"], "VERIFIED")
 
     def test_remediated_but_still_observed_reopens(self):
         led = ledger.new_ledger("t")
         ledger.merge(led, audit_with([helpers.sql_finding()], "20261001T000000Z"), helpers.NOW, TODAY)
-        ledger.record_remediation(led, "FT-0001", "attempted fix", [], helpers.NOW)
+        ledger.record_remediation(led, "FC-0001", "attempted fix", [], helpers.NOW)
         a = audit_with([helpers.sql_finding()], "20261002T000000Z")
         changes = ledger.merge(led, a, helpers.NOW, TODAY)
-        self.assertIn("FT-0001", changes["reopened"])
+        self.assertIn("FC-0001", changes["reopened"])
         self.assertEqual(a["findings"][0]["status"], "OPEN")
 
     def test_acceptance_requires_all_fields_and_expires(self):
         led = ledger.new_ledger("t")
         ledger.merge(led, audit_with([helpers.sql_finding()], "20261001T000000Z"), helpers.NOW, TODAY)
         with self.assertRaises(ledger.LedgerError):
-            ledger.accept(led, "FT-0001", {"risk": "x risk", "reason": "", "owner": "a", "date": "2026-10-01", "scope": "s s s", "compensating_controls": "none"}, helpers.NOW, TODAY)
+            ledger.accept(led, "FC-0001", {"risk": "x risk", "reason": "", "owner": "a", "date": "2026-10-01", "scope": "s s s", "compensating_controls": "none"}, helpers.NOW, TODAY)
         fields = {"risk": "SQL injection in search", "reason": "internal tool only", "owner": "Product owner", "date": "2026-10-01",
                   "scope": "search endpoint", "compensating_controls": "network restricted", "review_date": "2026-10-10"}
-        ledger.accept(led, "FT-0001", fields, helpers.NOW, TODAY)
-        self.assertEqual(ledger.find_entry(led, "FT-0001")[1]["status"], "ACCEPTED_RISK")
+        ledger.accept(led, "FC-0001", fields, helpers.NOW, TODAY)
+        self.assertEqual(ledger.find_entry(led, "FC-0001")[1]["status"], "ACCEPTED_RISK")
         later = datetime.date(2026, 11, 1)
         a = audit_with([helpers.sql_finding()], "20261101T000000Z")
         changes = ledger.merge(led, a, helpers.NOW, later)
-        self.assertIn("FT-0001", changes["expired_acceptances"])
+        self.assertIn("FC-0001", changes["expired_acceptances"])
         self.assertEqual(a["findings"][0]["status"], "OPEN")
 
     def test_legal_status_rules(self):
         led = ledger.new_ledger("t")
         ledger.merge(led, audit_with([helpers.deletion_finding()], "20261001T000000Z"), helpers.NOW, TODAY)
         with self.assertRaises(ledger.LedgerError):
-            ledger.set_legal_status(led, "FT-0001", "DECISION_RECEIVED", "counsel said fine", "fairtide", helpers.NOW)
+            ledger.set_legal_status(led, "FC-0001", "DECISION_RECEIVED", "counsel said fine", "flight-check", helpers.NOW)
         with self.assertRaises(ledger.LedgerError):
-            ledger.set_legal_status(led, "FT-0001", "COUNSEL_REVIEWED", "", "user", helpers.NOW)
-        ledger.set_legal_status(led, "FT-0001", "LEGAL_REVIEW_REQUESTED", "sent packet", "user", helpers.NOW)
-        ledger.set_legal_status(led, "FT-0001", "DECISION_RECEIVED", "User reports counsel advised implementing hard deletion within 30 days.", "user", helpers.NOW)
+            ledger.set_legal_status(led, "FC-0001", "COUNSEL_REVIEWED", "", "user", helpers.NOW)
+        ledger.set_legal_status(led, "FC-0001", "LEGAL_REVIEW_REQUESTED", "sent packet", "user", helpers.NOW)
+        ledger.set_legal_status(led, "FC-0001", "DECISION_RECEIVED", "User reports counsel advised implementing hard deletion within 30 days.", "user", helpers.NOW)
         with self.assertRaises(ledger.LedgerError):
-            ledger.set_legal_status(led, "FT-0001", "OPEN", "", "user", helpers.NOW)
-        entry = ledger.find_entry(led, "FT-0001")[1]
+            ledger.set_legal_status(led, "FC-0001", "OPEN", "", "user", helpers.NOW)
+        entry = ledger.find_entry(led, "FC-0001")[1]
         self.assertEqual(entry["legal"]["status"], "DECISION_RECEIVED")
         self.assertEqual(entry["legal"]["history"][-1]["source"], "user")
 
@@ -124,20 +124,20 @@ class LedgerTests(unittest.TestCase):
         led = ledger.new_ledger("t")
         ledger.merge(led, audit_with([helpers.sql_finding()], "20261001T000000Z"), helpers.NOW, TODAY)
         with self.assertRaises(ledger.LedgerError):
-            ledger.close(led, "FT-0001", "looks fine", helpers.NOW)
+            ledger.close(led, "FC-0001", "looks fine", helpers.NOW)
 
     def test_remediation_check_applies_even_when_domain_not_assessed(self):
         for result, expected in (("FIXED_VERIFIED", "VERIFIED"), ("NOT_FIXED", "OPEN")):
             led = ledger.new_ledger("t")
             a11y = helpers.sql_finding(domain="accessibility", rule="accessibility.untagged-pdf", control_ids=[])
             ledger.merge(led, audit_with([a11y], "20261001T000000Z"), helpers.NOW, TODAY)
-            ledger.record_remediation(led, "FT-0001", "added language", ["pdf.py"], helpers.NOW)
-            check = {"finding_id": "FT-0001", "result": result, "notes": "re-read pdf.py"}
+            ledger.record_remediation(led, "FC-0001", "added language", ["pdf.py"], helpers.NOW)
+            check = {"finding_id": "FC-0001", "result": result, "notes": "re-read pdf.py"}
             changes = ledger.merge(led, audit_with([], "20261005T000000Z", checks=[check]), helpers.NOW, TODAY)
-            self.assertEqual(ledger.find_entry(led, "FT-0001")[1]["status"], expected, result)
-            self.assertNotIn("FT-0001", changes["not_assessed_open"])
+            self.assertEqual(ledger.find_entry(led, "FC-0001")[1]["status"], expected, result)
+            self.assertNotIn("FC-0001", changes["not_assessed_open"])
             if result == "NOT_FIXED":
-                self.assertIn("FT-0001", changes["inconsistent_remediation"])
+                self.assertIn("FC-0001", changes["inconsistent_remediation"])
 
     def test_run_cannot_be_merged_twice(self):
         led = ledger.new_ledger("t")
@@ -165,7 +165,7 @@ class GateTests(unittest.TestCase):
         a, led = self._final([helpers.sql_finding()])
         d = gate.decide(a, led, TODAY)
         self.assertEqual(d["decision"], constants.GATE_NOT_READY)
-        self.assertIn("FT-0001", d["blocking_findings"])
+        self.assertIn("FC-0001", d["blocking_findings"])
 
     def test_critical(self):
         a, led = self._final([helpers.sql_finding(severity="CRITICAL")])
@@ -205,7 +205,7 @@ class GateTests(unittest.TestCase):
         ledger.merge(led, audit_with([helpers.sql_finding()], "20261001T000000Z"), helpers.NOW, TODAY)
         fields = {"risk": "sql risk", "reason": "internal tool", "owner": "Eng lead", "date": "2026-10-04",
                   "scope": "admin page", "compensating_controls": "VPN only"}
-        ledger.accept(led, "FT-0001", fields, "2026-10-04T12:05:00Z", TODAY)
+        ledger.accept(led, "FC-0001", fields, "2026-10-04T12:05:00Z", TODAY)
         a = audit_with([helpers.sql_finding()], "20261004T120000Z")
         ledger.merge(led, a, "2026-10-04T12:10:00Z", TODAY)
         a["findings"][0]["evidence_check"] = "PASSED"
@@ -219,26 +219,26 @@ class GateTests(unittest.TestCase):
         ledger.merge(led, audit_with([helpers.sql_finding()], "20261001T000000Z"), helpers.NOW, TODAY)
         fields = {"risk": "sql risk", "reason": "internal tool", "owner": "Eng lead", "date": "2026-10-02",
                   "scope": "admin page", "compensating_controls": "VPN only"}
-        ledger.accept(led, "FT-0001", fields, "2026-10-02T08:00:00Z", TODAY)
+        ledger.accept(led, "FC-0001", fields, "2026-10-02T08:00:00Z", TODAY)
         a = audit_with([helpers.sql_finding()], "20261004T120000Z")
         ledger.merge(led, a, "2026-10-04T12:10:00Z", TODAY)
         a["findings"][0]["evidence_check"] = "PASSED"
         d = gate.decide(a, led, TODAY)
         self.assertEqual(d["decision"], constants.GATE_READY_ACCEPTED)
-        self.assertEqual(d["accepted_findings"], ["FT-0001"])
+        self.assertEqual(d["accepted_findings"], ["FC-0001"])
 
     def test_accepted_critical_finding_still_blocks(self):
         led = ledger.new_ledger("t")
         ledger.merge(led, audit_with([helpers.sql_finding(severity="CRITICAL")], "20261001T000000Z"), helpers.NOW, TODAY)
         fields = {"risk": "sql risk", "reason": "deadline", "owner": "Eng lead", "date": "2026-10-02",
                   "scope": "everything", "compensating_controls": "none"}
-        ledger.accept(led, "FT-0001", fields, "2026-10-02T08:00:00Z", TODAY)
+        ledger.accept(led, "FC-0001", fields, "2026-10-02T08:00:00Z", TODAY)
         a = audit_with([helpers.sql_finding(severity="CRITICAL")], "20261004T120000Z")
         ledger.merge(led, a, "2026-10-04T12:10:00Z", TODAY)
         a["findings"][0]["evidence_check"] = "PASSED"
         d = gate.decide(a, led, TODAY)
         self.assertEqual(d["decision"], constants.GATE_CRITICAL)
-        self.assertEqual(d["accepted_critical_findings"], ["FT-0001"])
+        self.assertEqual(d["accepted_critical_findings"], ["FC-0001"])
         self.assertEqual(d["accepted_findings"], [])
         self.assertTrue(any("never lifts the block" in r for r in d["reasons"]))
 

@@ -18,7 +18,7 @@ import re
 import sys
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-PLUGIN = os.path.join(REPO, "plugins", "fairtide")
+PLUGIN = os.path.join(REPO, "plugins", "flight-check")
 AGENTS = os.path.join(PLUGIN, "agents")
 BLOCKS = os.path.join(REPO, "tools", "agent-blocks")
 BLOCK_RE = re.compile(r"(<!-- BEGIN GENERATED: ([a-z-]+) -->\n)(.*?)(<!-- END GENERATED: \2 -->)", re.S)

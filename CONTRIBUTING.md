@@ -1,10 +1,10 @@
-# Contributing to Fairtide
+# Contributing to Flight Check
 
-Thank you for helping. Fairtide is used to make release decisions, so correctness, honesty about uncertainty, and the security of the tool itself come first.
+Thank you for helping. Flight Check is used to make release decisions, so correctness, honesty about uncertainty, and the security of the tool itself come first.
 
 ## Ground rules
 
-- **Project-agnostic.** Fairtide must work on any project. Never add logic or wording specific to one application, company, or test fixture. Improve general procedures and issue classes instead.
+- **Project-agnostic.** Flight Check must work on any project. Never add logic or wording specific to one application, company, or test fixture. Improve general procedures and issue classes instead.
 - **Evidence first.** New checks must tell agents what evidence to collect and what counter-evidence to look for. Checklist items without an evidence method will not be accepted.
 - **No legal conclusions.** Text that states or implies legal advice, compliance, certification, enforceability, or "secure" or "safe" verdicts will not be accepted. The validator enforces this for findings and summaries; reviewers enforce it for documentation.
 - **Plugin safety:**
@@ -20,14 +20,14 @@ Thank you for helping. Fairtide is used to make release decisions, so correctnes
 python3 -m unittest discover -s tests/unit -p 'test_*.py'
 python3 tools/sync_agents.py          # after editing tools/agent-blocks/ or the controls catalog
 python3 tools/lint_plugin.py
-claude plugin validate --strict plugins/fairtide
-claude --plugin-dir ./plugins/fairtide   # try it on a project
+claude plugin validate --strict plugins/flight-check
+claude --plugin-dir ./plugins/flight-check   # try it on a project
 ```
 
 Where things live:
 - **Shared agent rules:** `tools/agent-blocks/`. They are inserted into every agent by `tools/sync_agents.py`; do not edit the generated blocks by hand.
-- **Controls and domains:** `plugins/fairtide/references/required-controls.json` and `domains.json`. Agents' control lists are generated from them.
-- **Data formats:** `plugins/fairtide/schemas/fairtide.schema.json`. Keep `constants.py` consistent; the lint checks it.
+- **Controls and domains:** `plugins/flight-check/references/required-controls.json` and `domains.json`. Agents' control lists are generated from them.
+- **Data formats:** `plugins/flight-check/schemas/flight-check.schema.json`. Keep `constants.py` consistent; the lint checks it.
 
 ## Changes that need extra care
 

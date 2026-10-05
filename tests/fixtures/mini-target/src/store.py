@@ -1,4 +1,4 @@
-"""Tiny fixture module used by Fairtide's unit tests. Not a real application."""
+"""Tiny fixture module used by Flight Check's unit tests. Not a real application."""
 import sqlite3
 
 

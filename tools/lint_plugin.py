@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Repository lint for Fairtide. Run from the repository root: python3 tools/lint_plugin.py
+"""Repository lint for Flight Check. Run from the repository root: python3 tools/lint_plugin.py
 
 Checks (all must pass in CI):
   frontmatter   skills and agents use allowed keys; skills are manual-only; auditing agents are read-only
@@ -22,10 +22,10 @@ import sys
 import unicodedata
 
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
-PLUGIN = os.path.join(REPO, "plugins", "fairtide")
+PLUGIN = os.path.join(REPO, "plugins", "flight-check")
 sys.path.insert(0, os.path.join(PLUGIN, "scripts"))
 
-from fairtide_lib import VERSION, catalog, constants, render_md  # noqa: E402
+from flight_check_lib import VERSION, catalog, constants, render_md  # noqa: E402
 
 SKILL_KEYS = {"name", "description", "when_to_use", "argument-hint", "arguments", "disable-model-invocation",
               "user-invocable", "allowed-tools", "disallowed-tools", "model", "effort", "license", "metadata", "compatibility"}
@@ -63,7 +63,7 @@ def walk(base, skip_dirs=(".git",)):
 # (ledger accept, revoke, legal, close) are deliberately absent: they must always prompt.
 PREAPPROVABLE_SUBCOMMANDS = {"version", "init-run", "validate", "finalize", "render", "gate", "runs", "findings",
                              "packet", "schema-check", "ledger show", "ledger remediate"}
-PREAPPROVAL = re.compile(r"Bash\(python3 \$\{CLAUDE_PLUGIN_ROOT\}/scripts/fairtide\.py ((?:ledger )?[a-z-]+) \*\)")
+PREAPPROVAL = re.compile(r"Bash\(python3 \$\{CLAUDE_PLUGIN_ROOT\}/scripts/flight_check\.py ((?:ledger )?[a-z-]+) \*\)")
 
 
 def parse_frontmatter(path):
@@ -115,15 +115,15 @@ def check_frontmatter_and_bodies():
         check_body(path, body)
         allowed = meta.get("allowed-tools", "")
         for tool in [t.strip() for t in re.split(r",(?![^()]*\))", allowed) if t.strip()]:
-            if tool.startswith("Bash(") and "${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py" not in tool:
-                err("frontmatter", "%s: allowed-tools may pre-approve only Fairtide's own script, found %r" % (rel(path), tool))
+            if tool.startswith("Bash(") and "${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py" not in tool:
+                err("frontmatter", "%s: allowed-tools may pre-approve only Flight Check's own script, found %r" % (rel(path), tool))
             elif tool in ("Bash", "Bash(*)", "WebFetch", "WebSearch") or tool.startswith("mcp__"):
                 err("frontmatter", "%s: allowed-tools must not pre-approve %r" % (rel(path), tool))
             elif tool.startswith("Bash("):
                 m = PREAPPROVAL.fullmatch(tool)
                 if not m:
                     err("frontmatter", "%s: pre-approve one named subcommand per entry, as "
-                        "Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py <subcommand> *); found %r" % (rel(path), tool))
+                        "Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py <subcommand> *); found %r" % (rel(path), tool))
                 elif m.group(1) not in PREAPPROVABLE_SUBCOMMANDS:
                     err("frontmatter", "%s: %r must not be pre-approved; commands that record the user's decisions "
                         "must always raise a permission prompt" % (rel(path), m.group(1)))
@@ -155,7 +155,7 @@ def check_frontmatter_and_bodies():
 def check_body(path, body):
     for i, line in enumerate(body.splitlines(), 1):
         if "!`" in line or re.match(r"^\s*```!", line):
-            err("injection", "%s:%d: shell-injection syntax is not allowed in Fairtide skills or agents" % (rel(path), i))
+            err("injection", "%s:%d: shell-injection syntax is not allowed in Flight Check skills or agents" % (rel(path), i))
         if re.match(r"^\s*@[\w./~-]+", line):
             err("injection", "%s:%d: @file imports are not allowed" % (rel(path), i))
 
@@ -271,7 +271,7 @@ def check_consistency():
         err("consistency", "report must contain the 33 numbered sections in order")
     manifest = json.load(open(os.path.join(PLUGIN, ".claude-plugin", "plugin.json"), encoding="utf-8"))
     if manifest.get("version") != VERSION:
-        err("consistency", "plugin.json version %s != fairtide_lib.VERSION %s" % (manifest.get("version"), VERSION))
+        err("consistency", "plugin.json version %s != flight_check_lib.VERSION %s" % (manifest.get("version"), VERSION))
     market = json.load(open(os.path.join(REPO, ".claude-plugin", "marketplace.json"), encoding="utf-8"))
     for entry in market["plugins"]:
         src = entry["source"]
@@ -302,7 +302,7 @@ def leak_scan_files():
     """Every file that is or could next be committed: tracked files plus untracked files that are not ignored.
 
     The leak rules cover the whole repository, not only the shipped plugin. Ignored paths (for
-    example .fairtide/runs/, which can quote audited projects) are local and never committed.
+    example .flight-check/runs/, which can quote audited projects) are local and never committed.
     """
     try:
         out = subprocess.run(["git", "-C", REPO, "ls-files", "-z", "--cached", "--others", "--exclude-standard"],
@@ -336,7 +336,7 @@ def check_leaks():
             for tok in _tokens(text):
                 if hashlib.sha256(tok.encode("utf-8")).hexdigest() in hashes:
                     err("leak", "%s contains a token from the protected fixture list (hash match)" % rel(p))
-    deny_path = os.environ.get("FAIRTIDE_LEAK_DENYLIST")
+    deny_path = os.environ.get("FLIGHT_CHECK_LEAK_DENYLIST")
     if deny_path and os.path.isfile(deny_path):
         terms = [l.strip() for l in open(deny_path, encoding="utf-8") if l.strip() and not l.startswith("#")]
         for p, text in texts.items():
@@ -345,7 +345,7 @@ def check_leaks():
                     err("leak", "%s contains a private denylisted term (term #%d)" % (rel(p), terms.index(term) + 1))
         notes.append("private denylist applied (%d terms) to %d files" % (len(terms), len(texts)))
     else:
-        notes.append("private denylist not applied (set FAIRTIDE_LEAK_DENYLIST to a local file; never commit it)")
+        notes.append("private denylist not applied (set FLIGHT_CHECK_LEAK_DENYLIST to a local file; never commit it)")
 
 
 def main():

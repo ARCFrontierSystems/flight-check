@@ -2,28 +2,28 @@
 
 ## Requirements
 
-- Claude Code with plugin support. Fairtide was developed and tested with Claude Code 2.1.289 and uses agent settings introduced in 2.1.271.
-- Python 3.9 or newer, available as `python3`. Fairtide's script uses only the standard library. On Windows, make sure `python3` resolves, for example through the Python launcher or an alias; otherwise Fairtide reports that its deterministic checks could not run.
+- Claude Code with plugin support. Flight Check was developed and tested with Claude Code 2.1.289 and uses agent settings introduced in 2.1.271.
+- Python 3.9 or newer, available as `python3`. Flight Check's script uses only the standard library. On Windows, make sure `python3` resolves, for example through the Python launcher or an alias; otherwise Flight Check reports that its deterministic checks could not run.
 
 ## Personal use (all projects on your machine)
 
 ```bash
 claude plugin marketplace add ARCFrontierSystems/project-guardian
-claude plugin install fairtide@arc-frontier-systems
+claude plugin install flight-check@arc-frontier-systems
 ```
 
 Or, inside a Claude Code session:
 
 ```
 /plugin marketplace add ARCFrontierSystems/project-guardian
-/plugin install fairtide@arc-frontier-systems
+/plugin install flight-check@arc-frontier-systems
 ```
 
 Adding the marketplace clones this repository. It contains the plugin and its development tooling. It does not contain deliberately vulnerable test applications; those are kept in a separate repository.
 
 ## Team use
 
-To offer Fairtide to everyone working in a repository, commit `.claude/settings.json` in that repository:
+To offer Flight Check to everyone working in a repository, commit `.claude/settings.json` in that repository:
 
 ```json
 {
@@ -33,7 +33,7 @@ To offer Fairtide to everyone working in a repository, commit `.claude/settings.
     }
   },
   "enabledPlugins": {
-    "fairtide@arc-frontier-systems": true
+    "flight-check@arc-frontier-systems": true
   }
 }
 ```
@@ -43,32 +43,32 @@ To offer Fairtide to everyone working in a repository, commit `.claude/settings.
 ```bash
 git clone https://github.com/ARCFrontierSystems/project-guardian.git
 cd /path/to/your/project
-claude --plugin-dir /path/to/project-guardian/plugins/fairtide
+claude --plugin-dir /path/to/project-guardian/plugins/flight-check
 ```
 
-## Allowing Fairtide's script
+## Allowing Flight Check's script
 
-Fairtide runs `python3 <plugin directory>/scripts/fairtide.py` to validate results, check evidence, and compute the ship gate. Each skill pre-approves only the subcommands it needs during its first turn; after that, Claude Code asks you. To avoid repeated prompts, or for non-interactive runs, allow the audit subcommands in your settings' `permissions.allow`:
+Flight Check runs `python3 <plugin directory>/scripts/flight_check.py` to validate results, check evidence, and compute the ship gate. Each skill pre-approves only the subcommands it needs during its first turn; after that, Claude Code asks you. To avoid repeated prompts, or for non-interactive runs, allow the audit subcommands in your settings' `permissions.allow`:
 
 ```json
-"Bash(python3 /absolute/path/to/plugins/fairtide/scripts/fairtide.py init-run *)",
-"Bash(python3 /absolute/path/to/plugins/fairtide/scripts/fairtide.py validate *)",
-"Bash(python3 /absolute/path/to/plugins/fairtide/scripts/fairtide.py finalize *)",
-"Bash(python3 /absolute/path/to/plugins/fairtide/scripts/fairtide.py render *)"
+"Bash(python3 /absolute/path/to/plugins/flight-check/scripts/flight_check.py init-run *)",
+"Bash(python3 /absolute/path/to/plugins/flight-check/scripts/flight_check.py validate *)",
+"Bash(python3 /absolute/path/to/plugins/flight-check/scripts/flight_check.py finalize *)",
+"Bash(python3 /absolute/path/to/plugins/flight-check/scripts/flight_check.py render *)"
 ```
 
 Add `runs`, `findings`, and `packet` the same way if you build Attorney Review Packets non-interactively.
 
-**Do not allow `fairtide.py ledger accept`, `revoke`, `legal`, or `close`, and do not allow `fairtide.py *`.** Those commands record decisions only you can make: accepted risks, counsel decisions, and closures. Their permission prompt is part of your confirmation, so a skill can never record one without you seeing it.
+**Do not allow `flight_check.py ledger accept`, `revoke`, `legal`, or `close`, and do not allow `flight_check.py *`.** Those commands record decisions only you can make: accepted risks, counsel decisions, and closures. Their permission prompt is part of your confirmation, so a skill can never record one without you seeing it.
 
 The script never makes network connections and never runs your project's code. The repository lint rejects any import of network or process modules in it.
 
 ## Updates and removal
 
-- Update: `claude plugin update fairtide@arc-frontier-systems`. Automatic updates are off by default for third-party marketplaces.
-- Remove: `claude plugin uninstall fairtide@arc-frontier-systems`.
-- Fairtide's data lives in each project's `.fairtide/` directory (run output and the ledger). Delete it if you no longer need it.
+- Update: `claude plugin update flight-check@arc-frontier-systems`. Automatic updates are off by default for third-party marketplaces.
+- Remove: `claude plugin uninstall flight-check@arc-frontier-systems`.
+- Flight Check's data lives in each project's `.flight-check/` directory (run output and the ledger). Delete it if you no longer need it.
 
 ## Cloud sessions and Cowork
 
-Personal plugins and skills installed on your machine are not available in Claude Code cloud sessions or Cowork. To use Fairtide there, commit the team settings above to the repository you work on, or check what your Claude plan supports for account-level plugins.
+Personal plugins and skills installed on your machine are not available in Claude Code cloud sessions or Cowork. To use Flight Check there, commit the team settings above to the repository you work on, or check what your Claude plan supports for account-level plugins.

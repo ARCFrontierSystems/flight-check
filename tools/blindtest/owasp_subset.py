@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""Build a small, balanced OWASP Benchmark (Java) fixture and a Fairtide ground-truth manifest.
+"""Build a small, balanced OWASP Benchmark (Java) fixture and a Flight Check ground-truth manifest.
 
 The OWASP Benchmark is a public test suite for application-security scanners. Each test case
 is labeled as a real vulnerability or a false positive, which makes the false positives ready-made
-decoys. Fairtide's own blind-test fixtures cover the other domains; this subset covers application
+decoys. Flight Check's own blind-test fixtures cover the other domains; this subset covers application
 security. Models may have seen the benchmark during training, so treat scores on it as optimistic.
 
 The benchmark is licensed under GPL-2.0. This tool copies files from a local checkout into a
@@ -11,7 +11,7 @@ directory outside this repository (with the benchmark's LICENSE) and never vendo
 
 Usage:
     python3 tools/blindtest/owasp_subset.py --benchmark /path/to/benchmarkjava \\
-        --out /path/to/fixture --per-class 2 --seed fairtide-1
+        --out /path/to/fixture --per-class 2 --seed flight-check-1
 
 This writes <out>/app/ (the code to audit) and <out>/ground-truth/manifest.json (outside the app).
 Development-only; never shipped in the plugin.
@@ -27,7 +27,7 @@ import sys
 
 PKG = os.path.join("src", "main", "java", "org", "owasp", "benchmark")
 
-# Category -> (severity, severity_tolerance, tier, domains). Severities are Fairtide's judgment of
+# Category -> (severity, severity_tolerance, tier, domains). Severities are Flight Check's judgment of
 # typical impact, not part of the benchmark, so the tolerance is generous.
 CATEGORIES = {
     "sqli": ("HIGH", 1, "must", ["application-security"]),
@@ -81,7 +81,7 @@ def main(argv=None):
     p.add_argument("--benchmark", required=True, help="local checkout of OWASP-Benchmark/BenchmarkJava")
     p.add_argument("--out", required=True, help="new directory outside this repository")
     p.add_argument("--per-class", type=int, default=2, help="real and false-positive cases per category")
-    p.add_argument("--seed", default="fairtide-1")
+    p.add_argument("--seed", default="flight-check-1")
     args = p.parse_args(argv)
 
     bench = os.path.abspath(args.benchmark)
