@@ -1,3 +1,7 @@
-# SHA-256 hashes (lowercase hex) of lowercase identifiers that must never appear in the shipped plugin,
+# SHA-256 hashes (lowercase hex) of lowercase identifiers that must never appear anywhere in this repository,
 # for example canary tokens and unique identifiers from blind-test fixtures. One hash per line.
 # Add hashes with: python3 -c "import hashlib,sys; print(hashlib.sha256(sys.argv[1].lower().encode()).hexdigest())" TOKEN
+# testbed App A canary
+c36333452c09e2516bf0b48a0a2fe2279cb6fe8ce3aace4d0fb9bd43d5c59fb6
+# testbed App B canary (held out)
+9ea645f918b39760467bf0c055f932e6becb0295485d415c85cb49d068f0caf3
