@@ -26,6 +26,38 @@ PLUGIN = os.path.join(REPO, "plugins", "fairtide")
 EXCLUDE = {".git", "ground-truth", "manifest.json", ".fairtide"}
 
 
+def summarize_stream(path):
+    """Final result, result count, and every denied tool call (with its target) from a stream-json log.
+
+    Headless runs can emit an interim result while background agents work; the last result is final.
+    """
+    results, uses, denied = [], {}, []
+    with open(path, encoding="utf-8", errors="replace") as fh:
+        for line in fh:
+            try:
+                event = json.loads(line)
+            except ValueError:
+                continue
+            if event.get("type") == "result":
+                results.append({k: event.get(k) for k in ("subtype", "is_error", "num_turns", "duration_ms", "total_cost_usd", "result")})
+            message = event.get("message")
+            content = message.get("content") if isinstance(message, dict) else None
+            if not isinstance(content, list):
+                continue
+            for block in content:
+                if block.get("type") == "tool_use":
+                    inp = block.get("input") or {}
+                    uses[block.get("id")] = {"tool": block.get("name"), "target": inp.get("file_path") or inp.get("command") or inp.get("subagent_type"),
+                                             "subagent": bool(event.get("parent_tool_use_id"))}
+                elif block.get("type") == "tool_result" and block.get("is_error"):
+                    text = block.get("content")
+                    text = text if isinstance(text, str) else json.dumps(text)
+                    if "denied" in text.lower() or "permission" in text.lower():
+                        denied.append(dict(uses.get(block.get("tool_use_id"), {}), error=text[:300]))
+    return {"results": len(results), "final": results[-1] if results else None,
+            "final_result": results[-1]["result"] if results else None, "denied_tool_calls": denied}
+
+
 def main(argv=None):
     p = argparse.ArgumentParser()
     p.add_argument("--app", required=True, help="application directory to audit (must not contain the answer key)")
@@ -66,18 +98,20 @@ def main(argv=None):
     prompt = "/fairtide:audit"
     if evidence_args:
         prompt += " --evidence " + " ".join(evidence_args)
+    # Stream every event to a log so a failed run can be diagnosed (which tool call was denied, and why).
     cmd = ["claude", "-p", prompt, "--plugin-dir", PLUGIN, "--tools", "Read,Write,Agent,Bash,Glob,Grep",
            "--permission-mode", "dontAsk", "--settings", settings_path, "--strict-mcp-config",
-           "--output-format", "json", "--max-budget-usd", str(args.budget), "--no-session-persistence"]
+           "--output-format", "stream-json", "--verbose", "--max-budget-usd", str(args.budget)]
     if args.model:
         cmd += ["--model", args.model]
     print("auditing copy at %s" % target)
-    proc = subprocess.run(cmd, cwd=target, stdin=subprocess.DEVNULL, capture_output=True, text=True)
     os.makedirs(args.out, exist_ok=True)
+    stream_path = os.path.join(args.out, "claude-stream.jsonl")
+    with open(stream_path, "w") as out_fh, open(os.path.join(args.out, "claude-stderr.txt"), "w") as err_fh:
+        proc = subprocess.run(cmd, cwd=target, stdin=subprocess.DEVNULL, stdout=out_fh, stderr=err_fh, text=True)
+    summary = summarize_stream(stream_path)
     with open(os.path.join(args.out, "claude-output.json"), "w") as fh:
-        fh.write(proc.stdout)
-    with open(os.path.join(args.out, "claude-stderr.txt"), "w") as fh:
-        fh.write(proc.stderr)
+        json.dump(summary, fh, indent=2)
     runs = os.path.join(target, ".fairtide", "runs")
     copied = []
     if os.path.isdir(runs):
@@ -91,7 +125,8 @@ def main(argv=None):
         shutil.copy(ledger, os.path.join(args.out, "ledger.json"))
     if not args.keep:
         shutil.rmtree(work, ignore_errors=True)
-    print(json.dumps({"exit_code": proc.returncode, "runs": copied, "out": os.path.abspath(args.out)}, indent=2))
+    print(json.dumps({"exit_code": proc.returncode, "runs": copied, "out": os.path.abspath(args.out),
+                      "denied_tool_calls": len(summary["denied_tool_calls"]), "final_result": (summary["final_result"] or "")[:300]}, indent=2))
     return 0 if copied else 1
 
 
