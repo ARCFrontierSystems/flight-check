@@ -47,7 +47,7 @@ Arguments: `$ARGUMENTS`
 
 ## 1. Start the run
 
-Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py init-run --base <run base> --root <root>`. It prints `run_id`, `run_dir`, `started_at`, and `commit`.
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/fairtide.py init-run --base <run base> --root <root>`. It prints `run_id`, `run_dir`, `started_at`, and `commit`. Use `run_dir` and the absolute audit root exactly as given, character for character, in every file path you write and every prompt you send; never shorten or retype them from memory. Paths outside the audit root are refused.
 
 If `python3` is unavailable or the command fails, follow "If the script cannot run" at the end.
 
