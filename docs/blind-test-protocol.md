@@ -10,6 +10,13 @@ Fairtide is evaluated against deliberately constructed synthetic applications wh
 4. **Held-out fixtures.** Keep at least one fixture that is never used while improving Fairtide and is scored only at release time. If a release scores clearly better on the development fixtures than on the held-out one, treat that as a sign of overfitting.
 5. **Canaries.** Put a unique random string in each fixture, for example in a comment. Add its SHA-256 hash to `tools/leak-hashes.txt`, so a leak into the plugin fails CI.
 
+## Where the fixtures come from
+
+Two kinds of fixture are used:
+
+- **Generated test applications** in the private testbed repository. These cover documentation that contradicts the code, legal and business gaps, privacy commitments, accessibility, reliability, and operations. Fixture authors may decline to plant security flaws, and when the first fixture author was asked to, a safety check stopped it. Do not try to work around such a refusal. Security flaws that turn up anyway are scored as unlisted findings.
+- **A public security benchmark** for the security domains. `tools/blindtest/owasp_subset.py` builds a balanced, deterministic sample of the OWASP Benchmark (Java). Its cases are labeled real vulnerability or false positive, and the false positives serve as decoys. The answer key is generated from the benchmark's published expected results and kept outside the audited directory. The benchmark is GPL-2.0, so the tool builds the sample outside this repository and never vendors it here. Models may have seen the benchmark during training, so report security scores from it as optimistic.
+
 ## What a test application should contain
 
 The goal is a realistic, unglamorous application. Avoid the well-known public vulnerable apps: models may have memorized them. Include, spread across files and layers:
@@ -70,16 +77,24 @@ Store it outside the application, for example `ground-truth/manifest.json` next 
 
 ## Running a blind test
 
-From a checkout of this repository, with the testbed checked out separately:
+From a checkout of this repository, with the testbed checked out separately and results kept outside both repositories (they quote fixture content):
 
 ```bash
-python3 tools/blindtest/run_audit.py --app ../testbed/app --out results/testbed-A-run1
-python3 tools/blindtest/score.py --final results/testbed-A-run1/<run_id>/audit.final.json \
-  --manifest ../testbed/ground-truth/manifest.json --json results/testbed-A-run1/score.json \
-  --markdown results/testbed-A-run1/score.md
+python3 tools/blindtest/run_audit.py --app ../testbed/app-a --out ../results/app-a-run1
+python3 tools/blindtest/score.py --final ../results/app-a-run1/<run_id>/audit.final.json \
+  --manifest ../testbed/ground-truth/app-a.json --json ../results/app-a-run1/score.json \
+  --markdown ../results/app-a-run1/score.md
 ```
 
-Then exercise the Legal Review Assistant on the same run: run `/fairtide:legal-packet` against the run directory, inspect the PDF, and score its questions (below).
+- **Each run** uses a fresh disposable copy of the application and the same narrowed permissions as `docs/hardened-mode.md`. It writes the full event log (`claude-stream.jsonl`) and a summary of denied tool calls (`claude-output.json`), so a stalled run can be diagnosed.
+- **Repeat each fixture at least three times,** then combine the scores with `python3 tools/blindtest/stability.py ../results/app-a-run*/score.json`.
+- **For the security benchmark:**
+  1. Build the sample with `python3 tools/blindtest/owasp_subset.py --benchmark <checkout> --out ../results/owasp-subset`.
+  2. Audit `../results/owasp-subset/app` the same way.
+  3. Score against `../results/owasp-subset/ground-truth/manifest.json`.
+- **The held-out fixture** is audited with the others but scored only at release time, by the person who holds its answer key. Nothing learned from it may change Fairtide before that release.
+
+Then exercise the Legal Review Assistant on a development-fixture run: run `/fairtide:legal-packet` against the run directory, inspect the PDF, and score its questions (below).
 
 ## What is measured
 
