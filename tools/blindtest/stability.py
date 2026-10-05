@@ -17,8 +17,8 @@ import itertools
 import json
 import sys
 
-METRICS = ("recall", "must_recall", "precision_lower_bound", "precision_excluding_unlisted",
-           "decoy_false_positive_rate", "severity_within_tolerance")
+METRICS = ("recall", "must_recall", "recall_location_only", "must_recall_location_only", "precision_lower_bound",
+           "precision_excluding_unlisted", "decoy_false_positive_rate", "severity_within_tolerance")
 
 
 def _spread(values):

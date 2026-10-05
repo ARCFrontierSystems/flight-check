@@ -106,6 +106,28 @@ def score(final, manifest, tol=5):
         used_i.add(ii)
         matches[ii] = fi
 
+    # Secondary pass: the same location, filed under a different domain. Fixture authors and Flight Check
+    # can reasonably disagree about the domain (a missing timeout is reliability or availability), so
+    # these are reported separately as location-only matches and never counted in the strict metrics.
+    loose = []
+    for fi, f in enumerate(findings):
+        if fi in used_f:
+            continue
+        for ii, issue in enumerate(issues):
+            if ii in used_i:
+                continue
+            ov = best_overlap(f, issue["locations"] + issue.get("alternate_locations", []), tol)
+            if ov > 0:
+                loose.append((ov, fi, ii))
+    loose.sort(key=lambda c: (-c[0], c[1], c[2]))
+    location_only = {}
+    for ov, fi, ii in loose:
+        if fi in used_f or ii in used_i:
+            continue
+        used_f.add(fi)
+        used_i.add(ii)
+        location_only[ii] = fi
+
     decoy_fp, unlisted = [], []
     for fi, f in enumerate(findings):
         if fi in used_f:
@@ -128,6 +150,9 @@ def score(final, manifest, tol=5):
                         "evidence_check": f.get("evidence_check"), "severity_delta": diff})
         else:
             row["detected"] = False
+            if ii in location_only:
+                f = findings[location_only[ii]]
+                row.update({"detected_location_only": True, "finding": f["id"], "finding_domain": f["domain"]})
         if issue.get("legal"):
             legal_total += 1
             if ii in matches:
@@ -170,6 +195,9 @@ def score(final, manifest, tol=5):
         "recall": round(tp / len(issues), 3) if issues else None,
         "recall_ci95": wilson(tp, len(issues)),
         "must_recall": round(len(must_hit) / len(must), 3) if must else None,
+        "location_only_matches": len(location_only),
+        "recall_location_only": round((tp + len(location_only)) / len(issues), 3) if issues else None,
+        "must_recall_location_only": round(sum(1 for r in must if r["detected"] or r.get("detected_location_only")) / len(must), 3) if must else None,
         "precision_lower_bound": round(tp / (tp + fp_known + len(unlisted)), 3) if (tp + fp_known + len(unlisted)) else None,
         "precision_excluding_unlisted": round(tp / (tp + fp_known), 3) if (tp + fp_known) else None,
         "decoy_false_positive_rate": round(fp_known / decoy_n, 3) if decoy_n else None,

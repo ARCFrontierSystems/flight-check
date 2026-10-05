@@ -66,6 +66,14 @@ class ScorerTests(unittest.TestCase):
     def test_domain_mismatch_is_not_a_match(self):
         r = score.score(final_with([finding("FC-1", "testing", "src/a.ts", 44, 47)]), MANIFEST)
         self.assertEqual(r["counts"]["true_positives"], 0)
+        # ...but it is reported as a location-only match and not as an unlisted finding
+        self.assertEqual(r["location_only_matches"], 1)
+        self.assertEqual(r["counts"]["unlisted_findings"], 0)
+        self.assertAlmostEqual(r["recall_location_only"], 0.333, places=3)
+        row = [p for p in r["per_issue"] if p["issue"] == "GT-1"][0]
+        self.assertFalse(row["detected"])
+        self.assertTrue(row["detected_location_only"])
+        self.assertEqual(row["finding_domain"], "testing")
 
     def test_stability_summary_across_runs(self):
         import stability
