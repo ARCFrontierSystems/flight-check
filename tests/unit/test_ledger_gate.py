@@ -62,6 +62,67 @@ class LedgerTests(unittest.TestCase):
         ledger.merge(led, a2, helpers.NOW, TODAY)
         self.assertEqual(a2["findings"][0]["id"], "FC-0001")
 
+    def test_reworded_rule_on_the_same_line_keeps_id(self):
+        # Agents name rules freely; the same issue on the same quoted line must keep its ID.
+        led = ledger.new_ledger("t")
+        a1 = audit_with([helpers.sql_finding()], "20261001T000000Z")
+        ledger.merge(led, a1, helpers.NOW, TODAY)
+        reworded = helpers.sql_finding(rule="application-security.sql-injection-in-search",
+                                       title="User input is concatenated into the search SQL query")
+        a2 = audit_with([reworded], "20261002T000000Z")
+        changes = ledger.merge(led, a2, helpers.NOW, TODAY)
+        self.assertEqual(a2["findings"][0]["id"], "FC-0001")
+        self.assertEqual(changes["new"], [])
+        self.assertEqual(led["entries"][a2["findings"][0]["fingerprint"]]["rule"], "application-security.sql-injection-in-search")
+
+    def test_reworded_rule_and_quote_with_the_same_title_keeps_id_and_flags_regression(self):
+        led = ledger.new_ledger("t")
+        a1 = audit_with([helpers.sql_finding()], "20261001T000000Z")
+        ledger.merge(led, a1, helpers.NOW, TODAY)
+        ledger.merge(led, audit_with([], "20261002T000000Z"), helpers.NOW, TODAY)
+        ledger.close(led, "FC-0001", "user confirmed fix", helpers.NOW)
+        back = helpers.sql_finding(rule="application-security.unparameterized-query",
+                                   title="Search query concatenates user input into raw SQL")
+        back["evidence"][0]["quote"] = "return conn.execute(query).fetchall()"
+        a2 = audit_with([back], "20261003T000000Z")
+        changes = ledger.merge(led, a2, helpers.NOW, TODAY)
+        self.assertEqual(a2["findings"][0]["id"], "FC-0001")
+        self.assertEqual(changes["regressions"], ["FC-0001"])
+
+    def test_different_issue_on_the_same_line_gets_a_new_id(self):
+        led = ledger.new_ledger("t")
+        a1 = audit_with([helpers.sql_finding()], "20261001T000000Z")
+        ledger.merge(led, a1, helpers.NOW, TODAY)
+        other = helpers.sql_finding(rule="application-security.unbounded-result-set",
+                                    title="Search returns every matching row without a limit", severity="LOW")
+        a2 = audit_with([other], "20261002T000000Z")
+        changes = ledger.merge(led, a2, helpers.NOW, TODAY)
+        self.assertEqual(changes["new"], ["FC-0002"])
+        self.assertIn("FC-0001", changes["not_reproduced"])
+
+    def test_ambiguous_reworded_match_gets_a_new_id(self):
+        led = ledger.new_ledger("t")
+        first = helpers.sql_finding(rule="application-security.sql-injection-a")
+        second = helpers.sql_finding(local_id="F2", rule="application-security.sql-injection-b")
+        a1 = audit_with([first, second], "20261001T000000Z")
+        ledger.merge(led, a1, helpers.NOW, TODAY)
+        a2 = audit_with([helpers.sql_finding(rule="application-security.sql-injection-c")], "20261002T000000Z")
+        changes = ledger.merge(led, a2, helpers.NOW, TODAY)
+        self.assertEqual(changes["new"], ["FC-0003"])
+
+    def test_exact_match_wins_over_a_looser_one(self):
+        led = ledger.new_ledger("t")
+        a1 = audit_with([helpers.sql_finding()], "20261001T000000Z")
+        ledger.merge(led, a1, helpers.NOW, TODAY)
+        # The reworded finding sorts first; the exact finding must still get FC-0001.
+        reworded = helpers.sql_finding(local_id="F0", rule="application-security.aaa-sql-injection")
+        a2 = audit_with([reworded, helpers.sql_finding()], "20261002T000000Z")
+        ledger.merge(led, a2, helpers.NOW, TODAY)
+        ids = {f["rule"]: f["id"] for f in a2["findings"]}
+        self.assertEqual(ids["application-security.sql-injection"], "FC-0001")
+        self.assertEqual(ids["application-security.aaa-sql-injection"], "FC-0002")
+        self.assertEqual(len(led["entries"]), 2)
+
     def test_domain_not_assessed_does_not_mark_not_reproduced(self):
         led = ledger.new_ledger("t")
         ledger.merge(led, audit_with([helpers.sql_finding()], "20261001T000000Z"), helpers.NOW, TODAY)

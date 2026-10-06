@@ -16,6 +16,7 @@ Two kinds of fixture are used:
 
 - **Generated test applications** in the private testbed repository. These cover documentation that contradicts the code, legal and business gaps, privacy commitments, accessibility, reliability, and operations. Fixture authors may decline to plant security flaws, and when the first fixture author was asked to, a safety check stopped it. Do not try to work around such a refusal. Security flaws that turn up anyway are scored as unlisted findings.
 - **A public security benchmark** for the security domains. `tools/blindtest/owasp_subset.py` builds a balanced, deterministic sample of the OWASP Benchmark (Java). Its cases are labeled real vulnerability or false positive, and the false positives serve as decoys. The answer key is generated from the benchmark's published expected results and kept outside the audited directory. The benchmark is GPL-2.0, so the tool builds the sample outside this repository and never vendors it here. Models may have seen the benchmark during training, so report security scores from it as optimistic.
+  - **Recognition changes the result.** In Phase 5, Flight Check recognized the unmodified sample as the OWASP Benchmark from its names and headers. It treated the code as a deliberately vulnerable test corpus, read one test case, and reported the planted flaws once as context. Per-case scores from an unmodified sample therefore measure that behavior, not detection. Report them that way, or use a sample whose identifying names have been removed.
 
 ## What a test application should contain
 
@@ -92,7 +93,11 @@ python3 tools/blindtest/score.py --final ../results/app-a-run1/<run_id>/audit.fi
   1. Build the sample with `python3 tools/blindtest/owasp_subset.py --benchmark <checkout> --out ../results/owasp-subset`.
   2. Audit `../results/owasp-subset/app` the same way.
   3. Score against `../results/owasp-subset/ground-truth/manifest.json`.
-- **The held-out fixture** is audited with the others but scored only at release time, by the person who holds its answer key. Nothing learned from it may change Flight Check before that release.
+- **The held-out fixture** is scored only at release time, by the person who holds its answer key. Nothing learned from it may change Flight Check before that release. Its development-time runs are recorded as aggregates only (gate, finding counts, evidence failures, denied calls).
+  - **At release,** audit it three times with the release build, then score each run and combine them:
+    `python3 tools/blindtest/score.py --final <run>/audit.final.json --manifest <held-out key> --json <run>/score.json`, then
+    `python3 tools/blindtest/stability.py <run1>/score.json <run2>/score.json <run3>/score.json`.
+  - Compare its numbers with the development fixture's from the same release. Clearly better results on the development fixture suggest overfitting.
 
 Then exercise the Legal Review Assistant on a development-fixture run: run `/flight-check:legal-packet` against the run directory, inspect the PDF, and score its questions (below).
 
@@ -101,7 +106,8 @@ Then exercise the Legal Review Assistant on a development-fixture run: run `/fli
 - **Detection:** recall overall, must-tier recall, and per-domain recall (with 95% confidence intervals; per-domain numbers from one fixture are diagnostic only).
 - **False positives:**
   - Decoy false-positive rate: findings on declared secure controls.
-  - Unlisted findings: these are adjudicated by a person as either real unseeded issues or false positives. Precision is reported with unlisted findings counted against it (a lower bound) and excluding them.
+  - Unlisted findings: these are adjudicated by a person as a real unseeded issue, a repeat of a seeded issue, a false positive, or an artifact of the test setup (such as the start guard). Precision is reported with unlisted findings counted against it (a lower bound), excluding them, and after adjudication. The scorer marks an unlisted finding that overlaps an already-detected issue as a *possible repeat*; that is a hint, not a verdict.
+  - Location-only matches (the right place, a different domain) are reported separately and never counted in strict recall.
 - **Accuracy:** severity accuracy (exact, and within tolerance); confidence calibration (the share of true positives at each confidence level); evidence integrity (findings whose quotes did not match the files, which must be zero).
 - **Applicability honesty:** expected not-applicable domains, and findings in domains that do not apply.
 - **Legal Review Assistant:**

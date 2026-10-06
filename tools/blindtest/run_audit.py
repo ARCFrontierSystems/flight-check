@@ -129,9 +129,11 @@ def main(argv=None):
     if not args.keep:
         shutil.rmtree(work, ignore_errors=True)
         shutil.rmtree(target, ignore_errors=True)
-    print(json.dumps({"exit_code": proc.returncode, "runs": copied, "out": os.path.abspath(args.out),
+    # A run directory alone is not success: the session can stop (for example at a usage limit) after init-run.
+    finalized = [n for n in copied if os.path.exists(os.path.join(args.out, n, "audit.final.json"))]
+    print(json.dumps({"exit_code": proc.returncode, "runs": copied, "finalized": finalized, "out": os.path.abspath(args.out),
                       "denied_tool_calls": len(summary["denied_tool_calls"]), "final_result": (summary["final_result"] or "")[:300]}, indent=2))
-    return 0 if copied else 1
+    return 0 if proc.returncode == 0 and finalized else 1
 
 
 if __name__ == "__main__":

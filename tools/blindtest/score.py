@@ -12,6 +12,9 @@ Unmatched findings:
   - overlapping a declared secure control (decoy)  -> decoy false positive
   - otherwise                                       -> unlisted; needs human adjudication
                                                        (a real but unseeded issue is not a false positive)
+    An unlisted finding that overlaps an issue another finding already matched is marked
+    possible_repeat_of. That is a hint for the adjudicator, not a verdict: a different issue in the
+    same lines, or a false positive, looks the same to this tool.
 
 Paths in the manifest are relative to the audited application root.
 This tool is development-only and is never shipped in the plugin.
@@ -129,12 +132,16 @@ def score(final, manifest, tol=5):
         location_only[ii] = fi
 
     decoy_fp, unlisted = [], []
+    detected_issues = sorted(set(matches) | set(location_only))
     for fi, f in enumerate(findings):
         if fi in used_f:
             continue
         hit = [d["id"] for d in decoys if f["domain"] in d["domains"] and best_overlap(f, d["locations"], tol) > 0]
-        (decoy_fp if hit else unlisted).append({"finding": f["id"], "title": f["title"], "domain": f["domain"],
-                                                "severity": f["severity"], "decoys": hit})
+        row = {"finding": f["id"], "title": f["title"], "domain": f["domain"], "severity": f["severity"], "decoys": hit}
+        if not hit:
+            row["possible_repeat_of"] = [issues[ii]["id"] for ii in detected_issues
+                                         if best_overlap(f, issues[ii]["locations"] + issues[ii].get("alternate_locations", []), tol) > 0]
+        (decoy_fp if hit else unlisted).append(row)
 
     per_issue = []
     sev_exact = sev_within = 0
@@ -191,7 +198,8 @@ def score(final, manifest, tol=5):
         "gate": final["gate"]["decision"],
         "expected_gate": manifest.get("expected_gate"),
         "counts": {"issues": len(issues), "must_issues": len(must), "decoys": decoy_n, "findings": n_findings,
-                   "true_positives": tp, "decoy_false_positives": fp_known, "unlisted_findings": len(unlisted)},
+                   "true_positives": tp, "decoy_false_positives": fp_known, "unlisted_findings": len(unlisted),
+                   "unlisted_possible_repeats": sum(1 for u in unlisted if u["possible_repeat_of"])},
         "recall": round(tp / len(issues), 3) if issues else None,
         "recall_ci95": wilson(tp, len(issues)),
         "must_recall": round(len(must_hit) / len(must), 3) if must else None,
@@ -251,7 +259,9 @@ def to_markdown(r):
         lines += ["", "## Decoy false positives", ""] + ["- %(finding)s %(title)s (decoys %(decoys)s)" % d for d in r["decoy_false_positives"]]
     if r["unlisted_for_adjudication"]:
         lines += ["", "## Unlisted findings (adjudicate: real unseeded issue or false positive?)", ""] + \
-                 ["- %(finding)s [%(severity)s/%(domain)s] %(title)s" % d for d in r["unlisted_for_adjudication"]]
+                 ["- %s [%s/%s] %s%s" % (d["finding"], d["severity"], d["domain"], d["title"],
+                                         " (possible repeat of %s)" % ", ".join(d["possible_repeat_of"]) if d.get("possible_repeat_of") else "")
+                  for d in r["unlisted_for_adjudication"]]
     return "\n".join(lines) + "\n"
 
 

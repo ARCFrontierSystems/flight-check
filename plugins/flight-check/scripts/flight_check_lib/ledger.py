@@ -10,6 +10,7 @@ Rules enforced here:
 
 import datetime
 import os
+import re
 
 from . import catalog, constants, fingerprint, minischema
 from .jsonio import dump_json, load_json
@@ -94,6 +95,22 @@ def find_entry(led, finding_id):
     raise LedgerError("no finding %s in the ledger" % finding_id)
 
 
+def _entry_path(entry):
+    return (entry.get("match_key") or "").partition("|")[2]
+
+
+def _rule_words(rule):
+    return set(w for w in re.split(r"[^a-z0-9]+", rule.lower().partition(".")[2] or rule.lower()) if w)
+
+
+def _title_words(title):
+    return set(re.findall(r"[a-z0-9]{3,}", title.lower()))
+
+
+def _word_similarity(a, b):
+    return len(a & b) / float(len(a | b)) if a and b else 0.0
+
+
 def merge(led, audit, now_iso, today):
     """Assign stable IDs and statuses to audit findings and update the ledger in place.
 
@@ -105,33 +122,65 @@ def merge(led, audit, now_iso, today):
     entries = led["entries"]
     alt_index = {}
     key_index = {}
+    path_index = {}
     for fp, e in entries.items():
         for alt in e.get("alt_fingerprints") or []:
             alt_index[alt] = fp
         key_index.setdefault(e.get("match_key", ""), []).append(fp)
+        path_index.setdefault((e["domain"], _entry_path(e)), []).append(fp)
 
     findings = sorted(audit["findings"], key=lambda f: (f["domain"], f["rule"], fingerprint.primary_path(f), f["local_id"]))
     fps = fingerprint.assign(findings)
     matched = set()
     changes = {"new": [], "regressions": [], "reopened": [], "expired_acceptances": []}
 
-    for f, fp in zip(findings, fps):
-        key = fingerprint.match_key(f)
+    # Pass 1: exact fingerprints, including ones recorded earlier as alternates. These go first so that
+    # a looser match below can never take an entry that another finding matches exactly.
+    assigned = [None] * len(findings)
+    for i, fp in enumerate(fps):
         entry_fp = fp if fp in entries else alt_index.get(fp)
-        if entry_fp in matched:
-            entry_fp = None
-        if entry_fp is None:
-            candidates = [c for c in key_index.get(key, []) if c not in matched]
-            if len(candidates) == 1:
-                entry_fp = candidates[0]
-                if fp != entry_fp:
-                    entries[entry_fp].setdefault("alt_fingerprints", []).append(fp)
+        if entry_fp is not None and entry_fp not in matched:
+            assigned[i] = entry_fp
+            matched.add(entry_fp)
+    # Pass 2, only when exactly one unmatched entry qualifies:
+    #   (a) the same rule and file (the quoted code changed);
+    #   (b) the same domain, file, and quoted anchor line, under a reworded rule or title. Agents name
+    #       rules freely, so the same issue can come back as icon-button-no-name in one run and
+    #       icon-button-without-name in the next;
+    #   (c) the same domain and file with a nearly identical title (the quoted lines changed as well).
+    for i, (f, fp) in enumerate(zip(findings, fps)):
+        if assigned[i] is not None:
+            continue
+        candidates = [c for c in key_index.get(fingerprint.match_key(f), []) if c not in matched]
+        if len(candidates) != 1:
+            same_file = [c for c in path_index.get((f["domain"], fingerprint.primary_path(f)), []) if c not in matched]
+            anchor = fingerprint.anchor_hash(f)
+            candidates = [c for c in same_file if anchor and entries[c].get("anchor_hash") == anchor
+                          and (_word_similarity(_rule_words(entries[c]["rule"]), _rule_words(f["rule"])) >= 0.34
+                               or _word_similarity(_title_words(entries[c]["title"]), _title_words(f["title"])) >= 0.5)]
+            if len(candidates) != 1:
+                candidates = [c for c in same_file
+                              if _word_similarity(_title_words(entries[c]["title"]), _title_words(f["title"])) >= 0.6]
+        if len(candidates) == 1:
+            assigned[i] = candidates[0]
+            matched.add(candidates[0])
+            if fp != candidates[0] and fp not in entries[candidates[0]].setdefault("alt_fingerprints", []):
+                entries[candidates[0]]["alt_fingerprints"].append(fp)
+
+    for i, (f, fp) in enumerate(zip(findings, fps)):
+        key = fingerprint.match_key(f)
+        entry_fp = assigned[i]
         if entry_fp is None:
             entry_fp = fp
-            entries[fp] = {
+            occurrence = 1
+            while entry_fp in entries:  # an entry another finding already matched holds this fingerprint
+                occurrence += 1
+                entry_fp = fingerprint.fingerprint(f, occurrence)
+            entries[entry_fp] = {
                 "id": "FC-%04d" % led["next_id"],
-                "fingerprint": fp,
+                "fingerprint": entry_fp,
                 "match_key": key,
+                "anchor_hash": fingerprint.anchor_hash(f),
                 "rule": f["rule"],
                 "domain": f["domain"],
                 "title": f["title"],
@@ -142,7 +191,7 @@ def merge(led, audit, now_iso, today):
                 "history": [_event(now_iso, "OPEN", "flight-check", "first observed", run_id)],
             }
             led["next_id"] += 1
-            changes["new"].append(entries[fp]["id"])
+            changes["new"].append(entries[entry_fp]["id"])
         else:
             e = entries[entry_fp]
             prev = e["status"]
@@ -169,6 +218,8 @@ def merge(led, audit, now_iso, today):
             e["title"] = f["title"]
             e["severity"] = f["severity"]
             e["match_key"] = key
+            e["rule"] = f["rule"]
+            e["anchor_hash"] = fingerprint.anchor_hash(f)
         matched.add(entry_fp)
         e = entries[entry_fp]
         legal = f.get("legal")

@@ -41,6 +41,12 @@ def anchor(finding):
     return ""
 
 
+def anchor_hash(finding):
+    """A short hash of the anchor line, so the ledger can compare anchors without storing quoted code."""
+    text = anchor(finding)
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()[:16] if text else ""
+
+
 def match_key(finding):
     return "%s|%s" % (finding["rule"], primary_path(finding))
 

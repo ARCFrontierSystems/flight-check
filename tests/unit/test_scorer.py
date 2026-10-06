@@ -46,12 +46,15 @@ class ScorerTests(unittest.TestCase):
                     legal={"classification": "POLICY/IMPLEMENTATION CONTRADICTION", "questions": ["q?"]}),
             finding("FC-3", "application-security", "src/db.ts", 12, 13),
             finding("FC-4", "testing", "src/other.ts", 1, 2, check="FAILED"),
-            finding("FC-5", "authorization", "src/a.ts", 45, 46),  # second finding on same issue -> unlisted
+            finding("FC-5", "authorization", "src/a.ts", 45, 46),  # second finding on same issue -> unlisted, with a hint
         ]
         r = score.score(final_with(findings), MANIFEST)
         self.assertEqual(r["counts"]["true_positives"], 2)
         self.assertEqual(r["counts"]["decoy_false_positives"], 1)
         self.assertEqual(r["counts"]["unlisted_findings"], 2)
+        self.assertEqual(r["counts"]["unlisted_possible_repeats"], 1)
+        hints = {u["finding"]: u["possible_repeat_of"] for u in r["unlisted_for_adjudication"]}
+        self.assertEqual(hints, {"FC-4": [], "FC-5": ["GT-1"]})
         self.assertAlmostEqual(r["recall"], 0.667, places=3)
         self.assertEqual(r["must_recall"], 1.0)
         self.assertEqual(r["decoy_false_positive_rate"], 1.0)

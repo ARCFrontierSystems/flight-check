@@ -63,7 +63,13 @@ Every decision carries a scope statement: it reflects only the evidence examined
 
 ## Ledger and regressions
 
-`.flight-check/ledger.json` keeps one entry per finding, keyed by a fingerprint built from the rule, the file path, and the first meaningful quoted line. The fingerprint survives line shifts; a secondary match on rule plus path survives small edits.
+`.flight-check/ledger.json` keeps one entry per finding, keyed by a fingerprint built from the rule, the file path, and the first meaningful quoted line. The fingerprint survives line shifts. Exact fingerprints are matched first. A finding that matches no fingerprint keeps an existing ID only when exactly one unmatched entry qualifies:
+
+- the same rule and file (the quoted code changed);
+- the same domain, file, and quoted line, with a similar rule name or title (agents reword rule names between runs);
+- the same domain and file, with a nearly identical title.
+
+Anything less certain gets a new ID. The old entry then shows as not reproduced; it is not silently merged.
 
 Lifecycle transitions:
 - **REGRESSION:** a finding that was VERIFIED or CLOSED is observed again.

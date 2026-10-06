@@ -379,6 +379,7 @@
         "fingerprint": {"type": "string", "pattern": "^[0-9a-f]{16}$"},
         "alt_fingerprints": {"type": "array", "items": {"type": "string", "pattern": "^[0-9a-f]{16}$"}},
         "match_key": {"type": "string"},
+        "anchor_hash": {"type": "string", "pattern": "^([0-9a-f]{16})?$"},
         "rule": {"type": "string"},
         "domain": {"$ref": "#/$defs/domainId"},
         "title": {"type": "string"},
