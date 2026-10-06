@@ -12,6 +12,10 @@ Unmatched findings:
   - overlapping a declared secure control (decoy)  -> decoy false positive
   - otherwise                                       -> unlisted; needs human adjudication
                                                        (a real but unseeded issue is not a false positive)
+    Evidence coverage (reported separately): an issue counts as covered when any finding, in any
+    domain, has an evidence item at one of its locations. A finding that groups several locations
+    (as Flight Check does for deliberately vulnerable code) can cover several issues this way, while
+    the strict match still pairs it with only one.
     An unlisted finding that overlaps an issue another finding already matched is marked
     possible_repeat_of. That is a hint for the adjudicator, not a verdict: a different issue in the
     same lines, or a false positive, looks the same to this tool.
@@ -174,6 +178,12 @@ def score(final, manifest, tol=5):
                     legal_questions_ok += 1
         per_issue.append(row)
 
+    covered = set()
+    for ii, issue in enumerate(issues):
+        locs = issue["locations"] + issue.get("alternate_locations", [])
+        if any(best_overlap(f, locs, tol) > 0 for f in findings):
+            covered.add(ii)
+            per_issue[ii]["covered_by_evidence"] = True
     detected = [r for r in per_issue if r["detected"]]
     must = [r for r in per_issue if r["tier"] == "must"]
     must_hit = [r for r in must if r["detected"]]
@@ -206,6 +216,8 @@ def score(final, manifest, tol=5):
         "location_only_matches": len(location_only),
         "recall_location_only": round((tp + len(location_only)) / len(issues), 3) if issues else None,
         "must_recall_location_only": round(sum(1 for r in must if r["detected"] or r.get("detected_location_only")) / len(must), 3) if must else None,
+        "recall_evidence_coverage": round(len(covered) / len(issues), 3) if issues else None,
+        "must_recall_evidence_coverage": round(sum(1 for r in must if r.get("covered_by_evidence")) / len(must), 3) if must else None,
         "precision_lower_bound": round(tp / (tp + fp_known + len(unlisted)), 3) if (tp + fp_known + len(unlisted)) else None,
         "precision_excluding_unlisted": round(tp / (tp + fp_known), 3) if (tp + fp_known) else None,
         "decoy_false_positive_rate": round(fp_known / decoy_n, 3) if decoy_n else None,

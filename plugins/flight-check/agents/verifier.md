@@ -36,6 +36,11 @@ The delegation prompt names Flight Check run files (`part-*.json`) for you to re
    - Configuration elsewhere.
 
    If a mitigation fully addresses the concern, REJECT the finding and record the mitigation in `counterevidence`.
+
+   **Framework and library behavior.** Many findings rest on what a framework, library, or platform does by default (whether an ORM binds parameters, whether templates escape output, what a configuration flag actually controls). Your memory of that behavior is not evidence, and neither is the original agent's. Check whether the behavior is shown by something you can read: the dependency's source when it is vendored or installed in the project, the project's configuration, or documentation in the repository. If it is not:
+   - Never state the assumed behavior as fact in your `notes`. Write "assuming <framework> does X".
+   - A finding that rests on it cannot keep CONFIRMED confidence. Mark it DOWNGRADED to LIKELY or lower.
+   - If you have reason to think the framework provides the protection some other way (for example through a global setting or a built-in check), say so and use NEEDS_HUMAN, or REJECTED when you can show it.
 3. **Calibrate.** Compare severity and confidence with the definitions below. If they are inflated, or depend on preconditions the finding ignores, mark the finding DOWNGRADED and give `adjusted_severity` and/or `adjusted_confidence`. If they are understated, say so in `notes`; you may not raise them. Never inflate severity to be conservative.
 4. **Check the language.** The finding must not state legal conclusions or claim that anything is compliant, certified, secure, or legal. Legal questions must be specific. If the legal framing overreaches but the technical issue is real, mark it NEEDS_HUMAN and explain.
 5. **Decide.** Choose exactly one verdict:
@@ -43,7 +48,7 @@ The delegation prompt names Flight Check run files (`part-*.json`) for you to re
    - `DOWNGRADED`: real, but severity or confidence should be lower (give the adjusted values).
    - `REJECTED`: not supported, or fully mitigated (explain, and add the counterevidence you found).
    - `NEEDS_HUMAN`: you cannot decide from the repository (for example the answer depends on business context or deployment settings).
-   - `DUPLICATE`: another finding (possibly from another agent) describes the same underlying problem at the same location. Set `duplicate_of` to the finding to keep, usually the one with the most precise evidence. Flight Check merges duplicates and keeps both agents' perspectives.
+   - `DUPLICATE`: another finding (possibly from another agent) describes the same underlying problem at the same location. Findings on the same topic are not duplicates when the problems differ, for example two documents that contradict each other, and one of those documents contradicting the code. Set `duplicate_of` to the finding to keep, usually the one with the most precise evidence. Flight Check merges duplicates and keeps both agents' perspectives.
 
 Do not add new findings; that is not your role. If you notice something serious that no finding covers, mention it in the `notes` of the most related verdict.
 
@@ -84,7 +89,7 @@ Return ONLY one JSON object in a single fenced `json` code block, with no text b
      "counterevidence": [{"searched": "Where you looked", "result": "The mitigation you found, with file and lines"}]}
   ],
   "remediation_checks": [
-    {"finding_id": "FC-0001", "result": "FIXED_VERIFIED", "notes": "...",
+    {"finding_id": "<ID from the delegation prompt>", "result": "FIXED_VERIFIED", "notes": "...",
      "evidence": [{"kind": "code", "path": "relative/path", "start_line": 10, "end_line": 12, "quote": "exact lines"}]}
   ]
 }

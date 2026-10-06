@@ -66,6 +66,14 @@ class ScorerTests(unittest.TestCase):
         md = score.to_markdown(r)
         self.assertIn("GT-3", md)
 
+    def test_grouped_finding_covers_several_issues_by_evidence(self):
+        grouped = finding("FC-1", "authorization", "src/a.ts", 44, 47)
+        grouped["evidence"].append({"kind": "code", "path": "src/jobs.ts", "start_line": 2, "end_line": 3})
+        r = score.score(final_with([grouped]), MANIFEST)
+        self.assertEqual(r["counts"]["true_positives"], 1)  # the strict match still pairs one finding with one issue
+        self.assertEqual(r["recall_evidence_coverage"], 0.667)  # GT-1 and GT-3 are both covered by its evidence
+        self.assertEqual(r["must_recall_evidence_coverage"], 0.5)
+
     def test_domain_mismatch_is_not_a_match(self):
         r = score.score(final_with([finding("FC-1", "testing", "src/a.ts", 44, 47)]), MANIFEST)
         self.assertEqual(r["counts"]["true_positives"], 0)

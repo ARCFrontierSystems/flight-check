@@ -21,7 +21,7 @@ Request: `$ARGUMENTS`
 
 ## Show status
 
-For `status`, or no arguments, run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger show --ledger <ledger>`. Summarize findings by status, open legal reviews, accepted risks (with review dates), and the last few runs with their gates. For one ID, run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger show --ledger <ledger> --id FC-0001`.
+For `status`, or no arguments, run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger show --ledger <ledger>`. Summarize findings by status, open legal reviews, accepted risks (with review dates), and the last few runs with their gates. For one ID, run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger show --ledger <ledger> --id <ID>`.
 
 ## Legal review status
 
@@ -37,7 +37,7 @@ Map what the user tells you to a status:
 `VERIFIED` is set only after a Flight Check re-audit confirms the change; tell the user to run `/flight-check:audit`.
 
 Run:
-`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger legal --ledger <ledger> --id FC-0001 --status <STATUS> --source user --note "<the user's own words>"`
+`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger legal --ledger <ledger> --id <ID> --status <STATUS> --source user --note "<the user's own words>"`
 
 - For `COUNSEL_REVIEWED` and `DECISION_RECEIVED`, the note must record what the user reported, attributed to them (for example `User reports counsel advised: ...`). Never paraphrase it into a stronger or different conclusion, and never invent one. If the user has not said what counsel decided, ask.
 - Moving backwards needs `--reason`.
@@ -71,7 +71,7 @@ To revoke: `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger revoke 
 ## Close a finding
 
 Only findings that are `VERIFIED` (fixed and confirmed by a re-audit) or `NOT_REPRODUCED` can be closed, and only on the user's confirmation. Run:
-`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger close --ledger <ledger> --id FC-0001 --note "<user's confirmation>"`
+`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger close --ledger <ledger> --id <ID> --note "<user's confirmation>"`
 
 If the finding is still open, explain that it must be fixed and verified, or explicitly accepted as a risk.
 

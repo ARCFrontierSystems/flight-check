@@ -3,6 +3,8 @@
 The packet organizes technical evidence and questions for qualified counsel. Evidence,
 severities, classifications, and questions are copied from the finalized audit; the
 request file only supplies summaries, the project identifier, and per-finding context.
+It may choose and order a finding's audit questions (by number) to leave out repeats,
+but it can never add or reword a question.
 Nothing here answers a legal question, cites legal authority, or determines compliance.
 """
 
@@ -21,6 +23,13 @@ HOW_TO_USE = (
     "it suggests putting to qualified counsel. Flight Check does not answer those questions. Space is provided "
     "for counsel's notes and for recording decisions. Record decisions you receive with /flight-check:track so "
     "Flight Check can track the resulting implementation work."
+)
+
+
+NO_QUESTIONS = "No specific questions were generated; counsel may identify the relevant questions."
+NO_QUESTIONS_BUSINESS = (
+    "None. Flight Check classified this as a business decision for the project's owners; the decisions are listed "
+    "under Relevant project decisions. Ask counsel about it if any of those choices depends on legal requirements."
 )
 
 
@@ -46,9 +55,21 @@ def check_request(request, final):
             errors.append("packet request: %s has no legal/business classification; the packet is for findings that warrant legal or business review" % fid)
     if len(set(request["finding_ids"])) != len(request["finding_ids"]):
         errors.append("packet request: finding_ids contains duplicates")
-    for key in (request.get("per_finding") or {}):
+    for key, extra in (request.get("per_finding") or {}).items():
         if key not in request["finding_ids"]:
             errors.append("packet request: per_finding has %s, which is not in finding_ids" % key)
+            continue
+        chosen = extra.get("questions")
+        if chosen is None or key not in by_id or not by_id[key].get("legal"):
+            continue
+        available = len(by_id[key]["legal"].get("questions") or [])
+        if not available:
+            errors.append("packet request: per_finding.%s.questions selects questions, but the finding has none" % key)
+        for n in chosen:
+            if n > available:
+                errors.append("packet request: per_finding.%s.questions has %d, but the finding has %d question(s)" % (key, n, available))
+        if len(set(chosen)) != len(chosen):
+            errors.append("packet request: per_finding.%s.questions contains duplicates" % key)
     texts = [("executive_summary", request["executive_summary"]), ("overall_summary", request["overall_summary"])]
     for fid, extra in (request.get("per_finding") or {}).items():
         if extra.get("technical_context"):
@@ -91,6 +112,11 @@ def _finding_parts(f, extra, ledger_entry):
         follow_up = ["Share this section with counsel and record the outcome with /flight-check:track (legal status for %s)." % f["id"],
                      "After a decision is received, implement any required changes and re-run /flight-check:audit to verify them."]
     history = (ledger_entry or {}).get("legal", {}).get("history", [])
+    questions = list(legal.get("questions") or [])
+    omitted = 0
+    if extra.get("questions"):
+        omitted = len(questions) - len(extra["questions"])
+        questions = [questions[n - 1] for n in extra["questions"]]
     status = f.get("legal_status") or "OPEN"
     context = [f["explanation"], "Potential impact: " + f["impact"]]
     if extra.get("technical_context"):
@@ -103,8 +129,15 @@ def _finding_parts(f, extra, ledger_entry):
         "context": context,
         "status": status,
         "history": history,
-        "questions": legal.get("questions") or [],
+        "questions": questions,
+        "omitted_questions": omitted,
+        "no_questions": NO_QUESTIONS_BUSINESS if legal["classification"] == "BUSINESS DECISION REQUIRED" else NO_QUESTIONS,
     }
+
+
+def _omitted_note(n):
+    return ("%d further question(s) from the audit repeat the ones above in other words and are left out; "
+            "the audit report lists all of them." % n)
 
 
 def build(final, request, ledger=None, generated_at=None, page_size="letter"):
@@ -176,7 +209,9 @@ def build(final, request, ledger=None, generated_at=None, page_size="letter"):
         doc.heading("Relevant policy / documentation references", level=2)
         doc.bullets([_clean(p) for p in parts["policy_refs"]] or ["None identified in the audited scope."])
         doc.heading("Questions for qualified counsel", level=2)
-        doc.bullets([_clean(q) for q in parts["questions"]] or ["No specific questions were generated; counsel may identify the relevant questions."], numbered=bool(parts["questions"]))
+        doc.bullets([_clean(q) for q in parts["questions"]] or [parts["no_questions"]], numbered=bool(parts["questions"]))
+        if parts["omitted_questions"]:
+            doc.paragraph(_omitted_note(parts["omitted_questions"]), font="F3", size=9)
         doc.heading("Follow-up items", level=2)
         doc.bullets([_clean(x) for x in parts["follow_up"]])
         doc.heading("Review status", level=2)
@@ -234,7 +269,9 @@ def render_markdown(final, request, findings, per, entries, date_text, project):
         out += ["", "### Technical context", ""] + [md_block(p) + "\n" for p in parts["context"]]
         out += ["### Relevant project decisions", ""] + (["- " + md(d) for d in parts["decisions"]] or ["- None recorded."])
         out += ["", "### Relevant policy / documentation references", ""] + (["- " + md(p) for p in parts["policy_refs"]] or ["- None identified in the audited scope."])
-        out += ["", "### Questions for qualified counsel", ""] + (["%d. %s" % (i, md(q)) for i, q in enumerate(parts["questions"], 1)] or ["- No specific questions were generated."])
+        out += ["", "### Questions for qualified counsel", ""] + (["%d. %s" % (i, md(q)) for i, q in enumerate(parts["questions"], 1)] or ["- " + parts["no_questions"]])
+        if parts["omitted_questions"]:
+            out += ["", "_%s_" % _omitted_note(parts["omitted_questions"])]
         out += ["", "### Follow-up items", ""] + ["- " + md(x) for x in parts["follow_up"]]
         out += ["", "### Review status", "", " ".join(_status_checklist(parts["status"])), "",
                 "### Attorney notes", "", "_(space for counsel's notes)_", "", "### Decisions / recommendations", "", "_(space for decisions)_", ""]

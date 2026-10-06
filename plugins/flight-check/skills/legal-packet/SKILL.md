@@ -45,12 +45,13 @@ Run Flight Check's script only as a single plain command that starts exactly wit
   "language": "<BCP 47 tag of the summaries' language, for example de; omit for English>",
   "executive_summary": "...",
   "overall_summary": "...",
-  "finding_ids": ["FC-0003", "FC-0007"],
+  "finding_ids": ["<ID>", "<ID>"],
   "per_finding": {
-    "FC-0003": {
+    "<ID>": {
       "technical_context": "<optional: how the affected feature works, from the finding's explanation>",
       "relevant_decisions": ["<optional: decisions already made or pending, only as stated in the findings or by the user>"],
-      "follow_up": ["<optional: concrete follow-up items>"]
+      "follow_up": ["<optional: concrete follow-up items>"],
+      "questions": [1, 3]
     }
   }
 }
@@ -59,6 +60,7 @@ Run Flight Check's script only as a single plain command that starts exactly wit
    - **executive_summary** (at most ~200 words): what the packet covers, how many findings, their classifications and severities, and what the user hopes to learn from counsel. Factual and neutral.
    - **overall_summary** (at most ~250 words): the legal and business themes across the findings (for example deletion commitments, liability terms, subscription terms). State the open questions without answering them.
    - **No conclusions.** Neither summary may contain legal conclusions. When you refer to wording from the project's own documents, put it in double quotes.
+   - **questions** (optional, per finding): a finding reported by several agents can carry questions that repeat each other in different words. Read each finding's `legal.questions` from the `findings` output. Where some repeat others, list the numbers of the ones to keep (counting from 1, in the order shown), in the order counsel should hear them. Use it only to leave out repeats and to order the questions. Never leave out a question that asks something different, and never write new questions; the packet copies the audit's wording and says how many were left out. Omit `questions` when there are no repeats.
 
 4. **Build the packet.** Run:
    `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py packet <run_dir> --request <run_dir>/packet-request.json --out <run_dir>/attorney-review-packet.pdf --ledger <ledger>`
@@ -71,5 +73,6 @@ Run Flight Check's script only as a single plain command that starts exactly wit
    - **Contents:** the number of pages and the findings included.
    - **The disclaimer:** this is a document to organize questions for qualified counsel; it is not legal advice and establishes nothing about compliance.
    - **Next steps:**
-     - When the user shares the packet with counsel: `/flight-check:track FC-0003 legal review requested`.
-     - When counsel responds, the user reports the decision in their own words: `/flight-check:track FC-0003 decision received: <what counsel said>`. Flight Check then tracks the implementation work and verifies it in the next audit.
+     - When the user shares the packet with counsel: `/flight-check:track <ID> legal review requested`, for each finding ID in this packet.
+     - When counsel responds, the user reports the decision in their own words: `/flight-check:track <ID> decision received: <what counsel said>`. Flight Check then tracks the implementation work and verifies it in the next audit.
+     - Show the packet's actual finding IDs in these commands, never example IDs.

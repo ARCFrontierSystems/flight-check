@@ -16,7 +16,7 @@ Two kinds of fixture are used:
 
 - **Generated test applications** in the private testbed repository. These cover documentation that contradicts the code, legal and business gaps, privacy commitments, accessibility, reliability, and operations. Fixture authors may decline to plant security flaws, and when the first fixture author was asked to, a safety check stopped it. Do not try to work around such a refusal. Security flaws that turn up anyway are scored as unlisted findings.
 - **A public security benchmark** for the security domains. `tools/blindtest/owasp_subset.py` builds a balanced, deterministic sample of the OWASP Benchmark (Java). Its cases are labeled real vulnerability or false positive, and the false positives serve as decoys. The answer key is generated from the benchmark's published expected results and kept outside the audited directory. The benchmark is GPL-2.0, so the tool builds the sample outside this repository and never vendors it here. Models may have seen the benchmark during training, so report security scores from it as optimistic.
-  - **Recognition changes the result.** In Phase 5, Flight Check recognized the unmodified sample as the OWASP Benchmark from its names and headers. It treated the code as a deliberately vulnerable test corpus, read one test case, and reported the planted flaws once as context. Per-case scores from an unmodified sample therefore measure that behavior, not detection. Report them that way, or use a sample whose identifying names have been removed.
+  - **Recognition changes the result.** In Phase 5, Flight Check recognized the unmodified sample as the OWASP Benchmark from its names and headers. It treated the code as a deliberately vulnerable test corpus, read one test case, and reported the planted flaws once as context. Per-case scores from an unmodified sample therefore measure that behavior, not detection. Build the sample with `--deidentify`, which removes the identifying package and class names, servlet paths, and header comments from the local copy. It keeps the benchmark's license and a notice of the changes next to the copy, outside the audited directory. The copy is for local testing only and is never distributed.
 
 ## What a test application should contain
 
@@ -90,7 +90,7 @@ python3 tools/blindtest/score.py --final ../results/app-a-run1/<run_id>/audit.fi
 - **Each run** uses a fresh disposable copy of the application and the same narrowed permissions as `docs/hardened-mode.md`. It writes the full event log (`claude-stream.jsonl`) and a summary of denied tool calls (`claude-output.json`), so a stalled run can be diagnosed.
 - **Repeat each fixture at least three times,** then combine the scores with `python3 tools/blindtest/stability.py ../results/app-a-run*/score.json`.
 - **For the security benchmark:**
-  1. Build the sample with `python3 tools/blindtest/owasp_subset.py --benchmark <checkout> --out ../results/owasp-subset`.
+  1. Build the sample with `python3 tools/blindtest/owasp_subset.py --benchmark <checkout> --out ../results/owasp-subset --deidentify`.
   2. Audit `../results/owasp-subset/app` the same way.
   3. Score against `../results/owasp-subset/ground-truth/manifest.json`.
 - **The held-out fixture** is scored only at release time, by the person who holds its answer key. Nothing learned from it may change Flight Check before that release. Its development-time runs are recorded as aggregates only (gate, finding counts, evidence failures, denied calls).

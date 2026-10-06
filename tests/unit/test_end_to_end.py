@@ -1,6 +1,7 @@
 """End-to-end: run directory -> finalize -> report.md -> Attorney Review Packet PDF, through the CLI."""
 
 import contextlib
+import datetime
 import io
 import json
 import os
@@ -15,6 +16,9 @@ import zlib
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import helpers  # noqa: E402
 from flight_check_lib import catalog, cli, constants, minischema, render_md  # noqa: E402
+from flight_check_lib import packet  # noqa: E402
+
+NOW_DT = datetime.datetime(2026, 10, 4, 12, 0, tzinfo=datetime.timezone.utc)
 
 
 def read_json(path):
@@ -313,6 +317,52 @@ class EndToEndTests(unittest.TestCase):
         code, out = run_cli("ledger", "show", "--ledger", ledger_path)
         self.assertEqual(code, 0)
         self.assertEqual(len(out["entries"]), 2)
+
+
+class PacketQuestionTests(unittest.TestCase):
+    def _final_and_id(self):
+        tmp, run_dir, ledger_path, code, out = finalized_run()
+        final = read_json(os.path.join(run_dir, "audit.final.json"))
+        f = next(f for f in final["findings"] if f.get("legal"))
+        f["legal"]["questions"] = ["First question about the deletion period?", "Second question about backups?",
+                                   "First question about the deletion period, asked again in other words?"]
+        return final, f
+
+    def _request(self, fid, per=None):
+        return {"project_identifier": "p", "finding_ids": [fid], "per_finding": per or {},
+                "executive_summary": "This packet collects one finding about the account deletion commitment.",
+                "overall_summary": "One contradiction about account deletion needs counsel's input before a decision."}
+
+    def test_request_can_choose_and_order_audit_questions(self):
+        final, f = self._final_and_id()
+        _, md_text, _ = packet.build(final, self._request(f["id"], {f["id"]: {"questions": [2, 1]}}), None, NOW_DT)
+        section = md_text.split("### Questions for qualified counsel", 1)[1].split("### Follow-up items", 1)[0]
+        self.assertIn("1. Second question about backups?", section)
+        self.assertIn("2. First question about the deletion period?", section)
+        self.assertNotIn("asked again", section)
+        self.assertIn("1 further question(s) from the audit repeat the ones above", section)
+
+    def test_request_cannot_select_missing_or_repeated_questions(self):
+        final, f = self._final_and_id()
+        for chosen, message in (([4], "has 4, but the finding has 3"), ([1, 1], "contains duplicates")):
+            with self.assertRaises(packet.PacketError) as ctx:
+                packet.build(final, self._request(f["id"], {f["id"]: {"questions": chosen}}), None, NOW_DT)
+            self.assertIn(message, str(ctx.exception))
+
+    def test_all_questions_kept_when_none_chosen(self):
+        final, f = self._final_and_id()
+        _, md_text, _ = packet.build(final, self._request(f["id"]), None, NOW_DT)
+        self.assertIn("3. First question about the deletion period, asked again", md_text)
+        self.assertNotIn("further question(s)", md_text)
+
+    def test_business_decision_without_questions_says_so(self):
+        final, f = self._final_and_id()
+        f["legal"] = {"classification": "BUSINESS DECISION REQUIRED", "decisions_needed": ["Which deletion period to promise."]}
+        _, md_text, _ = packet.build(final, self._request(f["id"]), None, NOW_DT)
+        self.assertIn(packet.NO_QUESTIONS_BUSINESS, md_text)
+        self.assertNotIn("No specific questions were generated", md_text)
+        with self.assertRaises(packet.PacketError):
+            packet.build(final, self._request(f["id"], {f["id"]: {"questions": [1]}}), None, NOW_DT)
 
 
 class ListingCommandTests(unittest.TestCase):

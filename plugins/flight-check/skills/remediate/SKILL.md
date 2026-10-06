@@ -48,14 +48,14 @@ For each approved finding:
 2. **Add or update a regression test** where practical, following the project's existing test conventions. It should fail on the old behavior and pass on the new.
 3. **Run the project's test suite**, or the relevant subset, if the user agrees, and report the result honestly. If tests fail, fix your change or tell the user. Never weaken or skip tests to get a pass.
 4. **Record the remediation:**
-   `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger remediate --ledger <ledger> --id FC-0001 --note "<what changed>" --file <path> [--file <path> ...]`
+   `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger remediate --ledger <ledger> --id <ID> --note "<what changed>" --file <path> [--file <path> ...]`
 
 ## 4. Re-audit
 
 This step verifies the fixes; do not skip it.
 
 1. **Start a run:** `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run --base <root>/.flight-check/runs --root <root> --suffix reaudit --inventory-from <previous run_dir>`
-2. **Write `run.json`** as in an audit, with `"mode": "re-audit"` and `"remediation_targets": ["FC-0001", ...]`.
+2. **Write `run.json`** as in an audit, with `"mode": "re-audit"` and `"remediation_targets": ["<ID>", ...]`.
 3. **Re-audit the affected domains.** Launch, in one message, every Flight Check domain agent whose domains contain the remediated findings: `flight-check:appsec`, `flight-check:data`, `flight-check:payments`, `flight-check:supply-chain`, `flight-check:platform`, `flight-check:testing`, `flight-check:ai`, `flight-check:a11y`, or `flight-check:governance`. Use this prompt:
 
    > Audit root: `<absolute root>`. Run `<run_id>`, mode `re-audit`, trust tier `own`. Your agent name (use it as `"agent"`): `<short name>`. Your domains: `<domains>`. Inventory: `<previous inventory items and applicability for your domains, as JSON>`. Project context: `<as before>`. Imported evidence: `<as before>`. Re-audit focus: these findings were remediated; examine the whole domain again and pay particular attention to them: `<ID, title, evidence locations, remediation note>`. Return only the JSON object described in your instructions.

@@ -336,7 +336,8 @@
             "properties": {
               "technical_context": {"type": "string", "maxLength": 4000},
               "relevant_decisions": {"type": "array", "items": {"type": "string", "minLength": 3, "maxLength": 1000}, "maxItems": 15},
-              "follow_up": {"type": "array", "items": {"type": "string", "minLength": 3, "maxLength": 1000}, "maxItems": 15}
+              "follow_up": {"type": "array", "items": {"type": "string", "minLength": 3, "maxLength": 1000}, "maxItems": 15},
+              "questions": {"type": "array", "items": {"type": "integer", "minimum": 1, "maximum": 100}, "minItems": 1, "maxItems": 100}
             }
           }
         }

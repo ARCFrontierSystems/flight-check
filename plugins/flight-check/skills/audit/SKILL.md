@@ -147,8 +147,8 @@ Write `<run_dir>/summary.json` from the finalize output, using only facts from t
 {
   "executive_summary": "...",
   "legal_review_summary": "...",
-  "remediation_priority": [{"finding_id": "FC-0001", "rationale": "..."}],
-  "accepted_risk_candidates": [{"ref": "FC-0004", "rationale": "..."}],
+  "remediation_priority": [{"finding_id": "<ID>", "rationale": "..."}],
+  "accepted_risk_candidates": [{"ref": "<ID or control ID>", "rationale": "..."}],
   "regression_recommendations": ["..."]
 }
 ```

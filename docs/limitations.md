@@ -12,7 +12,7 @@ Flight Check is designed to make it harder to ship software without understandin
 
 ## Model behavior
 
-- **False negatives.** Agents can miss issues, especially ones that span many files or depend on subtle framework behavior.
+- **False negatives.** Agents can miss issues, especially ones that span many files or depend on subtle framework behavior. In the Phase 5 blind test, a typical run missed about a third of the seeded issues (see `docs/audits/2026-10-06-phase-5-blind-test.md`).
 - **False positives.** The false-positive defense and the verifier reduce false positives but do not eliminate them.
 - **Non-determinism.** Two audits of the same code can differ. The ledger flags findings that appear or disappear between runs, so differences are visible rather than silent.
 - **Prompt injection.** Audited content can try to manipulate the auditor, either to suppress findings or to cause actions. Flight Check's agents are read-only and treat content as data, but no current approach fully prevents prompt injection. Use the [hardened procedure](hardened-mode.md) for untrusted code.
