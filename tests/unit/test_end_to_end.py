@@ -319,6 +319,50 @@ class EndToEndTests(unittest.TestCase):
         self.assertEqual(len(out["entries"]), 2)
 
 
+class HandlerReviewTests(unittest.TestCase):
+    """A handler reviewer reports findings for its files only; its NOT_MET controls outrank the main agent's."""
+
+    def _parts(self, reviewer_controls):
+        main = helpers.all_controls_resolved(helpers.base_part([helpers.deletion_finding()]))
+        main["controls"] = [c if c["id"] != "APPSEC-INJECTION" else
+                            {"id": "APPSEC-INJECTION", "state": "VERIFIED", "rationale": "Queries outside the delegated files are bound.",
+                             "evidence": [{"kind": "code", "path": "src/store.py", "start_line": 11, "end_line": 12,
+                                           "quote": helpers.sql_finding()["evidence"][0]["quote"]}]}
+                            for c in main["controls"]]
+        reviewer = {"agent": "appsec-h1", "coverage": [
+            {"domain": "application-security", "status": "ASSESSED", "rationale": "Handler review: read src/store.py end to end.",
+             "searches": ["Read src/store.py"]}],
+            "controls": reviewer_controls, "findings": [helpers.sql_finding()], "positive_controls": [],
+            "unverified_areas": [], "notes": [], "truncation": []}
+        return [main, reviewer]
+
+    def test_reviewer_not_met_outranks_main_verified(self):
+        parts = self._parts([{"id": "APPSEC-INJECTION", "state": "NOT_MET", "related_findings": ["F1"]}])
+        tmp, run_dir, ledger_path, code, out = finalized_run(parts=parts)
+        self.assertEqual(code, 0, out)
+        final = read_json(os.path.join(run_dir, "audit.final.json"))
+        ctl = next(c for c in final["controls"] if c["id"] == "APPSEC-INJECTION")
+        self.assertEqual(ctl["state"], "NOT_MET")
+        self.assertEqual(sorted(ctl["reported_by"]), ["appsec", "appsec-h1"])
+        cov = next(c for c in final["coverage"] if c["domain"] == "application-security")
+        self.assertEqual(cov["status"], "ASSESSED")
+        self.assertIn("appsec-h1", cov["reported_by"])
+        self.assertTrue(any(f["source_agent"] == "appsec-h1" for f in final["findings"]))
+
+    def test_failed_reviewer_keeps_the_gate_from_passing(self):
+        # The skill replaces a reviewer that failed validation with a part that reports its controls UNVERIFIED.
+        parts = self._parts([{"id": "APPSEC-INJECTION", "state": "UNVERIFIED",
+                              "missing_evidence": "Handler review of src/store.py failed validation."}])
+        parts[1]["findings"] = []
+        parts[1]["coverage"][0] = {"domain": "application-security", "status": "NOT_ASSESSED",
+                                   "rationale": "Agent output failed validation after two attempts"}
+        tmp, run_dir, ledger_path, code, out = finalized_run(parts=parts)
+        final = read_json(os.path.join(run_dir, "audit.final.json"))
+        ctl = next(c for c in final["controls"] if c["id"] == "APPSEC-INJECTION")
+        self.assertEqual(ctl["state"], "UNVERIFIED")
+        self.assertEqual(final["gate"]["decision"], constants.GATE_INSUFFICIENT)
+
+
 class PacketQuestionTests(unittest.TestCase):
     def _final_and_id(self):
         tmp, run_dir, ledger_path, code, out = finalized_run()
