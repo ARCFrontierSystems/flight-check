@@ -180,6 +180,7 @@
       "properties": {
         "agent": {"type": "string"},
         "items": {"type": "array", "items": {"$ref": "#/$defs/inventoryItem"}, "maxItems": 120},
+        "entry_point_files": {"type": "array", "items": {"type": "string", "pattern": "^(?![/\\\\])(?![A-Za-z]:)(?!.*(^|[/\\\\])\\.\\.([/\\\\]|$))[^\\n]{1,500}$"}, "maxItems": 400},
         "applicability": {
           "type": "array",
           "items": {

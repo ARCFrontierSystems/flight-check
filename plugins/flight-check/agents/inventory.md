@@ -38,6 +38,10 @@ Useful signals, valid for any ecosystem:
 - **User interface:** HTML templates, component files, mobile app projects.
 - **Data model:** migrations, schema files, ORM models. Look for fields holding personal data, payment data, health data, or children's data indicators.
 
+## Entry-point files
+
+List in `entry_point_files` every file that defines externally reachable entry points: HTTP routes, controllers or handlers, API endpoints, GraphQL resolvers, RPC methods, serverless functions, webhook receivers, message or queue consumers, and CLI commands. Use Glob and Grep to find them all, not a sample, and give paths relative to the audit root, sorted. The audit uses this list to share the reading of large numbers of handlers among several agents. List at most 400 files; if there are more, record the count and the search that finds them in `truncation`.
+
 ## Applicability decisions
 
 For every audit domain below, decide `applicable` = `yes`, `no`, or `unknown`, with a rationale. Choose `no` only when you searched for the relevant surface and found nothing, and include absence evidence that describes those searches. When in doubt, choose `unknown` so the domain is still assessed. Domains:
@@ -62,6 +66,7 @@ Return ONLY one JSON object in a single fenced `json` code block, with no text b
     {"aspect": "Payment provider", "value": "No payment SDKs, keys, or checkout code found", "state": "NOT_FOUND",
      "evidence": [{"kind": "absence", "searched": "Grep for common payment SDK names and checkout/subscription terms across the repository"}]}
   ],
+  "entry_point_files": ["src/routes/accounts.ts", "src/routes/orders.ts"],
   "applicability": [
     {"domain": "payments", "applicable": "no", "rationale": "...",
      "evidence": [{"kind": "absence", "searched": "..."}]}

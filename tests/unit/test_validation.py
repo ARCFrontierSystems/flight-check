@@ -174,6 +174,16 @@ class PartValidationTests(unittest.TestCase):
         self.assertTrue(any("no part-" in e for e in errors))
 
 
+class InventoryEntryPointTests(unittest.TestCase):
+    def test_entry_point_files_must_stay_inside_the_audit_root(self):
+        inv = helpers.base_inventory()
+        good = dict(inv, entry_point_files=["src/store.py", "web/handlers/Orders.java"])
+        self.assertEqual(minischema.validate_def(good, catalog.schema(), "inventory"), [])
+        for bad in ("/etc/passwd", "../outside.py", "src/../../outside.py", "C:/x.py", "src\\..\\..\\x.py"):
+            errors = minischema.validate_def(dict(inv, entry_point_files=[bad]), catalog.schema(), "inventory")
+            self.assertTrue(errors, bad)
+
+
 @unittest.skipIf(jsonschema is None, "jsonschema not installed")
 class SchemaAgreementTests(unittest.TestCase):
     """The built-in validator must agree with a reference JSON Schema implementation."""

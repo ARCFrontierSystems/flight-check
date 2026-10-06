@@ -104,7 +104,16 @@ Delegation prompt for each agent:
 > Imported evidence files (cite as kind "user-provided" with this path): `<list of path and description, or "none">`
 > Return only the JSON object described in your instructions.
 
-For each reply, extract the JSON object and write it to `<run_dir>/part-<agent>.json` (for example `part-appsec.json`). Set the top-level `"agent"` field to that same short name (for example `"appsec"`). This is the only edit you may make; never change findings, quotes, or any other content, including HTML-escaped characters.
+**Handler review.** Do this when `flight-check:appsec` is launched and the inventory's `entry_point_files` lists more than 12 files:
+1. Split that list, in its order, into groups of at most 10 files, at most 8 groups.
+2. In the same message as the other agents, launch one more `flight-check:appsec` agent per group, named `appsec-h1`, `appsec-h2`, and so on, with the delegation prompt above, plus this line:
+   > Handler review assignment: read each of these files end to end, with the helpers they call, and report on them only: `<the group's files>`.
+3. Add this line to the main `flight-check:appsec` agent's prompt:
+   > Handler reviewers read these files end to end: `<every file assigned to a group>`.
+   If the 8 groups could not hold every file, add the files left over:
+   > These entry-point files were not assigned to a reviewer: `<files>`.
+
+For each reply, extract the JSON object and write it to `<run_dir>/part-<agent>.json` (for example `part-appsec.json` or `part-appsec-h2.json`). Set the top-level `"agent"` field to that same short name (for example `"appsec"`). This is the only edit you may make; never change findings, quotes, or any other content, including HTML-escaped characters.
 
 ## 4. Validate
 
@@ -113,7 +122,7 @@ Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate <run_dir>`.
 If it reports errors in a part file:
 1. Launch that agent again with a new Agent tool call (do not try to message the earlier agent), giving it its previous JSON and the exact error list and asking for a corrected complete JSON object. Overwrite the part file with the corrected output.
 2. Repeat at most twice per agent.
-3. If the output is still invalid, replace that part file with a minimal valid part. Set its `agent`, give each of its domains coverage `NOT_ASSESSED` with rationale "Agent output failed validation after two attempts", and leave all lists empty. Tell the user. The ship gate will then fail safe.
+3. If the output is still invalid, replace that part file with a minimal valid part. Set its `agent`, give each of its domains coverage `NOT_ASSESSED` with rationale "Agent output failed validation after two attempts", and leave all lists empty. For a handler reviewer, give only `application-security` that coverage. List its files in `truncation`, and report `APPSEC-INJECTION`, `APPSEC-OUTPUT-ENCODING`, and `APPSEC-FILE-HANDLING` as UNVERIFIED, with `missing_evidence` naming those files. Tell the user. The ship gate will then fail safe.
 
 If `inventory.json` is invalid, re-run the inventory agent once with the errors.
 
