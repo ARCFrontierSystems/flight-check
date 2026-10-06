@@ -170,10 +170,64 @@ Fixture material stays outside this repository: run outputs, scores, packets, an
 
 ## Owner decisions from Phase 5
 
+Decided on 2026-10-06: all approved, and the adjudication was confirmed. See "After the owner's decisions" below.
+
+
 1. **Confirm or correct the preliminary adjudication** of App A's unlisted findings (above).
 2. **Approve or decline recommendations 1 to 8.** These are general procedure changes; none targets a test application.
 3. **Deliberately vulnerable code** (recommendation 9): decide how Flight Check should report it.
 4. **The security sample** (recommendation 10): decide whether to build a de-identified local copy and re-run it.
 5. **App B:** keep its answer key until release; App B is scored then on fresh runs of the release build.
+
+## After the owner's decisions
+
+The owner approved all ten recommendations and confirmed the preliminary adjudication of App A's unlisted findings.
+
+### What changed
+
+- **Recommendations 1 to 9** (commit `8fb435f`): document-to-document comparison, the product promise sweep, the outbound-call sweep, the framework-behavior rule, enumerating instead of sampling, the rule for deliberately vulnerable code, choosing counsel questions in the packet, business-decision wording, and `<ID>` placeholders in skills.
+- **Adversarial review.** Four reviewers each examined the changes from a different angle, and three skeptics tried to refute each issue they reported. 26 of 36 reported issues were upheld. They reduced to nine distinct problems, all fixed in `952293d`:
+  - the evidence and component limits for grouped findings were not stated;
+  - a grouping rule contradicted the timeout sweep;
+  - the verifier had no rule for deliberately vulnerable code;
+  - the packet example used literal question numbers;
+  - the de-identification left identifiers that still named test cases and categories.
+- **Handler review** (`a5d39d1`). The first de-identified runs below showed that instructions alone did not stop sampling. When the inventory lists more than 12 entry-point files, up to eight extra application-security agents now each read up to 10 handlers end to end.
+
+### Security sample, de-identified (recommendation 10)
+
+The same 44 cases were rebuilt with `owasp_subset.py --deidentify`. That removed the project's package, class, and file names; the paths and messages that named each vulnerability category; and the comments naming the project or its license. The license and a notice of the changes are kept beside the copy, outside the audited directory. Three runs per configuration:
+
+| | Unmodified sample, before the changes | De-identified, recommendations 1 to 9 | De-identified, plus handler review |
+|---|---|---|---|
+| Named the OWASP Benchmark | 3 of 3 runs | 0 of 3 | 0 of 3 |
+| Inferred a deliberately vulnerable or benchmark-style app | 3 of 3 | in most runs | in most runs |
+| Handlers read in full by application security | 1 of 44 | 8 to 13 of 44 | all 44, by 5 reviewers, none skipped |
+| Strict recall (mean) | 0.05 | 0.18 | 0.71 (0.64 to 0.82) |
+| Must-find recall | 0.08 | 0.25 | 0.83 (0.75 to 0.92) |
+| Evidence coverage | 0.05 | 0.32 | 0.94; must-find 1.0 |
+| Decoy false-positive rate | 0 | 0.11 | 0.11 |
+| Precision excluding unlisted findings | 1.0 | 0.63 | 0.87 |
+| Ship decision | BLOCKED — INSUFFICIENT EVIDENCE every run | INSUFFICIENT EVIDENCE once, CRITICAL RISK twice | BLOCKED — CRITICAL RISK every run |
+| Usage per audit | about $1.20 to $1.60 | about $2.30 to $2.80 | about $4.10 to $4.40 |
+
+**What this shows:**
+- **De-identification removed the recognition problem, and recommendation 9 changed what inference does.** No run named the benchmark, but most still inferred, from its uniform generated handlers, that the code was deliberately vulnerable. Under recommendation 9 they kept the severities the issues would have if deployed, and said the inference was not documented by the project. Handler review then made the reading complete.
+- **Detection:** with both changes, 21 of the 22 real vulnerabilities were found by at least one run, every must-find case was covered by evidence in every run, and the detected sets overlapped by 0.63 between runs.
+- **Ship decision:** every run blocked on a confirmed command injection that Flight Check rated CRITICAL, because no endpoint requires authentication. The answer key expected NOT READY with HIGH severity; CRITICAL is within its tolerance and stricter.
+- **Unlisted findings** (11 to 15 per run) were real problems in the shared support code: hardcoded credentials, no authentication, plaintext passwords, error details returned to clients, and no tests or build manifest.
+- **Decoy hits:** 7 across the three runs.
+  - 3 were a different, likely real issue: stack traces written to the response in a file the benchmark labels safe only for its crypto check.
+  - 1 was reported as not exploitable, as a LOW-severity hygiene item.
+  - 3 were genuine false positives, where the agent misread how a value flows; in one, it missed which list element is used after another is removed. The verifier confirmed that one too.
+- **Cost:** handler review makes a 44-handler audit cost about 70% more.
+
+**Caution:** the benchmark's generated coding style remains recognizable, and each case is one small handler; real applications spread flaws across layers. Treat these security numbers as optimistic.
+
+The mechanical evidence check caught one quote mismatch across the six de-identified runs and lowered that finding to UNVERIFIED.
+
+### Not yet re-measured
+
+App A has not been re-run since the changes. The effect of recommendations 1 to 3 (comparing documents, the promise sweep, and the outbound-call sweep) on the generated applications is therefore unmeasured. Three runs would use roughly $18 to $25 of usage; that is an owner decision.
 
 This record reflects only the evidence examined. It is not a certification or legal advice.
