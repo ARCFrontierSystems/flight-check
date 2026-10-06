@@ -51,7 +51,7 @@ Run Flight Check's script only as a single plain command that starts exactly wit
       "technical_context": "<optional: how the affected feature works, from the finding's explanation>",
       "relevant_decisions": ["<optional: decisions already made or pending, only as stated in the findings or by the user>"],
       "follow_up": ["<optional: concrete follow-up items>"],
-      "questions": [1, 3]
+      "questions": "<optional: numbers of the audit questions to keep, in order, only when some repeat others>"
     }
   }
 }
@@ -60,7 +60,7 @@ Run Flight Check's script only as a single plain command that starts exactly wit
    - **executive_summary** (at most ~200 words): what the packet covers, how many findings, their classifications and severities, and what the user hopes to learn from counsel. Factual and neutral.
    - **overall_summary** (at most ~250 words): the legal and business themes across the findings (for example deletion commitments, liability terms, subscription terms). State the open questions without answering them.
    - **No conclusions.** Neither summary may contain legal conclusions. When you refer to wording from the project's own documents, put it in double quotes.
-   - **questions** (optional, per finding): a finding reported by several agents can carry questions that repeat each other in different words. Read each finding's `legal.questions` from the `findings` output. Where some repeat others, list the numbers of the ones to keep (counting from 1, in the order shown), in the order counsel should hear them. Use it only to leave out repeats and to order the questions. Never leave out a question that asks something different, and never write new questions; the packet copies the audit's wording and says how many were left out. Omit `questions` when there are no repeats.
+   - **questions** (optional, per finding): a finding reported by several agents can carry questions that repeat each other in different words. Read each finding's `legal.questions` from the `findings` output. Where some repeat others, list the numbers of the ones to keep as an array of integers (counting from 1, in the order shown), in the order counsel should hear them, for example `[2, 1, 4]`. Use it only to leave out repeats and to order the questions. Never leave out a question that asks something different, and never write new questions; the packet copies the audit's wording and says how many were left out. Omit `questions` when there are no repeats.
 
 4. **Build the packet.** Run:
    `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py packet <run_dir> --request <run_dir>/packet-request.json --out <run_dir>/attorney-review-packet.pdf --ledger <ledger>`

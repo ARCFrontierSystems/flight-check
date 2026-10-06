@@ -257,6 +257,8 @@ def to_markdown(r):
              "- Fixture: %s" % r["fixture"].get("name", "?"),
              "- Run: %s; gate: %s%s" % (r["run_id"], r["gate"], (" (expected %s)" % r["expected_gate"]) if r.get("expected_gate") else ""),
              "- Recall: %s (95%% CI %s); must-tier recall: %s" % (r["recall"], r["recall_ci95"], r["must_recall"]),
+             "- Location only (other domain): recall %s, must-tier %s; evidence coverage: recall %s, must-tier %s"
+             % (r["recall_location_only"], r["must_recall_location_only"], r["recall_evidence_coverage"], r["must_recall_evidence_coverage"]),
              "- Precision (unlisted counted as false): %s; excluding unlisted: %s" % (r["precision_lower_bound"], r["precision_excluding_unlisted"]),
              "- Decoy false-positive rate: %s; Youden J on seeded sites: %s" % (r["decoy_false_positive_rate"], r["youden_j_on_seeded_sites"]),
              "- Severity exact: %s; within tolerance: %s" % (r["severity_exact"], r["severity_within_tolerance"]),

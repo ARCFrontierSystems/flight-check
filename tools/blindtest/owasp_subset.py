@@ -16,7 +16,9 @@ Usage:
 This writes <out>/app/ (the code to audit) and <out>/ground-truth/manifest.json (outside the app).
 
 With --deidentify, the local copy is changed so the auditor cannot recognize the benchmark: package and
-class names, servlet paths (which name the vulnerability category), and the identifying header comments.
+class names, servlet and page paths (which name the vulnerability category), comments naming the project or
+its license, and messages and identifiers that name test cases or categories. The coding style of the
+generated cases (for example doSomething and bar) is left as it is.
 The benchmark's LICENSE and a NOTICE describing the changes are written next to app/, not inside it, and
 ground-truth/name-map.json records the original name of every file. The copy is for local testing only
 and must never be distributed or committed.
@@ -34,15 +36,25 @@ import sys
 
 PKG = os.path.join("src", "main", "java", "org", "owasp", "benchmark")
 NEW_PKG = os.path.join("src", "main", "java", "org", "example", "portal")
-HEADER = re.compile(r"\A\s*/\*.*?\*/\s*", re.S)
+BLOCK_COMMENT = re.compile(r"[ \t]*/\*.*?\*/[ \t]*\n?", re.S)
+IDENTIFYING = re.compile(r"owasp|benchmark|General Public License|Open Web Application", re.I)
 SERVLET_PATH = re.compile(r'"/[A-Za-z]+-\d+/(BenchmarkTest\d{5})(\.html)?"')
 CASE_MESSAGE = re.compile(r'"[^"\n]*(?:TestCase|Test Case)[^"\n]*"')
+EXECUTED_MESSAGE = re.compile(r'"[^"\n]*\bTest\b[^"\n]*executed[^"\n]*"')
 TEST_NAME = re.compile(r"BenchmarkTest\d{5}")
 URL = re.compile(r"https?://[^\s\"<>]*owasp[^\s\"<>]*", re.I)
 NOTICE = ("This directory's app/ is a modified local copy of part of the OWASP Benchmark (Java), which is\n"
-          "licensed under GPL-2.0 (see LICENSE). It was changed for blind testing: package, class, and file\n"
-          "names, servlet paths, and header comments. ground-truth/name-map.json maps every file to its\n"
-          "original. It is for local testing only and must not be distributed.\n")
+          "licensed under GPL-2.0 (see LICENSE). Source: %s, %d cases per category and outcome, seed %s.\n"
+          "Changes made by tools/blindtest/owasp_subset.py --deidentify, so the auditor cannot recognize the\n"
+          "benchmark:\n"
+          "- block comments naming the project or its license were removed;\n"
+          "- the org.owasp.benchmark packages became org.example.portal, and testcode became web;\n"
+          "- test-case classes and files were renamed (BenchmarkTestNNNNN to Endpoint<hash>), and Thing* helpers to Processor*;\n"
+          "- servlet and page paths that named the vulnerability category became /api/<name>;\n"
+          "- messages and identifiers naming test cases or categories were made neutral;\n"
+          "- remaining project names and project URLs were replaced.\n"
+          "Library imports (for example org.owasp.esapi) are unchanged. ground-truth/name-map.json maps every\n"
+          "file to its original. This copy is for local testing only and must not be distributed.\n")
 
 # Category -> (severity, severity_tolerance, tier, domains). Severities are Flight Check's judgment of
 # typical impact, not part of the benchmark, so the tolerance is generous.
@@ -94,24 +106,25 @@ def new_name(name, seed):
 
 def deidentify_text(text, seed):
     """Remove what identifies the benchmark from one source file; library imports are left alone."""
-    head = HEADER.match(text)
-    if head and re.search(r"owasp|benchmark", head.group(0), re.I):
-        text = text[head.end():]
+    text = BLOCK_COMMENT.sub(lambda m: "" if IDENTIFYING.search(m.group(0)) else m.group(0), text).lstrip("\n")
     text = SERVLET_PATH.sub(lambda m: '"/api/%s%s"' % (new_name(m.group(1), seed).lower(), m.group(2) or ""), text)
     text = CASE_MESSAGE.sub('"Request failed"', text)
+    text = EXECUTED_MESSAGE.sub('"Operation completed"', text)
     for old, new in (("TestCase", "Handler"), ("Test Cases", "Handlers"), ("Test Case", "Handler"),
-                     ("test cases", "handlers"), ("test case", "handler")):
+                     ("test cases", "handlers"), ("test case", "handler"), ("testCase", "handler"), ("TESTCASE", "HANDLER")):
         text = text.replace(old, new)
+    text = text.replace('"BenchmarkTest"', '"Endpoint"')
     text = TEST_NAME.sub(lambda m: new_name(m.group(0), seed), text)
     text = text.replace("org.owasp.benchmark.testcode", "org.example.portal.web").replace("org.owasp.benchmark", "org.example.portal")
     text = re.sub(r"(?<![a-z])Thing", "Processor", text).replace("createThing", "createProcessor")
+    text = re.sub(r"\bthing", "processor", text)
     text = URL.sub("https://example.org/", text)
     for old, new in (("OWASP Benchmark", "Portal"), ("Benchmark", "Portal"), ("benchmark", "portal"), ("BENCHMARK", "PORTAL")):
         text = text.replace(old, new)
     return re.sub(r"(?<!org\.)OWASP ?|(?<!org\.)owasp(?!\.esapi)", "", text)
 
 
-def deidentify(out, app, seed):
+def deidentify(out, app, seed, source):
     """Rewrite app/ in place and return {new relative path: original relative path}."""
     mapping = {}
     old_root = os.path.join(app, PKG)
@@ -138,7 +151,7 @@ def deidentify(out, app, seed):
     if os.path.exists(os.path.join(app, "LICENSE")):
         shutil.move(os.path.join(app, "LICENSE"), os.path.join(out, "LICENSE"))
     with open(os.path.join(out, "NOTICE"), "w", encoding="utf-8") as fh:
-        fh.write(NOTICE)
+        fh.write(NOTICE % source)
     return mapping
 
 
@@ -164,6 +177,8 @@ def main(argv=None):
     if os.path.exists(out):
         sys.exit("refusing: %s already exists" % out)
 
+    if args.deidentify and not os.path.exists(os.path.join(bench, "LICENSE")):
+        sys.exit("refusing: --deidentify needs the benchmark's LICENSE file, which is kept next to the modified copy")
     csv_name, rows = load_expected(bench)
     chosen = select(rows, args.per_class, args.seed)
     app = os.path.join(out, "app")
@@ -176,7 +191,7 @@ def main(argv=None):
     for r in chosen:
         rel = os.path.join(PKG, "testcode", r["name"] + ".java")
         shutil.copy(os.path.join(bench, rel), os.path.join(app, rel))
-    mapping = deidentify(out, app, args.seed) if args.deidentify else None
+    mapping = deidentify(out, app, args.seed, (csv_name, args.per_class, args.seed)) if args.deidentify else None
     original_to_new = {v: k for k, v in (mapping or {}).items()}
 
     issues, decoys = [], []

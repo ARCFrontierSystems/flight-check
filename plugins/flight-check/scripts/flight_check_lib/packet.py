@@ -136,8 +136,8 @@ def _finding_parts(f, extra, ledger_entry):
 
 
 def _omitted_note(n):
-    return ("%d further question(s) from the audit repeat the ones above in other words and are left out; "
-            "the audit report lists all of them." % n)
+    return ("%d further question(s) from the audit were left out as repeats of the ones above when this packet "
+            "was prepared; the audit report lists all of them." % n)
 
 
 def build(final, request, ledger=None, generated_at=None, page_size="letter"):

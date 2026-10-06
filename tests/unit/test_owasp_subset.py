@@ -24,7 +24,9 @@ def fake_benchmark():
     with open(os.path.join(pkg, "helpers", "Util.java"), "w") as fh:
         fh.write("class Util {}\n")
     with open(os.path.join(pkg, "helpers", "ThingFactory.java"), "w") as fh:
-        fh.write(HEADER + "package org.owasp.benchmark.helpers;\nclass ThingFactory { Object createThing() { return null; } }\n")
+        # this header follows the package line, as some real files do
+        fh.write("package org.owasp.benchmark.helpers;\n" + HEADER +
+                 "class ThingFactory { Object createThing() { Object thing = null; return thing; } }\n")
     with open(os.path.join(root, "LICENSE"), "w") as fh:
         fh.write("license text\n")
     rows = ["# test name, category, real vulnerability, cwe, version"]
@@ -38,7 +40,9 @@ def fake_benchmark():
                 with open(os.path.join(pkg, "testcode", name + ".java"), "w") as fh:
                     fh.write(HEADER + "package org.owasp.benchmark.testcode;\nimport org.owasp.esapi.ESAPI;\n"
                              "@WebServlet(value = \"/%s-00/%s\")\nclass %s {\n  // %s\n"
-                             "  String page = \"/%s-00/%s.html\"; String m = \"Problem executing %s - TestCase\";\n}\n"
+                             "  String page = \"/%s-00/%s.html\"; String m = \"Problem executing %s - TestCase\";\n"
+                             "  String testCaseNumber = n.substring(1 + \"BenchmarkTest\".length());\n"
+                             "  String done = \"Weak Randomness Test java.util.Random.nextInt() executed\";\n}\n"
                              % (cat, name, name, cat, cat, name, cat))
     with open(os.path.join(root, "expectedresults-0.1.csv"), "w") as fh:
         fh.write("\n".join(rows) + "\n")
@@ -66,7 +70,7 @@ class OwaspSubsetTests(unittest.TestCase):
         self.assertFalse(os.path.exists(os.path.join(app, "ground-truth")))  # answers stay outside the audited app
         loc = m["issues"][0]["locations"][0]
         self.assertTrue(os.path.isfile(os.path.join(app, loc["path"])))
-        self.assertEqual(loc["end_line"], 10)
+        self.assertEqual(loc["end_line"], 12)
 
     def test_deidentified_copy_hides_the_benchmark_and_keeps_answers_aligned(self):
         bench = fake_benchmark()
@@ -79,8 +83,10 @@ class OwaspSubsetTests(unittest.TestCase):
                 with open(os.path.join(dirpath, fn), encoding="utf-8") as fh:
                     texts.append((os.path.join(dirpath, fn), fh.read()))
         for path, text in texts:
-            for word in ("benchmark", "testcode", "Thing", "testcase", "test case"):
-                self.assertNotIn(word.lower(), (path + text).lower() if word != "Thing" else path + text, path)
+            for word in ("benchmark", "testcode", "testcase", "test case", "randomness", "general public license"):
+                self.assertNotIn(word, (path + text).lower(), path)
+            self.assertNotIn("Thing", path + text, path)
+            self.assertNotIn("thing", text.replace("doSomething", ""), path)
             self.assertNotIn("owasp", text.replace("org.owasp.esapi", "").lower(), path)
             for cat in owasp_subset.CATEGORIES:
                 self.assertNotIn("/%s-" % cat, text, path)  # servlet paths no longer name the category
@@ -97,7 +103,17 @@ class OwaspSubsetTests(unittest.TestCase):
             loc = item["locations"][0]
             self.assertTrue(os.path.isfile(os.path.join(app, loc["path"])), loc["path"])
             self.assertTrue(names[loc["path"]].endswith(item["id"][len("OB-"):] + ".java"))
-            self.assertEqual(loc["end_line"], 7)  # the identifying header is gone
+            self.assertEqual(loc["end_line"], 9)  # the identifying header is gone
+        with open(os.path.join(app, owasp_subset.NEW_PKG, "helpers", "ProcessorFactory.java"), encoding="utf-8") as fh:
+            self.assertNotIn("/**", fh.read())  # a header after the package line is removed too
+        with open(os.path.join(out, "NOTICE"), encoding="utf-8") as fh:
+            self.assertIn("seed s", fh.read())
+
+    def test_deidentify_refuses_without_the_license(self):
+        bench = fake_benchmark()
+        os.remove(os.path.join(bench, "LICENSE"))
+        with self.assertRaises(SystemExit):
+            owasp_subset.main(["--benchmark", bench, "--out", os.path.join(tempfile.mkdtemp(), "f"), "--deidentify"])
 
     def test_refuses_to_write_inside_this_repository(self):
         with self.assertRaises(SystemExit):

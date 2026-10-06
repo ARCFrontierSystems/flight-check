@@ -333,14 +333,28 @@ class PacketQuestionTests(unittest.TestCase):
                 "executive_summary": "This packet collects one finding about the account deletion commitment.",
                 "overall_summary": "One contradiction about account deletion needs counsel's input before a decision."}
 
+    def _pdf_flat_text(self, data):
+        path = os.path.join(tempfile.mkdtemp(), "p.pdf")
+        with open(path, "wb") as fh:
+            fh.write(data)
+        check_pdf_structure(data)
+        text = pdf_text(path)
+        return " ".join(text.split()) if text is not None else None
+
     def test_request_can_choose_and_order_audit_questions(self):
         final, f = self._final_and_id()
-        _, md_text, _ = packet.build(final, self._request(f["id"], {f["id"]: {"questions": [2, 1]}}), None, NOW_DT)
+        data, md_text, _ = packet.build(final, self._request(f["id"], {f["id"]: {"questions": [2, 1]}}), None, NOW_DT)
+        flat = self._pdf_flat_text(data)
+        if flat is not None:
+            self.assertIn("1. Second question about backups?", flat)
+            self.assertIn("2. First question about the deletion period?", flat)
+            self.assertNotIn("asked again", flat)
+            self.assertIn("were left out as repeats", flat)
         section = md_text.split("### Questions for qualified counsel", 1)[1].split("### Follow-up items", 1)[0]
         self.assertIn("1. Second question about backups?", section)
         self.assertIn("2. First question about the deletion period?", section)
         self.assertNotIn("asked again", section)
-        self.assertIn("1 further question(s) from the audit repeat the ones above", section)
+        self.assertIn("1 further question(s) from the audit were left out as repeats", section)
 
     def test_request_cannot_select_missing_or_repeated_questions(self):
         final, f = self._final_and_id()
@@ -358,7 +372,10 @@ class PacketQuestionTests(unittest.TestCase):
     def test_business_decision_without_questions_says_so(self):
         final, f = self._final_and_id()
         f["legal"] = {"classification": "BUSINESS DECISION REQUIRED", "decisions_needed": ["Which deletion period to promise."]}
-        _, md_text, _ = packet.build(final, self._request(f["id"]), None, NOW_DT)
+        data, md_text, _ = packet.build(final, self._request(f["id"]), None, NOW_DT)
+        flat = self._pdf_flat_text(data)
+        if flat is not None:
+            self.assertIn(" ".join(packet.NO_QUESTIONS_BUSINESS.split()), flat)
         self.assertIn(packet.NO_QUESTIONS_BUSINESS, md_text)
         self.assertNotIn("No specific questions were generated", md_text)
         with self.assertRaises(packet.PacketError):
