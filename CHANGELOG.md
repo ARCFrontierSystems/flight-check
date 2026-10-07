@@ -4,7 +4,7 @@ All notable changes are recorded here. Versions follow [Semantic Versioning](htt
 
 ## [Unreleased] — 0.1.0
 
-First development version. Not yet blind-tested or released.
+First development version, not yet released. Blind-tested in Phase 5 (see `docs/audits/2026-10-06-phase-5-blind-test.md`); the held-out fixture is scored at release.
 
 - Renamed the project from Fairtide to **Flight Check**: plugin id `flight-check`, commands `/flight-check:*`, script `flight_check.py`, working directory `.flight-check/`, finding IDs `FC-0001` (existing ledger IDs `FT-` became `FC-` with the same numbers), packet title "FLIGHT CHECK — ATTORNEY REVIEW PACKET", and the CI secret `FLIGHT_CHECK_LEAK_DENYLIST`. Nothing had been released under the old names.
 - Changes from the Phase 5 blind tests:
