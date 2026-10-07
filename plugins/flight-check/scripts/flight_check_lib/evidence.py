@@ -45,11 +45,17 @@ def resolve_within(root, rel_path):
     return candidate, None
 
 
+MIN_GAPPED_QUOTE_CHARS = 12
+_ELISION = re.compile(r"\.\.\.|…")
+
+
 def quote_matches(quote, window_text):
     segments = [_norm(s) for s in _GAP.split(quote)]
     segments = [s for s in segments if len(s) >= 3]
     if not segments:
         return None  # nothing checkable, e.g. the quote is only a redaction marker
+    if _ELISION.search(quote) and sum(len(s) for s in segments) < MIN_GAPPED_QUOTE_CHARS:
+        return None  # a quote that is mostly skipped lines proves too little to count as matching
     haystack = _norm(window_text)
     pos = 0
     for seg in segments:

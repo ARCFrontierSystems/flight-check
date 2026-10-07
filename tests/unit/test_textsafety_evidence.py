@@ -46,6 +46,12 @@ class TextSafetyTests(unittest.TestCase):
 
 
 class EvidenceCheckTests(unittest.TestCase):
+    def test_gap_heavy_quote_is_not_accepted(self):
+        window = "def handler(req):\n    value = req.args['q']\n    return run(value)\n"
+        self.assertIsNone(evidence.quote_matches("ret ... ] ... ;", window))  # mostly gaps: unchecked, never OK
+        self.assertTrue(evidence.quote_matches("value = req.args['q']\n...\nreturn run(value)", window))
+        self.assertTrue(evidence.quote_matches("return run(value)", window))  # no gap: unchanged
+
     root = helpers.FIXTURE_ROOT
 
     def check(self, **ev):

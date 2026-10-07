@@ -7,6 +7,7 @@ All notable changes are recorded here. Versions follow [Semantic Versioning](htt
 First development version, not yet released. Blind-tested in Phase 5 (see `docs/audits/2026-10-06-phase-5-blind-test.md`); the held-out fixture is scored at release.
 
 - Renamed the project from Fairtide to **Flight Check**: plugin id `flight-check`, commands `/flight-check:*`, script `flight_check.py`, working directory `.flight-check/`, finding IDs `FC-0001` (existing ledger IDs `FT-` became `FC-` with the same numbers), packet title "FLIGHT CHECK — ATTORNEY REVIEW PACKET", and the CI secret `FLIGHT_CHECK_LEAK_DENYLIST`. Nothing had been released under the old names.
+- Changes from the Phase 6 release audit: a quote that skips lines with `...` must contain at least 12 checkable characters, or it is reported as uncheckable instead of matching; the README links the blind-test record and explains that run directories can be deleted.
 - Changes from the Phase 5 blind tests:
   - **Documents compared with each other.** The governance agent builds a table of what each policy and statement says (time limits, audience and ages, governing law, liability, data, rights) and reports each conflicting topic as its own finding. A conflict between two documents is separate from a conflict with the code.
   - **Product promise sweep.** Promises in the README, marketing, help, and in-app text are listed first and each is checked against the code.

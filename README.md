@@ -8,7 +8,7 @@ Flight Check asks one question:
 
 It examines security, privacy, legal/business risk, compliance readiness, accessibility, reliability, and production readiness. It reports what it found with file-and-line evidence, what it verified as working, and what it could not verify. It never confuses "we did not find a problem" with "there is no problem".
 
-> **Status: pre-release (0.1.0).** Flight Check is under active development. Its blind evaluation against a synthetic test application has not been published yet. Treat results as an aid to human judgment, not a substitute for it.
+> **Status: pre-release (0.1.0).** Flight Check is under active development. Its first blind evaluation is published in [docs/audits/2026-10-06-phase-5-blind-test.md](docs/audits/2026-10-06-phase-5-blind-test.md); results on the held-out test application are scored at release. Treat results as an aid to human judgment, not a substitute for it.
 
 ## What Flight Check does
 
@@ -90,7 +90,7 @@ Details: [docs/methodology.md](docs/methodology.md).
 - **No telemetry, no network.** Flight Check adds no telemetry, and its script makes no network connections.
 - **Model provider.** The content Flight Check's agents read is processed by your Claude Code session's model provider under your existing Claude Code configuration, like any other Claude Code task. That includes anything in the audited files: source code, configuration, fixtures, seed data, logs, and any personal, health, payment, or other regulated or confidential data they contain.
 - **Before auditing sensitive material,** check that your organization permits sending it to that provider. To keep files out of an audit, audit a subdirectory (`/flight-check:audit path/to/subdir`) or a copy of the project without them. Flight Check masks likely secrets in what it writes, but the agents still read the original files.
-- **Local files.** Flight Check masks likely secrets in everything it writes from agent results: `report.md`, `audit.final.json`, the ledger, and Attorney Review Packets. The raw agent replies saved in the run directory are kept as received for traceability; run directories are gitignored automatically. Masking is pattern-based, so it can miss unusual secret formats. Your conversation history follows Claude Code's own retention settings.
+- **Local files.** Flight Check masks likely secrets in everything it writes from agent results: `report.md`, `audit.final.json`, the ledger, and Attorney Review Packets. The raw agent replies saved in the run directory are kept as received for traceability; run directories are gitignored automatically. They can contain quoted project content, so delete `.flight-check/runs/<run>/` directories you no longer need (the ledger keeps finding history without them). Masking is pattern-based, so it can miss unusual secret formats. Your conversation history follows Claude Code's own retention settings.
 
 ## Usage and cost
 
