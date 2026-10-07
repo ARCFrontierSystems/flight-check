@@ -19,6 +19,10 @@ The user asked to keep these until they ask for them. When they do, point them t
 - Blind-test protocol: `docs/blind-test-protocol.md`, for Phase 5, which runs Flight Check blind against the separate private testbed repository.
 - GitHub repository settings to switch on: `docs/maintainers/github-settings.md`.
 
+## Working preferences
+
+The user asked for this for the rest of development: **be as token- and usage-efficient as possible.** Prefer one targeted check over repeated runs, avoid multi-agent workflows and extra review fan-outs unless a step cannot be done reliably otherwise, combine audit runs where one batch can serve two purposes, and keep replies short.
+
 ## Repository layout
 
 - `plugins/flight-check/` is the shipped Claude Code plugin (skills, agents, scripts, schemas, references). Everything in it reaches users.
