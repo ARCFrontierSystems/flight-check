@@ -1,2 +1,117 @@
-# flight-check
-Flight Check is an open security, privacy, and compliance framework designed to help developers identify risks, enforce secure development practices, protect applications and data, and improve production readiness. Built for projects of all sizes.
+# Flight Check
+
+**Evidence-first ship-readiness audits for any software project, as a Claude Code plugin.**
+
+Flight Check asks one question:
+
+> *Based on the evidence available in this project, what could prevent this software from being safely and responsibly released?*
+
+It examines security, privacy, legal/business risk, compliance readiness, accessibility, reliability, and production readiness. It reports what it found with file-and-line evidence, what it verified as working, and what it could not verify. It never confuses "we did not find a problem" with "there is no problem".
+
+> **Status: pre-release (0.1.0).** Flight Check is under active development. Its first blind evaluation is published in [docs/audits/2026-10-06-phase-5-blind-test.md](docs/audits/2026-10-06-phase-5-blind-test.md); results on the held-out test application are scored at release. Treat results as an aid to human judgment, not a substitute for it.
+
+## What Flight Check does
+
+- **Audits 19 domains:**
+  - application security, authentication, authorization, data protection, privacy (including retention and deletion)
+  - payments/subscriptions, third-party services, dependencies/supply chain, IP/assets
+  - infrastructure/deployment, reliability/recovery, operational readiness, production readiness, testing
+  - AI/LLM risks, accessibility
+  - legal/business risk, compliance readiness, documentation consistency
+- **Requires evidence.** Every finding cites files and line ranges with quotes, and Flight Check mechanically checks each quote against the file. Before reporting a problem, Flight Check searches for evidence that it is already mitigated. A separate verifier re-checks every finding and can confirm, downgrade, merge, or reject it.
+- **Reports what works, too.** Positive controls are listed with evidence, so the report is not a list of complaints.
+- **Fails safe.** A control Flight Check cannot establish is marked UNVERIFIED, never "passed".
+- **Computes a deterministic ship gate.** The decision is computed by code from the findings and controls, not written by the model: READY FOR RELEASE, READY WITH ACCEPTED RISKS, NOT READY — REMEDIATION REQUIRED, BLOCKED — INSUFFICIENT EVIDENCE, or BLOCKED — CRITICAL RISK.
+- **Includes a Legal Review Assistant.** Findings that warrant legal or business review are classified, and each comes with specific questions for qualified counsel. Flight Check can produce **FLIGHT CHECK — ATTORNEY REVIEW PACKET**, a printable PDF to take into a consultation. It does not give legal advice.
+- **Tracks findings over time.** Finding IDs are stable across audits. Regressions are flagged. Accepted risks, counsel decisions, and closures are recorded only from your explicit input.
+- **Offers a remediation mode** (for your own projects). It fixes the findings you authorize, adds regression tests where practical, and re-audits to verify the fixes instead of assuming they worked.
+- **Produces machine-readable output** for CI: `audit.final.json` and gate exit codes.
+
+## What Flight Check is not
+
+- **Not legal advice, a compliance certification, an audit opinion, or a penetration test.** It never states that a project is compliant, certified, secure, or legal.
+- **Not exhaustive.** It reads code and configuration statically. It does not run your application or tests, scan live infrastructure, or query vulnerability databases. Those areas stay UNVERIFIED unless you import evidence.
+- **Not infallible.** Language models can miss issues and can be wrong. Flight Check's checks reduce, but do not eliminate, false positives and false negatives. See [docs/limitations.md](docs/limitations.md).
+
+## Requirements
+
+- Claude Code with plugin support. Developed and tested with Claude Code 2.1.289; it relies on agent settings introduced in 2.1.271.
+- Python 3.9 or newer available as `python3`. Flight Check's bundled script uses only the Python standard library and makes no network connections.
+
+## Install
+
+From Claude Code's command line:
+
+```bash
+claude plugin marketplace add ARCFrontierSystems/flight-check
+claude plugin install flight-check@arc-frontier-systems
+```
+
+Or inside a Claude Code session: `/plugin marketplace add ARCFrontierSystems/flight-check`, then `/plugin install flight-check@arc-frontier-systems`. To try Flight Check without installing it, clone this repository and start Claude Code with `claude --plugin-dir ./plugins/flight-check`. See [docs/installation.md](docs/installation.md) for team setup, updates, and removal.
+
+## Use
+
+| Command | What it does |
+|---|---|
+| `/flight-check:audit` | Audits the current project and writes the report, the machine-readable results, and the ship decision. |
+| `/flight-check:legal-packet` | Builds the Attorney Review Packet PDF from findings that warrant legal or business review. |
+| `/flight-check:track` | Shows status, and records your decisions: accepted risks, legal review status, counsel decisions you report, closures. |
+| `/flight-check:remediate FC-0001,FC-0002` | Fixes findings you authorize in your own project, then re-audits to verify. |
+
+Useful audit options:
+- `--context FILE`: a short description of your markets, audience, regulated data, and business model.
+- `--evidence FILE ...`: imported evidence, such as scanner output, CI test results, or restore-test records.
+- `--untrusted --out DIR`: for code you do not own or trust; read [Auditing untrusted code](docs/hardened-mode.md) first.
+
+Flight Check runs its bundled script (`python3 <plugin>/scripts/flight_check.py`) to validate results and compute the gate. Approve it when asked; choosing "always allow" avoids repeated prompts. See [docs/usage.md](docs/usage.md).
+
+## Output
+
+Each audit writes a run directory:
+- `.flight-check/runs/<run>/report.md`: the 33-section human-readable report.
+- `.flight-check/runs/<run>/audit.final.json`: machine-readable findings, controls, coverage, and the gate. See [docs/output-format.md](docs/output-format.md).
+- `.flight-check/runs/<run>/attorney-review-packet.pdf`: written when you run `/flight-check:legal-packet`.
+
+The project also gets a ledger, `.flight-check/ledger.json`, which holds finding history. Commit it if you want regression tracking across your team. Run directories are gitignored automatically because they quote your project's files.
+
+## How it works
+
+1. **Inventory.** A read-only agent maps the project and decides which domains apply.
+2. **Domain audits.** Nine read-only domain agents (tools limited to Read, Grep, Glob) audit in parallel and return structured findings, controls, and coverage.
+3. **Validation.** `flight_check.py validate` enforces the output contract: evidence on every finding, counter-evidence searches, no legal conclusions, no vague findings.
+4. **Verification.** A verifier agent re-reads every cited line and searches independently for mitigations.
+5. **Finalize.** `flight_check.py finalize` checks every quote against the files, assigns stable IDs, detects regressions, and computes the ship gate.
+6. **Report.** The 33-section report and the machine-readable results are written.
+
+Details: [docs/methodology.md](docs/methodology.md).
+
+## Privacy and data handling
+
+- **No telemetry, no network.** Flight Check adds no telemetry, and its script makes no network connections.
+- **Model provider.** The content Flight Check's agents read is processed by your Claude Code session's model provider under your existing Claude Code configuration, like any other Claude Code task. That includes anything in the audited files: source code, configuration, fixtures, seed data, logs, and any personal, health, payment, or other regulated or confidential data they contain.
+- **Before auditing sensitive material,** check that your organization permits sending it to that provider. To keep files out of an audit, audit a subdirectory (`/flight-check:audit path/to/subdir`) or a copy of the project without them. Flight Check masks likely secrets in what it writes, but the agents still read the original files.
+- **Local files.** Flight Check masks likely secrets in everything it writes from agent results: `report.md`, `audit.final.json`, the ledger, and Attorney Review Packets. The raw agent replies saved in the run directory are kept as received for traceability; run directories are gitignored automatically. They can contain quoted project content, so delete `.flight-check/runs/<run>/` directories you no longer need (the ledger keeps finding history without them). Masking is pattern-based, so it can miss unusual secret formats. Your conversation history follows Claude Code's own retention settings.
+
+## Usage and cost
+
+An audit runs up to eleven agent tasks (inventory, up to nine domain agents, and a verifier), each reading part of the project, so usage grows with project size and with the number of applicable domains. Flight Check sets no token limit of its own; your Claude Code plan or provider settings govern spend.
+
+For reference, Flight Check's self-audit of its own repository (about 600 KB of text, ten agent tasks plus one retry) took about six minutes. The agents used roughly 800,000 input tokens and 50,000 output tokens, and the coordinating session about 1.6 million input tokens; most input tokens in both were cache reads. Treat these as an order of magnitude, not a quote. Prices depend on your plan and model.
+
+To limit usage:
+- Restrict the audit to the domains you need with `--domains`. The other domains are then reported as not assessed, so the ship gate stays blocked.
+- Audit a subdirectory.
+- For headless runs, set a spending cap with `claude -p ... --max-budget-usd <amount>`.
+- Check your plan's usage page after the first audit.
+
+## Disclaimer
+
+Flight Check organizes evidence and questions for qualified professionals. It is not legal advice and does not establish compliance with any law, regulation, standard, or contract. Results reflect only the evidence available in the audited scope. You remain responsible for your release decisions.
+
+## Project
+
+- License: [Apache-2.0](LICENSE) (see [NOTICE](NOTICE))
+- Security issues in Flight Check itself: [SECURITY.md](SECURITY.md)
+- Contributing: [CONTRIBUTING.md](CONTRIBUTING.md)
+- Changes: [CHANGELOG.md](CHANGELOG.md)
+- Testing approach: [docs/testing.md](docs/testing.md)

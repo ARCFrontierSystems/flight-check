@@ -1,0 +1,14 @@
+# Flight Check run output when auditing this repository itself (reports may contain quoted findings)
+.flight-check/runs/
+.flight-check/packets/
+# Local leak-gate denylist (never commit; see CONTRIBUTING.md)
+.flight-check-denylist*
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+# plugin eval results
+evals/results/
+# Editors / OS
+.DS_Store
+*.swp

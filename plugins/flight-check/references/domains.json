@@ -1,0 +1,25 @@
+{
+  "catalog_version": "1.0",
+  "description": "Audit domains. Every finding, control, and coverage entry belongs to exactly one domain. 'Overall ship readiness' is not a domain: it is the ship gate computed from all domains.",
+  "domains": [
+    {"id": "application-security", "title": "Application Security", "agent": "appsec", "summary": "Input/output handling, injection, web/API hardening, file uploads, webhooks, secrets, administration surfaces, logging and error disclosure."},
+    {"id": "authentication", "title": "Authentication", "agent": "appsec", "summary": "Registration, login, credentials, password reset and recovery, MFA, sessions, tokens, cookies, brute-force and enumeration defenses."},
+    {"id": "authorization", "title": "Authorization", "agent": "appsec", "summary": "Server-side enforcement, roles and attributes, object-level ownership, tenant isolation, administrative and background-job authorization."},
+    {"id": "data-protection", "title": "Data Protection", "agent": "data", "summary": "Datastore and storage access control, row-level security, sensitive-data handling, encryption, backups security, data exposure."},
+    {"id": "privacy", "title": "Privacy", "agent": "data", "summary": "Collection, purpose, sharing, tracking, consent, retention, deletion, export, correction, and consistency between privacy disclosures and implementation."},
+    {"id": "payments", "title": "Payments / Subscriptions", "agent": "payments", "summary": "Payment boundaries, keys, webhooks, idempotency, subscription state, entitlements, trials, renewals, cancellations, refunds, chargebacks."},
+    {"id": "third-party", "title": "Third-Party Services", "agent": "supply-chain", "summary": "Inventory of external services, credentials, data shared, failure modes, vendor dependency and exit considerations."},
+    {"id": "supply-chain", "title": "Dependencies / Supply Chain", "agent": "supply-chain", "summary": "Dependency inventory, lockfiles, known-vulnerability status, install and build scripts, CI/CD pipeline integrity, package provenance."},
+    {"id": "ip-assets", "title": "IP / Asset Protection", "agent": "supply-chain", "summary": "Project and dependency licenses, third-party assets (fonts, images, media, icons), attribution, trademarks, user- and AI-generated content."},
+    {"id": "infrastructure", "title": "Infrastructure / Deployment", "agent": "platform", "summary": "Environments, hosting, network exposure, storage, DNS and domains, CI/CD deployment permissions, preview and staging exposure."},
+    {"id": "reliability", "title": "Reliability / Recovery", "agent": "platform", "summary": "Failure handling, timeouts, retries, idempotency, jobs and queues, consistency, race conditions, backups, restore testing, disaster recovery."},
+    {"id": "operational-readiness", "title": "Operational Readiness", "agent": "platform", "summary": "Monitoring, alerting, error tracking, logging operations, runbooks, rollback procedures, incident readiness."},
+    {"id": "production-readiness", "title": "Production Readiness", "agent": "platform", "summary": "Production configuration, debug and development features, HTTPS, environment separation, limits and abuse protection for public surfaces."},
+    {"id": "testing", "title": "Testing", "agent": "testing", "summary": "Unit, integration, end-to-end, security, privacy, payment, webhook, deletion, accessibility, failure-mode, and regression test coverage."},
+    {"id": "ai-llm", "title": "AI / LLM Risks", "agent": "ai", "summary": "Prompt injection, tool authorization, excessive agency, data leakage, output handling, cost abuse, provider data use, disclosure."},
+    {"id": "accessibility", "title": "Accessibility", "agent": "a11y", "summary": "Semantics, accessible names and labels, keyboard operability, focus, contrast, motion, forms and errors, dialogs, navigation, alternative text."},
+    {"id": "legal-business", "title": "Legal / Business Risk", "agent": "governance", "summary": "Terms, privacy policy, acceptable use, liability, warranty, indemnification, governing law, disputes, subscriptions and refunds, user content, AI usage, vendor terms."},
+    {"id": "compliance-readiness", "title": "Compliance Readiness", "agent": "governance", "summary": "Identification of potentially applicable regulatory regimes and the code-observable evidence relevant to them. Never a compliance determination."},
+    {"id": "documentation", "title": "Documentation Consistency", "agent": "governance", "summary": "Agreement between README, product and API docs, policies, help pages, marketing claims, configuration, and actual behavior."}
+  ]
+}
