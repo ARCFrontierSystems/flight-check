@@ -27,7 +27,7 @@ jobs:
         run: |
           sudo apt-get update -q
           sudo apt-get install -y --no-install-recommends poppler-utils
-          python -m pip install --disable-pip-version-check "jsonschema==4.23.0"
+          python -m pip install --disable-pip-version-check --require-hashes --only-binary=:all: -r tools/ci-requirements.txt
       - name: Unit tests
         run: python -m unittest discover -s tests/unit -p 'test_*.py' -v
       - name: Lint

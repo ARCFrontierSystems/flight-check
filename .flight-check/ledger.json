@@ -596,6 +596,12 @@
             "source": "flight-check",
             "note": "classified LEGAL REVIEW REQUIRED",
             "run_id": "20261007T120434Z"
+          },
+          {
+            "at": "2026-10-12T20:01:20Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "included in attorney review packet attorney-review-packet.pdf"
           }
         ]
       }
@@ -630,7 +636,7 @@
       ],
       "legal": {
         "classification": "BUSINESS DECISION REQUIRED",
-        "status": "OPEN",
+        "status": "IMPLEMENTED",
         "history": [
           {
             "at": "2026-10-07T12:12:32Z",
@@ -638,6 +644,18 @@
             "source": "flight-check",
             "note": "classified BUSINESS DECISION REQUIRED",
             "run_id": "20261007T120434Z"
+          },
+          {
+            "at": "2026-10-12T20:00:56Z",
+            "status": "DECISION_RECEIVED",
+            "source": "user",
+            "note": "Owner decision 2026-10-12: no separate terms of use (Apache-2.0 license plus disclaimers, since Flight Check is free and runs in the user's own Claude Code); no governing-law clause while there are no separate terms; contributions under Apache-2.0 section 5 with a Developer Certificate of Origin sign-off."
+          },
+          {
+            "at": "2026-10-12T20:00:56Z",
+            "status": "IMPLEMENTED",
+            "source": "user",
+            "note": "README states there are no separate terms of use; CONTRIBUTING.md states the contribution terms and the sign-off."
           }
         ]
       }
@@ -651,7 +669,7 @@
       "domain": "supply-chain",
       "title": "CI installs jsonschema without a lockfile, so transitive Python dependencies float; the npm install is pinned only at the top level",
       "severity": "LOW",
-      "status": "NOT_REPRODUCED",
+      "status": "REMEDIATED",
       "first_seen_run": "20261007T120434Z",
       "last_seen_run": "20261007T120434Z",
       "history": [
@@ -668,6 +686,23 @@
           "source": "flight-check",
           "note": "not observed in an assessed domain; confirm resolution",
           "run_id": "20261012T194029Z"
+        },
+        {
+          "at": "2026-10-12T20:00:56Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: CI installs test tools from tools/ci-requirements.txt with exact versions and sha256 hashes (--require-hashes)."
+        }
+      ],
+      "remediations": [
+        {
+          "at": "2026-10-12T20:00:56Z",
+          "note": "CI installs test tools from tools/ci-requirements.txt with exact versions and sha256 hashes (--require-hashes).",
+          "files": [
+            "tools/ci-requirements.txt",
+            ".github/workflows/ci.yml"
+          ],
+          "source": "flight-check"
         }
       ]
     }

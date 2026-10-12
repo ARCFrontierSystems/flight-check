@@ -111,11 +111,11 @@ Release build, generated test applications. Strict matching means the same locat
 | Item | Status |
 |---|---|
 | FC-0001: untagged PDF | ACCEPTED_RISK by the owner on 2026-10-12, review 2027-04-12 |
-| FC-0013: name overlaps existing marks | Open: counsel review before public launch |
-| FC-0014: terms of use, governing law, contribution terms | Open: owner or counsel decision |
+| FC-0013: name overlaps existing marks | Open: counsel review before public launch. An Attorney Review Packet was prepared on 2026-10-12 |
+| FC-0014: terms of use, governing law, contribution terms | Owner decided on 2026-10-12: no separate terms of use (license plus disclaimers), no governing-law clause while there are no separate terms, and contributions under Apache-2.0 with a Developer Certificate of Origin sign-off. README and CONTRIBUTING.md updated |
 | FC-0011: private vulnerability reporting | CLOSED: the owner enabled it on 2026-10-12 |
 
-FC-0013 and FC-0014 show as NOT_REPRODUCED in the ledger because the last self-audit did not report them again. They are still open; close them only once resolved.
+FC-0013 shows as NOT_REPRODUCED in the ledger because the last self-audit did not report it again. It is still open; close it only once counsel has reviewed the name.
 
 ## Attorney Review Packet status
 
@@ -130,8 +130,8 @@ FC-0013 and FC-0014 show as NOT_REPRODUCED in the ledger because the last self-a
   - the Phase 6 checklist passed: no secrets or private information in the history, packaging, license, documentation, disclaimers, tests, and local install;
   - Apache-2.0 license.
 - **Before a public launch:**
-  - get counsel's review of the name (FC-0013) and decide on terms and contribution terms (FC-0014);
-  - optionally, lock the CI tool installs (FC-0015).
+  - get counsel's review of the name (FC-0013); the Attorney Review Packet is ready.
+- **Done after this report:** terms and contribution terms decided (FC-0014), and CI tool installs locked with hashes (FC-0015).
 - **Recommended next fixes** (owner approval needed):
   1. Done after this report: decode quotes escaped more than once, and save oversized agent replies with `save-reply`.
   2. Rate repeatable money-movement failures as CRITICAL when they affect every customer.
