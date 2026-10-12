@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "next_id": 16,
+  "next_id": 21,
   "entries": {
     "23182de0fc497035": {
       "id": "FC-0001",
@@ -710,6 +710,19 @@
           "status": "REMEDIATED",
           "source": "flight-check",
           "note": "remediation recorded; pending verification by re-audit: CI installs test tools from tools/ci-requirements.txt with exact versions and sha256 hashes (--require-hashes)."
+        },
+        {
+          "at": "2026-10-12T20:32:33Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "verifier reports the fix is not effective: The Python half of the finding is fixed. ci.yml line 30 installs with `--require-hashes --only-binary=:all: -r tools/ci-requirements.txt`. The requirements file pins seven entries with sha256 hashes, including the transitive packages attrs, referencing, rpds-py, jsonschema-specifications and typing-extensions, with per-Python-version markers. The finding's title also says the npm install is pinned only at the top level. That is still true: ci.yml line 54 runs `npm install -g @anthropic-ai/claude-code@2.1.289`, and I found no lockfile, `npm ci` or integrity pin. This is tracked as supply-chain.S1. Mark the finding fixed only if the owner accepts and documents the npm residual risk, or commits a lockfile for the CI tool.",
+          "run_id": "20261012T202214Z"
+        },
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: npm half fixed: CI installs Claude Code with npm ci from tools/ci-npm/package-lock.json (integrity-pinned); pip half was already hash-locked."
         }
       ],
       "remediations": [
@@ -720,6 +733,197 @@
             "tools/ci-requirements.txt",
             ".github/workflows/ci.yml"
           ],
+          "source": "flight-check"
+        },
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "note": "npm half fixed: CI installs Claude Code with npm ci from tools/ci-npm/package-lock.json (integrity-pinned); pip half was already hash-locked.",
+          "files": [],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "22a00e4688cedc17": {
+      "id": "FC-0016",
+      "fingerprint": "22a00e4688cedc17",
+      "match_key": "documentation.ci-python-versions-mismatch|docs/audits/2026-10-12-phase-7-final-report.md",
+      "anchor_hash": "abdb07616fd7c7e9",
+      "rule": "documentation.ci-python-versions-mismatch",
+      "domain": "documentation",
+      "title": "Final report says CI runs 91 tests on Python 3.9, 3.11 and 3.12, but the CI matrix has only 3.9 and 3.12",
+      "severity": "LOW",
+      "status": "REMEDIATED",
+      "first_seen_run": "20261012T202214Z",
+      "last_seen_run": "20261012T202214Z",
+      "history": [
+        {
+          "at": "2026-10-12T20:32:33Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T202214Z"
+        },
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: Final report now says 3.9 and 3.12 in CI, 3.9 and 3.11 locally."
+        }
+      ],
+      "remediations": [
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "note": "Final report now says 3.9 and 3.12 in CI, 3.9 and 3.11 locally.",
+          "files": [],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "2a4d520763e8af7f": {
+      "id": "FC-0017",
+      "fingerprint": "2a4d520763e8af7f",
+      "match_key": "documentation.stale-held-out-results-statement|README.md",
+      "anchor_hash": "2fe955bce72e39de",
+      "rule": "documentation.stale-held-out-results-statement",
+      "domain": "documentation",
+      "title": "README and CHANGELOG say the held-out fixture 'is scored at release', but the Phase 7 report already publishes held-out scores",
+      "severity": "LOW",
+      "status": "REMEDIATED",
+      "first_seen_run": "20261012T202214Z",
+      "last_seen_run": "20261012T202214Z",
+      "history": [
+        {
+          "at": "2026-10-12T20:32:33Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T202214Z"
+        },
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: README status and CHANGELOG now link the published Phase 7 held-out results."
+        }
+      ],
+      "remediations": [
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "note": "README status and CHANGELOG now link the published Phase 7 held-out results.",
+          "files": [],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "8fb37d121bd51e16": {
+      "id": "FC-0018",
+      "fingerprint": "8fb37d121bd51e16",
+      "match_key": "documentation.usage-claim-understates-agent-tasks|README.md",
+      "anchor_hash": "2a4a91ffa1e3bb1b",
+      "rule": "documentation.usage-claim-understates-agent-tasks",
+      "domain": "documentation",
+      "title": "README says an audit runs 'up to eleven agent tasks', but the audit skill can launch more (handler reviewers and repeat passes)",
+      "severity": "LOW",
+      "status": "REMEDIATED",
+      "first_seen_run": "20261012T202214Z",
+      "last_seen_run": "20261012T202214Z",
+      "history": [
+        {
+          "at": "2026-10-12T20:32:33Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T202214Z"
+        },
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: README usage section now counts handler reviewers and repeat passes."
+        }
+      ],
+      "remediations": [
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "note": "README usage section now counts handler reviewers and repeat passes.",
+          "files": [],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "75a36ef5a6dcc17f": {
+      "id": "FC-0019",
+      "fingerprint": "75a36ef5a6dcc17f",
+      "match_key": "legal-business.trademark-overlap-recorded-without-counsel-evidence|CLAUDE.md",
+      "anchor_hash": "68c3d24d644e2df7",
+      "rule": "legal-business.trademark-overlap-recorded-without-counsel-evidence",
+      "domain": "legal-business",
+      "title": "Repository records that the name overlaps a registered mark; closure rests on the owner's own report, with no evidence of counsel review",
+      "severity": "LOW",
+      "status": "OPEN",
+      "first_seen_run": "20261012T202214Z",
+      "last_seen_run": "20261012T202214Z",
+      "history": [
+        {
+          "at": "2026-10-12T20:32:33Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T202214Z"
+        }
+      ],
+      "legal": {
+        "classification": "POTENTIAL LEGAL RISK",
+        "status": "CLOSED",
+        "history": [
+          {
+            "at": "2026-10-12T20:32:33Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified POTENTIAL LEGAL RISK",
+            "run_id": "20261012T202214Z"
+          },
+          {
+            "at": "2026-10-12T20:36:33Z",
+            "status": "CLOSED",
+            "source": "user",
+            "note": "Same subject as FC-0013. Owner on 2026-10-12: 'Name check is good. No need to keep that open anymore.' | reason: Owner decision on the name check"
+          }
+        ]
+      }
+    },
+    "41063de38b26753d": {
+      "id": "FC-0020",
+      "fingerprint": "41063de38b26753d",
+      "match_key": "supply-chain.unlocked-npm-install-in-ci|.github/workflows/ci.yml",
+      "anchor_hash": "1ffad3081ba37866",
+      "rule": "supply-chain.unlocked-npm-install-in-ci",
+      "domain": "supply-chain",
+      "title": "CI installs @anthropic-ai/claude-code with only the top-level version pinned, with no lockfile or integrity check",
+      "severity": "LOW",
+      "status": "REMEDIATED",
+      "first_seen_run": "20261012T202214Z",
+      "last_seen_run": "20261012T202214Z",
+      "history": [
+        {
+          "at": "2026-10-12T20:32:33Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T202214Z"
+        },
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: CI installs Claude Code with npm ci from tools/ci-npm/package-lock.json, which pins every package with its integrity hash."
+        }
+      ],
+      "remediations": [
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "note": "CI installs Claude Code with npm ci from tools/ci-npm/package-lock.json, which pins every package with its integrity hash.",
+          "files": [],
           "source": "flight-check"
         }
       ]
@@ -754,6 +958,12 @@
     {
       "run_id": "20261012T194029Z",
       "at": "2026-10-12T19:46:17Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    },
+    {
+      "run_id": "20261012T202214Z",
+      "at": "2026-10-12T20:32:33Z",
       "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
       "mode": "audit"
     }

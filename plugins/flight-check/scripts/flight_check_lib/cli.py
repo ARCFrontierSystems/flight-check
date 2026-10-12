@@ -80,7 +80,12 @@ def cmd_init_run(args):
     run_dir = os.path.join(base, run_id)
     if os.path.exists(run_dir):
         return _fail("run directory already exists: %s" % run_dir)
-    os.makedirs(run_dir)
+    new_base = not os.path.isdir(base)
+    # Run directories hold raw agent replies that quote the project, so only the owner may read them.
+    os.makedirs(run_dir, mode=0o700)
+    os.chmod(run_dir, 0o700)
+    if new_base:
+        os.chmod(base, 0o700)
     if args.inventory_from:
         src = os.path.join(os.path.abspath(args.inventory_from), "inventory.json")
         try:

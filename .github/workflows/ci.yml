@@ -50,8 +50,11 @@ jobs:
       - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
         with:
           node-version: "22"
-      - name: Install Claude Code (pinned)
-        run: npm install -g @anthropic-ai/claude-code@2.1.289
+      - name: Install Claude Code (locked)
+        # The lockfile pins every package with its integrity hash; npm ci refuses anything that differs.
+        run: |
+          npm ci --prefix tools/ci-npm --no-audit --no-fund
+          echo "$GITHUB_WORKSPACE/tools/ci-npm/node_modules/.bin" >> "$GITHUB_PATH"
       - name: Validate plugin and marketplace
         run: |
           claude plugin validate --strict plugins/flight-check

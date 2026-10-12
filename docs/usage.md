@@ -5,7 +5,7 @@ All Flight Check commands are run explicitly. Claude never starts an audit on it
 ## `/flight-check:audit`
 
 ```
-/flight-check:audit [path] [--context FILE] [--evidence FILE ...] [--domains a,b] [--untrusted --out DIR]
+/flight-check:audit [path] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2] [--untrusted --out DIR]
 ```
 
 - `path`: the project to audit. Defaults to the current directory.
@@ -26,6 +26,7 @@ All Flight Check commands are run explicitly. Claude never starts an audit on it
   - A record of a successful backup restore test. This can verify `REL-BACKUP-RESTORE`.
   - Accessibility test reports, and penetration test summaries.
 - `--domains a,b`: limit the audit to some domains. The others are reported as not assessed, so the ship decision fails safe.
+- `--passes 2` (or 3): run each domain agent two or three times independently and combine the results. Language-model audits vary from run to run; combining passes finds more issues and gives a steadier ship decision. A control counts as verified when any pass verified it with evidence, a gap reported by any pass stands, and the verifier merges repeated findings. Domain-audit usage grows about in proportion. Recommended before a release decision.
 - `--untrusted --out DIR`: for code you do not own or trust. See [hardened-mode.md](hardened-mode.md).
 
 A typical first audit ends in **BLOCKED — INSUFFICIENT EVIDENCE**, because some release-critical controls, such as dependency vulnerability status and tested restores, cannot be established from source code alone. That is intended. The report lists exactly which evidence would change the decision. You can then import that evidence, or explicitly accept the risk with `/flight-check:track`.

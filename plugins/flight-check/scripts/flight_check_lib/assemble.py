@@ -95,13 +95,31 @@ def _similar(a, b, threshold=0.6):
     return len(wa & wb) / float(len(wa | wb)) >= threshold
 
 
+_PASS_SUFFIX = re.compile(r"-p[2-9]$")
+
+
+def _base_agent(agent):
+    return _PASS_SUFFIX.sub("", agent)
+
+
 def _merge_control(existing, incoming, agent):
     existing.setdefault("reported_by", [])
+    # Repeat passes of one agent (appsec, appsec-p2) are independent attempts at the same work, so
+    # evidence that any pass found counts: VERIFIED with evidence beats UNVERIFIED (the evidence is
+    # still checked against the files). NOT_MET from any pass or any other agent still wins.
+    passes_only = all(_base_agent(a) == _base_agent(agent) for a in existing["reported_by"])
     existing["reported_by"].append(agent)
     old, new = existing["state"], incoming["state"]
     if old != new:
         existing.setdefault("conflicts", []).append("%s reported %s" % (agent, new))
-        if constants.CONTROL_STATE_CAUTION[new] > constants.CONTROL_STATE_CAUTION[old]:
+        verified = existing if old == "VERIFIED" else incoming
+        if passes_only and {old, new} == {"VERIFIED", "UNVERIFIED"} and verified.get("evidence"):
+            take_new = new == "VERIFIED"
+        else:
+            take_new = constants.CONTROL_STATE_CAUTION[new] > constants.CONTROL_STATE_CAUTION[old]
+        if take_new:
+            if new == "VERIFIED":
+                existing.pop("missing_evidence", None)
             existing["state"] = new
             for field in ("rationale", "missing_evidence"):
                 if incoming.get(field):

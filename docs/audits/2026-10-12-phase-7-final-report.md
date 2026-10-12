@@ -41,7 +41,7 @@ The ship decisions are READY FOR RELEASE, READY WITH ACCEPTED RISKS, NOT READY â
 
 ## Tests performed
 
-- **Unit tests:** 91 tests on Python 3.9, 3.11, and 3.12 (CI), with 86% line coverage of the shipped scripts.
+- **Unit tests:** 91 tests on Python 3.9 and 3.12 in CI, and on 3.9 and 3.11 locally, with 86% line coverage of the shipped scripts.
 - **Repository checks:** the lint (standard-library only, no network or subprocess calls, pre-approval limits, invisible characters, credential-like strings), the leak gate (private denylist and fixture canaries across every committable file and the full history), and strict plugin validation.
 - **Self-audits** of this repository: Phase 3, two in Phase 4, Phase 6, and Phase 7.
 - **Blind tests** (protocol in [blind-test-protocol.md](../blind-test-protocol.md)):

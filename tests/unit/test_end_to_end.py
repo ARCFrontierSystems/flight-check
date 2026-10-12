@@ -304,6 +304,8 @@ class EndToEndTests(unittest.TestCase):
         tmp = tempfile.mkdtemp()
         code, out = run_cli("init-run", "--base", os.path.join(tmp, "runs"), "--root", helpers.REPO, "--now", helpers.NOW)
         self.assertEqual(code, 0, out)
+        self.assertEqual(os.stat(out["run_dir"]).st_mode & 0o777, 0o700)  # raw agent replies stay owner-only
+        self.assertEqual(os.stat(os.path.join(tmp, "runs")).st_mode & 0o777, 0o700)
         self.assertEqual(out["run_id"], "20261004T120000Z")
         self.assertTrue(os.path.isdir(out["run_dir"]))
         self.assertTrue(os.path.exists(os.path.join(tmp, "runs", ".gitignore")))

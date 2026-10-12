@@ -242,6 +242,7 @@
         },
         "imported_evidence": {"type": "array", "items": {"$ref": "#/$defs/importedEvidence"}, "maxItems": 50},
         "requested_domains": {"type": "array", "items": {"$ref": "#/$defs/domainId"}},
+        "passes": {"type": "integer", "minimum": 1, "maximum": 3},
         "remediation_targets": {"type": "array", "items": {"type": "string", "pattern": "^FC-[0-9]{4,}$"}, "maxItems": 100},
         "notes": {"type": "array", "items": {"type": "string", "maxLength": 2000}, "maxItems": 30}
       }

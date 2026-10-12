@@ -127,7 +127,7 @@ For each domain you own:
 
 Explain the reasoning in `severity_rationale`. Never inflate severity to be conservative.
 
-- **CRITICAL**: directly exploitable or near-certain severe harm with little or no precondition. Examples: unauthenticated access to all users' data, exposed live production credentials, payment bypass.
+- **CRITICAL**: directly exploitable or near-certain severe harm with little or no precondition. Examples: unauthenticated access to all users' data, exposed live production credentials, payment bypass, and a routine operation (a scheduled job, a retry, a re-run) that would charge, refund, or delete for many customers at once in error.
 - **HIGH**: serious harm that is likely exploitable or likely to occur, possibly with modest preconditions. Examples: object-level access control missing on sensitive records, injection reachable by any signed-in user, unverified payment webhooks.
 - **MEDIUM**: meaningful risk that needs specific conditions, or a significant gap between policy and implementation without immediate exploitation.
 - **LOW**: limited impact or a defense-in-depth gap.
