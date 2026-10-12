@@ -2,9 +2,9 @@
 
 All notable changes are recorded here. Versions follow [Semantic Versioning](https://semver.org/).
 
-## [1.0.0] — 2026-10-12
+## [1.0.0-rc.1] — 2026-10-12 (pre-release)
 
-First release. Development versions (0.1.0) were never published as releases. Blind-tested in Phase 5 (`docs/audits/2026-10-06-phase-5-blind-test.md`), on a held-out application in Phase 7 (`docs/audits/2026-10-12-phase-7-final-report.md`), and on a second held-out application for this release (`docs/audits/2026-10-12-v1-release-evaluation.md`).
+Release candidate for 1.0; not yet published as a release. Development versions (0.1.0) were never published as releases. Blind-tested in Phase 5 (`docs/audits/2026-10-06-phase-5-blind-test.md`), on a held-out application in Phase 7 (`docs/audits/2026-10-12-phase-7-final-report.md`), and on a second held-out application for this release candidate (`docs/audits/2026-10-12-v1-release-evaluation.md`).
 
 - Changes from the release self-audit:
   - **Security map first.** Domain agents read a project's own security documentation early, use it only as a map to the files and tests it names, and verify each control there. Documentation alone never verifies a control. `docs/security-design.md` now also covers AI data boundaries and ledger integrity.

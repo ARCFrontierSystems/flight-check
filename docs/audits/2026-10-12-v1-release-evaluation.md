@@ -1,6 +1,6 @@
-# Flight Check 1.0 release evaluation, 2026-10-12
+# Flight Check 1.0 release-candidate evaluation, 2026-10-12
 
-This record covers the blind evaluation of the 1.0.0 release candidate on a new held-out test application, and the release self-audit. Following the blind-test protocol, it reports aggregates only: no fixture code, names, or answer-key contents.
+This record covers the blind evaluation of the 1.0 release candidate (published as `1.0.0-rc.1`) on a new held-out test application, and the release self-audit. Following the blind-test protocol, it reports aggregates only: no fixture code, names, or answer-key contents.
 
 ## Held-out application
 
@@ -55,6 +55,14 @@ One audit of this repository at the release candidate (run `20261012T220354Z`, v
 | FC-0023 | No terms of use beyond Apache-2.0 | Owner decision recorded: the license and its disclaimers |
 | FC-0024 | The name overlaps a registered mark | Owner decision recorded (same subject as FC-0013) |
 | FC-0025 | The ledger is not locked against two Flight Check commands writing it at the same time | Open; low impact for single-user use |
+
+## Fixes and confirming self-audit
+
+The two release-critical controls were made verifiable by real changes, not by re-running until a run passed:
+- Domain agents now read a project's own security documentation early, as a map only, and verify each control at the code and tests it names. `docs/security-design.md` now maps the AI data boundaries (single local user, read-only agents with no network or write tools, pre-approved script commands only, what reaches the model provider) and ledger integrity.
+- FC-0025 was fixed: commands that change the ledger hold a lock file from read to write.
+
+The confirming self-audit (run `20261012T222035Z`, `--passes 2`, about $4.15, at commit `6dc58d9`; the version string then read 1.0.0 and has since become `1.0.0-rc.1` with no other change) gave **READY FOR RELEASE**: no open findings, no unverified release-critical controls, every domain assessed or shown not applicable, and the FC-0025 fix verified. FC-0021 and FC-0022 were not reported in that run and are recorded as NOT_REPRODUCED, which means "not seen", not "fixed": the verifier still does not review VERIFIED controls (FC-0021), and the repository description still describes planned capabilities (FC-0022; the owner is keeping it until the product matches it).
 
 ## Limitations at release
 
