@@ -1,6 +1,6 @@
 Local check results for this repository
-Generated: 2026-10-04T23:16:59Z on commit 9e773ccc6c72e20ade6eb6000e54da7fba9982f6
-Environment: Python 3.11.15 and Python 3.9.23, Claude Code 2.1.289 (Claude Code)
+Generated: 2026-10-12T21:32:10Z on commit 2e5b0847b109250625ebd7284fc13a375d74e5af
+Environment: Python 3.11.15 and Python 3.9.23, 2.1.296 (Claude Code)
 
 == python3 -m unittest discover -s tests/unit -p 'test_*.py' -v
 test_agent_field_must_match_file_name (test_end_to_end.EndToEndTests.test_agent_field_must_match_file_name) ... ok
@@ -12,8 +12,15 @@ test_init_run_and_ledger_cli (test_end_to_end.EndToEndTests.test_init_run_and_le
 test_invalid_run_writes_nothing (test_end_to_end.EndToEndTests.test_invalid_run_writes_nothing) ... ok
 test_near_duplicate_questions_not_merged_twice (test_end_to_end.EndToEndTests.test_near_duplicate_questions_not_merged_twice) ... ok
 test_verifier_rejection_and_fabricated_evidence (test_end_to_end.EndToEndTests.test_verifier_rejection_and_fabricated_evidence) ... ok
+test_failed_reviewer_keeps_the_gate_from_passing (test_end_to_end.HandlerReviewTests.test_failed_reviewer_keeps_the_gate_from_passing) ... ok
+test_reviewer_not_met_outranks_main_verified (test_end_to_end.HandlerReviewTests.test_reviewer_not_met_outranks_main_verified) ... ok
 test_runs_findings_and_inventory_reuse (test_end_to_end.ListingCommandTests.test_runs_findings_and_inventory_reuse) ... ok
+test_all_questions_kept_when_none_chosen (test_end_to_end.PacketQuestionTests.test_all_questions_kept_when_none_chosen) ... ok
+test_business_decision_without_questions_says_so (test_end_to_end.PacketQuestionTests.test_business_decision_without_questions_says_so) ... ok
+test_request_can_choose_and_order_audit_questions (test_end_to_end.PacketQuestionTests.test_request_can_choose_and_order_audit_questions) ... ok
+test_request_cannot_select_missing_or_repeated_questions (test_end_to_end.PacketQuestionTests.test_request_cannot_select_missing_or_repeated_questions) ... ok
 test_language_tag_is_validated (test_end_to_end.PdfLanguageTests.test_language_tag_is_validated) ... ok
+test_large_reply_saved_by_claude_code_is_copied_exactly (test_end_to_end.SaveReplyTests.test_large_reply_saved_by_claude_code_is_copied_exactly) ... ok
 test_secrets_in_agent_output_never_reach_json_or_ledger (test_end_to_end.SecretMaskingTests.test_secrets_in_agent_output_never_reach_json_or_ledger) ... ok
 test_duplicates_in_one_run_get_distinct_fingerprints (test_ledger_gate.FingerprintTests.test_duplicates_in_one_run_get_distinct_fingerprints) ... ok
 test_stable_across_line_shift (test_ledger_gate.FingerprintTests.test_stable_across_line_shift) ... ok
@@ -31,30 +38,66 @@ test_timely_finding_acceptance_counts (test_ledger_gate.GateTests.test_timely_fi
 test_unassessed_domain_blocks (test_ledger_gate.GateTests.test_unassessed_domain_blocks) ... ok
 test_unverified_release_critical_control_blocks (test_ledger_gate.GateTests.test_unverified_release_critical_control_blocks) ... ok
 test_acceptance_requires_all_fields_and_expires (test_ledger_gate.LedgerTests.test_acceptance_requires_all_fields_and_expires) ... ok
+test_ambiguous_reworded_match_gets_a_new_id (test_ledger_gate.LedgerTests.test_ambiguous_reworded_match_gets_a_new_id) ... ok
 test_closing_open_finding_is_refused (test_ledger_gate.LedgerTests.test_closing_open_finding_is_refused) ... ok
+test_different_issue_on_the_same_line_gets_a_new_id (test_ledger_gate.LedgerTests.test_different_issue_on_the_same_line_gets_a_new_id) ... ok
 test_domain_not_assessed_does_not_mark_not_reproduced (test_ledger_gate.LedgerTests.test_domain_not_assessed_does_not_mark_not_reproduced) ... ok
+test_exact_match_wins_over_a_looser_one (test_ledger_gate.LedgerTests.test_exact_match_wins_over_a_looser_one) ... ok
 test_legal_status_rules (test_ledger_gate.LedgerTests.test_legal_status_rules) ... ok
 test_remediated_but_still_observed_reopens (test_ledger_gate.LedgerTests.test_remediated_but_still_observed_reopens) ... ok
+test_remediation_check_applies_even_when_domain_not_assessed (test_ledger_gate.LedgerTests.test_remediation_check_applies_even_when_domain_not_assessed) ... ok
 test_remediation_requires_reaudit_verification (test_ledger_gate.LedgerTests.test_remediation_requires_reaudit_verification) ... ok
+test_reworded_rule_and_quote_with_the_same_title_keeps_id_and_flags_regression (test_ledger_gate.LedgerTests.test_reworded_rule_and_quote_with_the_same_title_keeps_id_and_flags_regression) ... ok
+test_reworded_rule_on_the_same_line_keeps_id (test_ledger_gate.LedgerTests.test_reworded_rule_on_the_same_line_keeps_id) ... ok
 test_run_cannot_be_merged_twice (test_ledger_gate.LedgerTests.test_run_cannot_be_merged_twice) ... ok
 test_same_finding_with_changed_quote_keeps_id (test_ledger_gate.LedgerTests.test_same_finding_with_changed_quote_keeps_id) ... ok
 test_stable_ids_and_regression (test_ledger_gate.LedgerTests.test_stable_ids_and_regression) ... ok
+test_balanced_deterministic_subset_with_valid_manifest (test_owasp_subset.OwaspSubsetTests.test_balanced_deterministic_subset_with_valid_manifest) ... {
+ "app": "/tmp/tmp2xyw953e/fixture/app",
+ "manifest": "/tmp/tmp2xyw953e/fixture/ground-truth/manifest.json",
+ "real_cases": 22,
+ "false_positive_cases": 22
+}
+{
+ "app": "/tmp/tmpq1p0ryox/fixture/app",
+ "manifest": "/tmp/tmpq1p0ryox/fixture/ground-truth/manifest.json",
+ "real_cases": 22,
+ "false_positive_cases": 22
+}
+ok
+test_deidentified_copy_hides_the_benchmark_and_keeps_answers_aligned (test_owasp_subset.OwaspSubsetTests.test_deidentified_copy_hides_the_benchmark_and_keeps_answers_aligned) ... {
+ "app": "/tmp/tmpi621n_b1/fixture/app",
+ "manifest": "/tmp/tmpi621n_b1/fixture/ground-truth/manifest.json",
+ "real_cases": 11,
+ "false_positive_cases": 11
+}
+ok
+test_deidentify_refuses_without_the_license (test_owasp_subset.OwaspSubsetTests.test_deidentify_refuses_without_the_license) ... ok
+test_refuses_to_write_inside_this_repository (test_owasp_subset.OwaspSubsetTests.test_refuses_to_write_inside_this_repository) ... ok
 test_domain_mismatch_is_not_a_match (test_scorer.ScorerTests.test_domain_mismatch_is_not_a_match) ... ok
+test_grouped_finding_covers_several_issues_by_evidence (test_scorer.ScorerTests.test_grouped_finding_covers_several_issues_by_evidence) ... ok
 test_manifest_validation (test_scorer.ScorerTests.test_manifest_validation) ... ok
 test_matching_decoys_unlisted_and_metrics (test_scorer.ScorerTests.test_matching_decoys_unlisted_and_metrics) ... ok
+test_stability_summary_across_runs (test_scorer.ScorerTests.test_stability_summary_across_runs) ... ok
+test_gap_heavy_quote_is_not_accepted (test_textsafety_evidence.EvidenceCheckTests.test_gap_heavy_quote_is_not_accepted) ... ok
 test_gaps_for_redaction_and_ellipsis (test_textsafety_evidence.EvidenceCheckTests.test_gaps_for_redaction_and_ellipsis) ... ok
 test_html_escaped_quote_is_decoded_once_and_restored (test_textsafety_evidence.EvidenceCheckTests.test_html_escaped_quote_is_decoded_once_and_restored) ... ok
 test_line_tolerance_and_range (test_textsafety_evidence.EvidenceCheckTests.test_line_tolerance_and_range) ... ok
 test_missing_file_and_out_of_root (test_textsafety_evidence.EvidenceCheckTests.test_missing_file_and_out_of_root) ... ok
 test_ok_and_whitespace_insensitive (test_textsafety_evidence.EvidenceCheckTests.test_ok_and_whitespace_insensitive) ... ok
+test_quote_escaped_twice_is_decoded (test_textsafety_evidence.EvidenceCheckTests.test_quote_escaped_twice_is_decoded) ... ok
 test_quote_mismatch (test_textsafety_evidence.EvidenceCheckTests.test_quote_mismatch) ... ok
 test_summary_values (test_textsafety_evidence.EvidenceCheckTests.test_summary_values) ... ok
 test_symlink_escaping_root_is_refused (test_textsafety_evidence.EvidenceCheckTests.test_symlink_escaping_root_is_refused) ... ok
 test_code_block_fence_longer_than_content (test_textsafety_evidence.TextSafetyTests.test_code_block_fence_longer_than_content) ... ok
 test_markdown_neutralizes_links_images_and_html (test_textsafety_evidence.TextSafetyTests.test_markdown_neutralizes_links_images_and_html) ... ok
+test_paths_are_not_redacted_but_random_tokens_are (test_textsafety_evidence.TextSafetyTests.test_paths_are_not_redacted_but_random_tokens_are) ... ok
 test_placeholders_are_not_redacted (test_textsafety_evidence.TextSafetyTests.test_placeholders_are_not_redacted) ... ok
 test_redacts_known_secret_formats (test_textsafety_evidence.TextSafetyTests.test_redacts_known_secret_formats) ... ok
 test_sanitize_removes_bidi_zero_width_ansi_and_controls (test_textsafety_evidence.TextSafetyTests.test_sanitize_removes_bidi_zero_width_ansi_and_controls) ... ok
+test_other_agents_and_not_met_stay_cautious (test_validation.ControlMergeTests.test_other_agents_and_not_met_stay_cautious) ... ok
+test_repeat_pass_evidence_verifies_a_control (test_validation.ControlMergeTests.test_repeat_pass_evidence_verifies_a_control) ... ok
+test_entry_point_files_must_stay_inside_the_audit_root (test_validation.InventoryEntryPointTests.test_entry_point_files_must_stay_inside_the_audit_root) ... ok
 test_absence_requires_searched (test_validation.PartValidationTests.test_absence_requires_searched) ... ok
 test_assessed_coverage_requires_searches (test_validation.PartValidationTests.test_assessed_coverage_requires_searches) ... ok
 test_business_decision_needs_decisions (test_validation.PartValidationTests.test_business_decision_needs_decisions) ... ok
@@ -62,7 +105,8 @@ test_control_state_rules (test_validation.PartValidationTests.test_control_state
 test_how_to_verify_only_on_unverified_controls (test_validation.PartValidationTests.test_how_to_verify_only_on_unverified_controls) ... ok
 test_informational_cannot_block (test_validation.PartValidationTests.test_informational_cannot_block) ... ok
 test_legal_classification_needs_specific_questions (test_validation.PartValidationTests.test_legal_classification_needs_specific_questions) ... ok
-test_legal_finding_requires_legal_human_review (test_validation.PartValidationTests.test_legal_finding_requires_legal_human_review) ... ok
+test_legal_classification_without_review_flag_is_warned_and_fixed_at_assembly (test_validation.PartValidationTests.test_legal_classification_without_review_flag_is_warned_and_fixed_at_assembly) ... ok
+test_legal_finding_without_review_flag_is_a_warning_not_an_error (test_validation.PartValidationTests.test_legal_finding_without_review_flag_is_a_warning_not_an_error) ... ok
 test_legal_overclaim_rejected_but_quoted_claim_allowed (test_validation.PartValidationTests.test_legal_overclaim_rejected_but_quoted_claim_allowed) ... ok
 test_located_evidence_requires_quote (test_validation.PartValidationTests.test_located_evidence_requires_quote) ... ok
 test_missing_counterevidence_fails (test_validation.PartValidationTests.test_missing_counterevidence_fails) ... ok
@@ -75,28 +119,33 @@ test_violation_and_enforceability_conclusions_rejected (test_validation.PartVali
 test_agreement_on_valid_and_invalid_documents (test_validation.SchemaAgreementTests.test_agreement_on_valid_and_invalid_documents) ... ok
 
 ----------------------------------------------------------------------
-Ran 70 tests in 0.206s
+Ran 96 tests in 0.444s
 
 OK
-exit code: 0
 
-== python3.9 -m unittest discover -s tests/unit -p 'test_*.py' (oldest supported Python)
-Ran 70 tests in 0.244s
+== python3.9 -m unittest discover -s tests/unit -p 'test_*.py'
+Ran 96 tests in 0.382s
 
 OK (skipped=1)
-exit code: 0
 
 == python3 tools/sync_agents.py --check
-exit code: 0
+exit 0
 
-== python3 tools/lint_plugin.py (with the private leak denylist configured)
-note: fixture canary list is empty (tools/leak-hashes.txt); add hashes when blind-test fixtures exist
-note: private denylist applied (4 terms) to 82 files
+== python3 tools/lint_plugin.py (with the private denylist)
+note: private denylist applied (5 terms) to 95 files
 lint passed
-exit code: 0
 
-== claude plugin validate --strict plugins/fairtide
-Validating plugin manifest: /home/user/project-guardian/plugins/fairtide/.claude-plugin/plugin.json
+== claude plugin validate --strict plugins/flight-check
+Validating plugin manifest: /home/user/project-guardian/plugins/flight-check/.claude-plugin/plugin.json
+
+i Advice (does not change the verdict):
+
+  > /home/user/project-guardian/plugins/flight-check/README.md: This README has no line that installs "flight-check" from a marketplace. Add the install line, which works in one step on Claude Code 2.1.275 or later. Validate the folder that holds its marketplace.json to have <owner>/<repo> filled in, and the name its marketplace lists it under.
+      /plugin install flight-check --marketplace <owner>/<repo>
 
 √ Validation passed
-exit code: 0
+
+== claude plugin validate --strict .
+Validating marketplace manifest: /home/user/project-guardian/.claude-plugin/marketplace.json
+
+√ Validation passed
