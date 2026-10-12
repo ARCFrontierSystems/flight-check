@@ -1,6 +1,9 @@
 # Flight Check run output when auditing this repository itself (reports may contain quoted findings)
 .flight-check/runs/
 .flight-check/packets/
+# Environment files can hold real credentials; this repository needs none
+.env
+.env.*
 # Local leak-gate denylist (never commit; see CONTRIBUTING.md)
 .flight-check-denylist*
 # Python

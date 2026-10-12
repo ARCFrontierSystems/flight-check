@@ -1,0 +1,16 @@
+# Security design
+
+This page maps each protection in Flight Check's bundled script to the code that implements it and the tests that check it. Paths are relative to `plugins/flight-check/scripts/flight_check_lib/` for code and `tests/unit/` for tests.
+
+| Protection | What it does | Code | Tests |
+|---|---|---|---|
+| No network, no subprocess | The script uses only the Python standard library and never opens a network connection or runs another program. | Enforced on every commit by `tools/lint_plugin.py` (`FORBIDDEN_MODULES`, `FORBIDDEN_CALLS` such as `eval`, `exec` and `__import__`, and `os` process calls) | The lint runs in CI |
+| What leaves your machine | Nothing, from the script. The agents' reads go to your Claude Code session's model provider, like any other Claude Code task. Flight Check adds no telemetry. | README, "Privacy and data handling" | — |
+| Secret masking | Likely secrets (cloud, GitHub, Slack, Stripe and model-provider keys, private keys, JWTs, password and token assignments) are replaced with `[REDACTED]` in everything written from agent results: `report.md`, `audit.final.json`, the ledger, and Attorney Review Packets. Placeholders such as `${DB_PASSWORD}` are left alone. Masking is pattern-based and can miss unusual formats. | `textsafety.redact`, `assemble.mask_secrets` | `test_textsafety_evidence.py`: `test_redacts_known_secret_formats`, `test_placeholders_are_not_redacted` |
+| Owner-only local files | Each run directory, and the `runs/` folder when Flight Check creates it, is mode 0700. Files the script writes are created through `tempfile.mkstemp`, so they are mode 0600. Run directories are gitignored automatically. | `cli.cmd_init_run`, `jsonio.dump_json` | `test_end_to_end.py`: `test_init_run_and_ledger_cli` |
+| Path containment | Cited files must resolve inside the audit root; `..` paths and symlinks that leave the root are refused. Entry-point paths in the inventory must be relative and stay inside the root. | `evidence.resolve_within`, inventory schema | `test_textsafety_evidence.py`: `test_missing_file_and_out_of_root`, `test_symlink_escaping_root_is_refused`; `test_validation.py`: `test_entry_point_files_must_stay_inside_the_audit_root` |
+| Output encoding | Text from audited files and agents is treated as data. Markdown output escapes HTML, neutralizes links and images, and escapes table and heading characters; code blocks use a fence longer than any backtick run in the content. PDF text strings escape `\`, `(` and `)`. | `render_md.md`, `render_md.code_block`, `pdf._escape` | `test_textsafety_evidence.py`: `test_markdown_neutralizes_links_images_and_html`, `test_code_block_fence_longer_than_content` |
+| Evidence check | Every quoted line is compared with the cited file before a finding is accepted. | `evidence.py` | `test_textsafety_evidence.py` |
+| Limited permissions | Agents are read-only (Read, Grep, Glob). Skills pre-approve only the script subcommands they need; decision commands always ask. | `plugins/flight-check/agents/*.md` and `skills/*/SKILL.md`; checked by `tools/lint_plugin.py` | The lint runs in CI |
+
+For code you do not own or trust, see [hardened-mode.md](hardened-mode.md). To report a vulnerability in Flight Check, see [SECURITY.md](../SECURITY.md).
