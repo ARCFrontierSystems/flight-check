@@ -61,6 +61,7 @@ Or inside a Claude Code session: `/plugin marketplace add ARCFrontierSystems/fli
 Useful audit options:
 - `--context FILE`: a short description of your markets, audience, regulated data, and business model.
 - `--evidence FILE ...`: imported evidence, such as scanner output, CI test results, or restore-test records.
+- `--passes 2`: runs each domain agent twice and combines the results, for a steadier ship decision at about twice the usage. Recommended before a release decision.
 - `--untrusted --out DIR`: for code you do not own or trust; read [Auditing untrusted code](docs/hardened-mode.md) first.
 
 Flight Check runs its bundled script (`python3 <plugin>/scripts/flight_check.py`) to validate results and compute the gate. Approve it when asked; choosing "always allow" avoids repeated prompts. See [docs/usage.md](docs/usage.md).

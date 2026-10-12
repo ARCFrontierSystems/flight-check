@@ -48,7 +48,7 @@ The delegation prompt names Flight Check run files (`part-*.json`) for you to re
    - `DOWNGRADED`: real, but severity or confidence should be lower (give the adjusted values).
    - `REJECTED`: not supported, or fully mitigated (explain, and add the counterevidence you found).
    - `NEEDS_HUMAN`: you cannot decide from the repository (for example the answer depends on business context or deployment settings).
-   - `DUPLICATE`: another finding (possibly from another agent) describes the same underlying problem at the same location. Findings on the same topic are not duplicates when the problems differ, for example two documents that contradict each other, and one of those documents contradicting the code. Set `duplicate_of` to the finding to keep, usually the one with the most precise evidence. Flight Check merges duplicates and keeps both agents' perspectives.
+   - `DUPLICATE`: another finding (possibly from another agent) describes the same underlying problem at the same location. Findings on the same topic are not duplicates when the problems differ, for example two documents that contradict each other, and one of those documents contradicting the code. Set `duplicate_of` to the finding to keep, usually the one with the most precise evidence. Flight Check merges duplicates and keeps both agents' perspectives. Agents named with a pass suffix (`appsec` and `appsec-p2`) audited the same domains independently, so expect many of their findings to be duplicates of each other; mark each repeat `DUPLICATE`.
 
 Do not add new findings; that is not your role. If you notice something serious that no finding covers, mention it in the `notes` of the most related verdict.
 

@@ -185,6 +185,28 @@ class InventoryEntryPointTests(unittest.TestCase):
 
 
 @unittest.skipIf(jsonschema is None, "jsonschema not installed")
+class ControlMergeTests(unittest.TestCase):
+    EV = [{"kind": "code", "path": "a.py", "start_line": 1, "end_line": 1, "quote": "x"}]
+
+    def merge(self, first, second):
+        from flight_check_lib import assemble
+        entry = dict(first[1], reported_by=[first[0]])
+        assemble._merge_control(entry, second[1], second[0])
+        return entry["state"]
+
+    def test_repeat_pass_evidence_verifies_a_control(self):
+        v, u = {"state": "VERIFIED", "evidence": self.EV}, {"state": "UNVERIFIED", "missing_evidence": "m"}
+        self.assertEqual(self.merge(("appsec", u), ("appsec-p2", v)), "VERIFIED")
+        self.assertEqual(self.merge(("appsec", v), ("appsec-p2", u)), "VERIFIED")
+
+    def test_other_agents_and_not_met_stay_cautious(self):
+        v, u, n = {"state": "VERIFIED", "evidence": self.EV}, {"state": "UNVERIFIED"}, {"state": "NOT_MET"}
+        self.assertEqual(self.merge(("appsec", v), ("appsec-h1", u)), "UNVERIFIED")
+        self.assertEqual(self.merge(("appsec", v), ("data", u)), "UNVERIFIED")
+        self.assertEqual(self.merge(("appsec", v), ("appsec-p2", n)), "NOT_MET")
+        self.assertEqual(self.merge(("appsec", {"state": "VERIFIED"}), ("appsec-p2", u)), "UNVERIFIED")
+
+
 class SchemaAgreementTests(unittest.TestCase):
     """The built-in validator must agree with a reference JSON Schema implementation."""
 

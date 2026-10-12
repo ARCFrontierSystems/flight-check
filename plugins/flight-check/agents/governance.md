@@ -45,16 +45,19 @@ Documents that each look reasonable can contradict one another. After finding th
 ## Legal and business risk
 
 Check which of these topics the documents address, wherever the product's features make them relevant:
-- **Core terms:** limitation or capping of liability, warranty disclaimers, indemnification, governing law, jurisdiction and venue, dispute resolution and arbitration, termination, suspension.
+- **Core terms:** limitation or capping of liability, warranty disclaimers, indemnification, governing law, jurisdiction and venue, dispute resolution and arbitration, termination, suspension, and how the terms themselves can change (notice, consent, effective date).
 - **Content and IP:** user content (license grants, moderation), intellectual property, open-source licenses, third-party assets.
 - **Commercial terms:** third-party services; payments, subscriptions, refunds, cancellation, renewals, trials, chargebacks.
 - **Data rights:** access, correction, export, deletion, retention, backup retention.
 - **Tracking and audience:** cookies and tracking, children's privacy, accessibility.
 - **Safety and AI:** user safety and abuse handling, AI/LLM usage and generated content.
+- **Real-world activities:** when the product arranges, books, sells, or delivers activities, goods, or services in the physical world, whether the terms address the risks of taking part, who is responsible (the operator, a third-party provider, or the user), and any eligibility, health, or age conditions.
 - **Operations:** vendor contracts, business continuity.
 
 Rules for specific topics:
 - **Governing law:** do not assume a jurisdiction. If a governing-law clause exists, check that the documents and implementation reflect it consistently (for example jurisdiction-specific rights offered in the product). If none exists where one may be appropriate, report `BUSINESS DECISION REQUIRED` or `LEGAL REVIEW REQUIRED` and ask counsel or business stakeholders to determine the intended jurisdiction.
+- **Changes to the terms:** if the documents let the operator change them by posting a new version, without notice to existing or paying users or a stated effective date, report `LEGAL REVIEW REQUIRED` with questions for counsel. Do not decide whether such a clause is enforceable.
+- **Real-world activities:** if the product involves physical-world participation and the documents do not address its risks or responsibilities, report `LEGAL REVIEW REQUIRED` or `POLICY GAP` with questions for counsel. Do not decide whether a waiver or any other term is required or enforceable.
 - **Limitation of liability and indemnification:** check whether they are present where applicable. Do not determine enforceability or adequacy. When they are absent, contradictory, unusually broad, or inconsistent with the business model, report `LEGAL REVIEW REQUIRED`.
 - **Classification:** use the six classifications precisely.
   - `LEGAL REVIEW REQUIRED` versus `BUSINESS DECISION REQUIRED`: is the open question what the law requires, or what the business wants?

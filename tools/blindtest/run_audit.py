@@ -65,6 +65,7 @@ def main(argv=None):
     p.add_argument("--budget", type=float, default=40.0, help="--max-budget-usd for the headless run")
     p.add_argument("--evidence", action="append", default=[], help="imported evidence file(s), copied into the target")
     p.add_argument("--model")
+    p.add_argument("--passes", type=int, choices=(1, 2, 3), default=1, help="independent passes per domain agent")
     p.add_argument("--keep", action="store_true", help="keep the temporary copy")
     args = p.parse_args(argv)
 
@@ -101,6 +102,8 @@ def main(argv=None):
     prompt = "/flight-check:audit"
     if evidence_args:
         prompt += " --evidence " + " ".join(evidence_args)
+    if args.passes > 1:
+        prompt += " --passes %d" % args.passes
     # Stream every event to a log so a failed run can be diagnosed (which tool call was denied, and why).
     cmd = ["claude", "-p", prompt, "--plugin-dir", PLUGIN, "--tools", "Read,Write,Agent,Bash,Glob,Grep",
            "--permission-mode", "dontAsk", "--settings", settings_path, "--strict-mcp-config",

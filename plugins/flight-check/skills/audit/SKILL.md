@@ -1,7 +1,7 @@
 ---
 name: audit
 description: Evidence-first ship-readiness audit: security, privacy, legal/business, compliance readiness, accessibility, reliability, production readiness. Deterministic ship gate and report.
-argument-hint: "[path] [--untrusted] [--out DIR] [--context FILE] [--evidence FILE ...] [--domains a,b]"
+argument-hint: "[path] [--untrusted] [--out DIR] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2]"
 disable-model-invocation: true
 allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py save-reply *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py finalize *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render *)
 disallowed-tools: WebFetch, WebSearch, Edit, NotebookEdit, Skill
@@ -34,6 +34,7 @@ Arguments: `$ARGUMENTS`
 - `--context FILE`: user-written project context: jurisdictions and markets, audience (including minors), regulated data, business model, deployment.
 - `--evidence FILE ...`: imported evidence such as vulnerability-scanner JSON, CI test results, restore-test records, accessibility test reports, or pentest reports.
 - `--domains a,b`: restrict the audit to these domains. The ship gate then treats the others as NOT ASSESSED and fails safe.
+- `--passes N` (1 to 3, default 1): run each domain agent N times independently and combine the results. This finds more issues and makes results steadier from run to run, and costs roughly N times as much for the domain audits. Tell the user the cost before starting when N is above 1.
 
 **Trust tier and output locations:**
 - **own** (default):
@@ -69,7 +70,7 @@ Write `<run_dir>/run.json`:
 
 - **Context.** If `--context` was given, read that file and set `"context": {"provided": true, "source": "<path>", "summary": "<faithful summary, max ~150 words>"}`. These are user statements, not verified facts.
 - **Imported evidence.** Add one entry per `--evidence` file: `{"id": "EV-1", "path": "<path as given>", "description": "<what it is>"}`.
-- **Optional keys.** Omit `commit`, `scope`, and `requested_domains` when empty.
+- **Optional keys.** Omit `commit`, `scope`, and `requested_domains` when empty. Add `"passes": N` when `--passes` is above 1.
 
 ## 2. Inventory
 
@@ -113,7 +114,9 @@ Delegation prompt for each agent:
    If the 8 groups could not hold every file, add the files left over:
    > These entry-point files were not assigned to a reviewer: `<files>`.
 
-For each reply, extract the JSON object and write it to `<run_dir>/part-<agent>.json` (for example `part-appsec.json` or `part-appsec-h2.json`). Set the top-level `"agent"` field to that same short name (for example `"appsec"`). This is the only edit you may make; never change findings, quotes, or any other content, including HTML-escaped characters.
+**Repeat passes.** When `--passes` is 2 or 3, launch every domain agent above (not the handler reviewers) once more per extra pass, in the same message, named `<agent>-p2` and `<agent>-p3` (for example `appsec-p2`), with the same delegation prompt and that name. Flight Check counts a control as VERIFIED when any pass verified it with evidence, keeps NOT_MET from any pass, and the verifier merges findings that several passes reported.
+
+For each reply, extract the JSON object and write it to `<run_dir>/part-<agent>.json` (for example `part-appsec.json`, `part-appsec-h2.json`, or `part-appsec-p2.json`). Set the top-level `"agent"` field to that same short name (for example `"appsec"`). This is the only edit you may make; never change findings, quotes, or any other content, including HTML-escaped characters.
 
 ## 4. Validate
 

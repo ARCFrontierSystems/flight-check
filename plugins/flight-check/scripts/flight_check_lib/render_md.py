@@ -225,7 +225,8 @@ def render(final, summary):
     out.append("|---|---|")
     for k, v in (("Flight Check version", final["tool"]["version"]), ("Run", run["run_id"]), ("Started", run["started_at"]),
                  ("Mode", run["mode"]), ("Trust tier", run["trust_tier"]), ("Revision", run["target"].get("commit", "not recorded")),
-                 ("Scope", ", ".join(run["target"].get("scope") or ["entire project"])), ("Ship decision", g["decision"])):
+                 ("Scope", ", ".join(run["target"].get("scope") or ["entire project"])),
+                 ("Agent passes", run.get("passes", 1)), ("Ship decision", g["decision"])):
         out.append("| %s | %s |" % (k, md(str(v))))
     out.append("")
     out.append("> " + md(constants.REPORT_DISCLAIMER))
