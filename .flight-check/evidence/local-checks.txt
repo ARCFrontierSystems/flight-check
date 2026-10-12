@@ -1,5 +1,5 @@
 Local check results for this repository
-Generated: 2026-10-12T21:32:10Z on commit 2e5b0847b109250625ebd7284fc13a375d74e5af
+Generated: 2026-10-12T22:20:19Z on commit 29c948d218cd991592c337eb416256b2f458fa0d
 Environment: Python 3.11.15 and Python 3.9.23, 2.1.296 (Claude Code)
 
 == python3 -m unittest discover -s tests/unit -p 'test_*.py' -v
@@ -37,6 +37,9 @@ test_run_start_uses_the_earlier_of_run_id_and_run_json (test_ledger_gate.GateTes
 test_timely_finding_acceptance_counts (test_ledger_gate.GateTests.test_timely_finding_acceptance_counts) ... ok
 test_unassessed_domain_blocks (test_ledger_gate.GateTests.test_unassessed_domain_blocks) ... ok
 test_unverified_release_critical_control_blocks (test_ledger_gate.GateTests.test_unverified_release_critical_control_blocks) ... ok
+test_lock_is_held_inside_and_released_after (test_ledger_gate.LedgerLockTests.test_lock_is_held_inside_and_released_after) ... ok
+test_second_writer_waits_then_fails_clearly (test_ledger_gate.LedgerLockTests.test_second_writer_waits_then_fails_clearly) ... ok
+test_stale_lock_from_a_crash_is_removed (test_ledger_gate.LedgerLockTests.test_stale_lock_from_a_crash_is_removed) ... ok
 test_acceptance_requires_all_fields_and_expires (test_ledger_gate.LedgerTests.test_acceptance_requires_all_fields_and_expires) ... ok
 test_ambiguous_reworded_match_gets_a_new_id (test_ledger_gate.LedgerTests.test_ambiguous_reworded_match_gets_a_new_id) ... ok
 test_closing_open_finding_is_refused (test_ledger_gate.LedgerTests.test_closing_open_finding_is_refused) ... ok
@@ -53,21 +56,21 @@ test_run_cannot_be_merged_twice (test_ledger_gate.LedgerTests.test_run_cannot_be
 test_same_finding_with_changed_quote_keeps_id (test_ledger_gate.LedgerTests.test_same_finding_with_changed_quote_keeps_id) ... ok
 test_stable_ids_and_regression (test_ledger_gate.LedgerTests.test_stable_ids_and_regression) ... ok
 test_balanced_deterministic_subset_with_valid_manifest (test_owasp_subset.OwaspSubsetTests.test_balanced_deterministic_subset_with_valid_manifest) ... {
- "app": "/tmp/tmp2xyw953e/fixture/app",
- "manifest": "/tmp/tmp2xyw953e/fixture/ground-truth/manifest.json",
+ "app": "/tmp/tmp2khktjt1/fixture/app",
+ "manifest": "/tmp/tmp2khktjt1/fixture/ground-truth/manifest.json",
  "real_cases": 22,
  "false_positive_cases": 22
 }
 {
- "app": "/tmp/tmpq1p0ryox/fixture/app",
- "manifest": "/tmp/tmpq1p0ryox/fixture/ground-truth/manifest.json",
+ "app": "/tmp/tmperqvidsr/fixture/app",
+ "manifest": "/tmp/tmperqvidsr/fixture/ground-truth/manifest.json",
  "real_cases": 22,
  "false_positive_cases": 22
 }
 ok
 test_deidentified_copy_hides_the_benchmark_and_keeps_answers_aligned (test_owasp_subset.OwaspSubsetTests.test_deidentified_copy_hides_the_benchmark_and_keeps_answers_aligned) ... {
- "app": "/tmp/tmpi621n_b1/fixture/app",
- "manifest": "/tmp/tmpi621n_b1/fixture/ground-truth/manifest.json",
+ "app": "/tmp/tmp227h_zen/fixture/app",
+ "manifest": "/tmp/tmp227h_zen/fixture/ground-truth/manifest.json",
  "real_cases": 11,
  "false_positive_cases": 11
 }
@@ -78,6 +81,7 @@ test_domain_mismatch_is_not_a_match (test_scorer.ScorerTests.test_domain_mismatc
 test_grouped_finding_covers_several_issues_by_evidence (test_scorer.ScorerTests.test_grouped_finding_covers_several_issues_by_evidence) ... ok
 test_manifest_validation (test_scorer.ScorerTests.test_manifest_validation) ... ok
 test_matching_decoys_unlisted_and_metrics (test_scorer.ScorerTests.test_matching_decoys_unlisted_and_metrics) ... ok
+test_primary_location_outranks_a_larger_alternate_overlap (test_scorer.ScorerTests.test_primary_location_outranks_a_larger_alternate_overlap) ... ok
 test_stability_summary_across_runs (test_scorer.ScorerTests.test_stability_summary_across_runs) ... ok
 test_gap_heavy_quote_is_not_accepted (test_textsafety_evidence.EvidenceCheckTests.test_gap_heavy_quote_is_not_accepted) ... ok
 test_gaps_for_redaction_and_ellipsis (test_textsafety_evidence.EvidenceCheckTests.test_gaps_for_redaction_and_ellipsis) ... ok
@@ -119,12 +123,12 @@ test_violation_and_enforceability_conclusions_rejected (test_validation.PartVali
 test_agreement_on_valid_and_invalid_documents (test_validation.SchemaAgreementTests.test_agreement_on_valid_and_invalid_documents) ... ok
 
 ----------------------------------------------------------------------
-Ran 96 tests in 0.444s
+Ran 100 tests in 0.617s
 
 OK
 
 == python3.9 -m unittest discover -s tests/unit -p 'test_*.py'
-Ran 96 tests in 0.382s
+Ran 100 tests in 0.670s
 
 OK (skipped=1)
 
@@ -132,7 +136,7 @@ OK (skipped=1)
 exit 0
 
 == python3 tools/lint_plugin.py (with the private denylist)
-note: private denylist applied (5 terms) to 95 files
+note: private denylist applied (5 terms) to 96 files
 lint passed
 
 == claude plugin validate --strict plugins/flight-check

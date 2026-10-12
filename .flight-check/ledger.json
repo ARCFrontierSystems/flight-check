@@ -1105,7 +1105,7 @@
       "domain": "reliability",
       "title": "Ledger load and save have no file locking, so concurrent CLI invocations can lose updates",
       "severity": "LOW",
-      "status": "OPEN",
+      "status": "REMEDIATED",
       "first_seen_run": "20261012T220354Z",
       "last_seen_run": "20261012T220354Z",
       "history": [
@@ -1115,6 +1115,20 @@
           "source": "flight-check",
           "note": "first observed",
           "run_id": "20261012T220354Z"
+        },
+        {
+          "at": "2026-10-12T22:20:19Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: Commands that change the ledger now hold a lock file from read to write (ledger.locked), with tests."
+        }
+      ],
+      "remediations": [
+        {
+          "at": "2026-10-12T22:20:19Z",
+          "note": "Commands that change the ledger now hold a lock file from read to write (ledger.locked), with tests.",
+          "files": [],
+          "source": "flight-check"
         }
       ]
     }
