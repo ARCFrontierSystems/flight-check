@@ -214,7 +214,7 @@ class LedgerLockTests(unittest.TestCase):
         import tempfile
         self.dir = tempfile.mkdtemp()
         self.path = os.path.join(self.dir, "ledger.json")
-        self.lock = self.path + ".lock"
+        self.lock = os.path.join(self.dir, "state.lock")
 
     def tearDown(self):
         import shutil

@@ -267,17 +267,20 @@ Every decision is stamped `{"decision", "at", "run_id", "revision", "commit"}`. 
 ## 12. Writing, safety, and recovery
 
 - **One lock** (`state.lock`, replacing the 1.0 `ledger.json.lock`) is held by any command that changes state, from first read to last write.
-- **Write order:** back up when required, write each changed state file atomically (temporary file and rename, mode 0600, as in 1.0), then append the history event last. A command interrupted before its event leaves a file whose `revision` is ahead of the log; `state check` reports it and `state restore` returns to the last backup. Nothing is reset silently.
+- **Journal:** before replacing anything, a command copies the files it will change into `pending/` and writes `pending/journal.json` last, recording the log position it will reach. It then writes each changed file atomically (temporary file and rename, mode 0600, as in 1.0), appends its history events, and removes `pending/`. If `pending/` exists, an earlier command was interrupted: write commands refuse to run, and `state recover` either finishes the cleanup (when every event was written) or puts every journaled file back as it was before that command. Nothing is reset silently.
 - **Validation on load:** every file is checked against its schema; size limits apply; unknown fields are rejected; paths must stay inside the root. An invalid file stops write commands with a clear error and leaves the file untouched. Read-only commands report the problem.
-- **Backups:** written to `.flight-check/backups/<time>-<reason>/` (mode 0700) before migrations, restores, and imports. Flight Check never deletes backups.
+- **Symbolic links:** a state directory or state file that is a symbolic link is refused, so a planted link cannot make Flight Check read or replace a file elsewhere.
+- **Backups:** written to `.flight-check/backups/<time>-<reason>/` (mode 0700) before migrations, restores, and imports, or on request (`state backup`), each with the hashes of its files. Flight Check never deletes backups. `state restore` restores the project, registers, and ledger from a backup, keeps the history log, and records the restore in it.
 - **Export and import:** `state export` writes one JSON bundle of the four committed files with their hashes. `state import` validates the bundle, refuses a different `project_id` unless the user confirms with `state adopt`, and backs up first.
 - **No secrets:** text fields pass through the 1.0 secret masking before they are stored; repository URLs lose any credentials; state stores no quotes.
 
 ## 13. Migration from 1.0
 
-- A 1.0 project has `ledger.json` (schema 1.0) and no `project.json`.
-- Read-only commands work on 1.0 state by upgrading it in memory, without writing.
-- The first command that changes state backs up `ledger.json`, creates `project.json` with a new identity, migrates the ledger to schema 2.0 (statuses unchanged; legal fields on findings become `LR-` items linked from the finding, keeping their history; 1.0 legal statuses map as in the table below), creates `registers.json` and `history.jsonl` (first event: the migration), and only then reports success.
+- A 1.0 project has `ledger.json` (schema 1.0) and no `project.json`. Read-only commands work on it as it is.
+- Each state file carries its own `schema_version` and is migrated on its own, in steps, so a step can ship with the phase that needs it:
+  1. **State files** (Phase 3): the first command that changes state (`state init`, a finalized audit, or a `ledger` command) backs up `ledger.json`, creates `project.json` with a new identity, an empty `registers.json`, and `history.jsonl` whose first event records the migration. The ledger itself is not changed by this step.
+  2. **Legal items** (Phase 6): legal fields on findings become `LR-` items linked from the finding, keeping their history; 1.0 legal statuses map as in the table below.
+  3. **Ledger 2.0** (Phase 7): the added finding statuses, regression records, and persistent positive controls.
 - A failure at any step leaves the original files as they were and reports the backup location.
 - State written by a newer Flight Check is never rewritten by an older one: an unknown `schema_version` makes write commands refuse.
 

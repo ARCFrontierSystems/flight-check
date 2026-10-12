@@ -787,7 +787,7 @@
         "actor": {"$ref": "#/$defs/source"},
         "by": {"type": "string", "maxLength": 200},
         "command": {"type": "string", "minLength": 1, "maxLength": 80},
-        "record": {"type": "string", "pattern": "^(state|(FC|PF|PC|REQ|DEC|RISK|LR)-[0-9]{4,}|domain:[a-z-]+)$"},
+        "record": {"type": "string", "pattern": "^(state|(FC|PF|PC|REQ|DEC|RISK|LR)-[0-9]{4,}|domain:[a-z-]+|control:[A-Z0-9]+(-[A-Z0-9]+)*)$"},
         "change": {"type": "object", "additionalProperties": {"type": "array", "maxItems": 2}},
         "reason": {"type": "string", "maxLength": 4000},
         "run_id": {"type": ["string", "null"], "maxLength": 80},
