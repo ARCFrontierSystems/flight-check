@@ -31,6 +31,7 @@ The user asked for this for the rest of development: **be as token- and usage-ef
 
 ## Development rules
 
+- Sign off every commit with `git commit -s` (Developer Certificate of Origin; see CONTRIBUTING.md). The DCO app may check pull requests for it.
 - Run before every commit: `python3 -m unittest discover -s tests/unit -p 'test_*.py'`, `python3 tools/sync_agents.py --check`, `python3 tools/lint_plugin.py`, and `claude plugin validate --strict plugins/flight-check`.
 - Shared agent instructions live in `tools/agent-blocks/`; edit them there and run `python3 tools/sync_agents.py`. Control lists in agents are generated from `plugins/flight-check/references/required-controls.json`.
 - Plugin scripts are Python 3.9+ standard library only: no network, no subprocess, no eval/exec. The lint enforces this.
