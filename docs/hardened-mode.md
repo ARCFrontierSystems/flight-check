@@ -34,6 +34,7 @@ Inside the audit, Flight Check's agents can only Read, Grep, and Glob. They trea
        "allow": [
          "Bash(python3 /abs/plugin/scripts/flight_check.py init-run *)",
          "Bash(python3 /abs/plugin/scripts/flight_check.py validate *)",
+         "Bash(python3 /abs/plugin/scripts/flight_check.py save-reply *)",
          "Bash(python3 /abs/plugin/scripts/flight_check.py finalize *)",
          "Bash(python3 /abs/plugin/scripts/flight_check.py render *)",
          "Edit(//abs/out/runs/**)"

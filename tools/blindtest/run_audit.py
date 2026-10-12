@@ -92,7 +92,7 @@ def main(argv=None):
     # The ledger is written by the script, so the session itself may write only run directories.
     settings = {"permissions": {
         "allow": ["Edit(/%s/.flight-check/runs/**)" % target]
-        + ["Bash(python3 %s %s *)" % (script, sub) for sub in ("init-run", "validate", "finalize", "render")],
+        + ["Bash(python3 %s %s *)" % (script, sub) for sub in ("init-run", "validate", "save-reply", "finalize", "render")],
         "deny": ["Edit(/%s/.flight-check/ledger.json)" % target, "Bash(python3 %s ledger *)" % script],
     }}
     settings_path = os.path.join(work, "settings.json")

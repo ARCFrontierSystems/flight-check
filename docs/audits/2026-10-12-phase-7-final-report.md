@@ -87,10 +87,11 @@ Release build, generated test applications. Strict matching means the same locat
    - Two audits of the same code can differ in which issues they report and which controls they verify. For example, the last two self-audits reported 7 findings and then none.
    - The ledger marks findings that are not reported again as NOT_REPRODUCED, never as fixed, and closing a finding needs the user's confirmation.
    - For release decisions, run two or three audits.
-2. **Large agent replies.** One release-build run of seven stopped before its ship decision: a corrected agent reply was too large for the coordinating session to save. The audit said so and produced no decision.
+2. **Large agent replies** (fixed after this report). One release-build run of seven stopped before its ship decision: a corrected agent reply was too large for the coordinating session to save. The audit said so and produced no decision. The skills now save such replies with `flight_check.py save-reply`; replaying that run's stored reply passes validation.
 3. **Double-escaped quotes.**
    - Agent replies sometimes arrive HTML-escaped twice (for example `&amp;gt;`). The evidence check decodes them only once, so in one run 7 correct findings had their confidence lowered to UNVERIFIED.
    - This fails safe, but it understates real findings.
+   - Fixed after this report: the check now undoes up to three layers of escaping. Re-checking that run lowered its failed findings from 7 to 1, a genuine mismatch.
 4. **Product-logic gaps** that no single line shows, and some legal-document gaps, are still often missed.
 5. **Severity of business-logic failures** that repeat money movement (for example, double charging) can be rated one level too low.
 6. **Static analysis only.** Flight Check never runs the project. Infrastructure outside the repository, organizational controls, and deployment settings remain UNVERIFIED unless the user imports evidence.
@@ -112,9 +113,9 @@ Release build, generated test applications. Strict matching means the same locat
 | FC-0001: untagged PDF | ACCEPTED_RISK by the owner on 2026-10-12, review 2027-04-12 |
 | FC-0013: name overlaps existing marks | Open: counsel review before public launch |
 | FC-0014: terms of use, governing law, contribution terms | Open: owner or counsel decision |
-| FC-0011: private vulnerability reporting | Open: owner to enable in the repository settings |
+| FC-0011: private vulnerability reporting | CLOSED: the owner enabled it on 2026-10-12 |
 
-FC-0011, FC-0013, and FC-0014 show as NOT_REPRODUCED in the ledger because the last self-audit did not report them again. They are still open; close them only once resolved.
+FC-0013 and FC-0014 show as NOT_REPRODUCED in the ledger because the last self-audit did not report them again. They are still open; close them only once resolved.
 
 ## Attorney Review Packet status
 
@@ -129,14 +130,12 @@ FC-0011, FC-0013, and FC-0014 show as NOT_REPRODUCED in the ledger because the l
   - the Phase 6 checklist passed: no secrets or private information in the history, packaging, license, documentation, disclaimers, tests, and local install;
   - Apache-2.0 license.
 - **Before a public launch:**
-  - enable private vulnerability reporting (FC-0011);
   - get counsel's review of the name (FC-0013) and decide on terms and contribution terms (FC-0014);
   - optionally, lock the CI tool installs (FC-0015).
 - **Recommended next fixes** (owner approval needed):
-  1. Decode quotes that arrived HTML-escaped more than once.
-  2. Let the audit save an agent reply from the file Claude Code stores it in, instead of retyping it.
-  3. Rate repeatable money-movement failures as CRITICAL when they affect every customer.
-  4. Run the held-out fixture again after those fixes.
+  1. Done after this report: decode quotes escaped more than once, and save oversized agent replies with `save-reply`.
+  2. Rate repeatable money-movement failures as CRITICAL when they affect every customer.
+  3. Run the held-out fixture again after these fixes.
 
 ## Final ship gate
 

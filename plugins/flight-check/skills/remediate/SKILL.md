@@ -3,7 +3,7 @@ name: remediate
 description: Fix authorized Flight Check findings in your own project, then re-audit to verify the fixes.
 argument-hint: "FC-0001[,FC-0002 ...] [--run RUN_DIR]"
 disable-model-invocation: true
-allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py runs *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py findings *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py finalize *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger remediate *)
+allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py runs *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py findings *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py save-reply *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py finalize *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger remediate *)
 disallowed-tools: WebFetch, WebSearch, Skill
 ---
 
@@ -60,7 +60,7 @@ This step verifies the fixes; do not skip it.
 
    > Audit root: `<absolute root>`. Run `<run_id>`, mode `re-audit`, trust tier `own`. Your agent name (use it as `"agent"`): `<short name>`. Your domains: `<domains>`. Inventory: `<previous inventory items and applicability for your domains, as JSON>`. Project context: `<as before>`. Imported evidence: `<as before>`. Re-audit focus: these findings were remediated; examine the whole domain again and pay particular attention to them: `<ID, title, evidence locations, remediation note>`. Return only the JSON object described in your instructions.
 
-   Save each reply to `<run_dir>/part-<agent>.json`, setting its top-level `"agent"` field to the short name. Then run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate <run_dir>` and fix errors as in an audit: re-run the agent with the errors, at most twice.
+   Save each reply to `<run_dir>/part-<agent>.json`, setting its top-level `"agent"` field to the short name. If the Agent tool says a reply was too large and saved it to a file, never retype it: run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py save-reply <run_dir> --from <that file> --as part-<agent>.json` (use `--as verification.json` for the verifier). Then run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate <run_dir>` and fix errors as in an audit: re-run the agent with the errors, at most twice.
 4. **Verify the fixes.** Launch `flight-check:verifier` with the part files and this addition:
 
    > Remediation checks: for each of these findings, decide FIXED_VERIFIED, NOT_FIXED, or UNVERIFIED in the current code: `<ID, title, original evidence locations and quotes, remediation note and files>`.

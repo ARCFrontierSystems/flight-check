@@ -474,7 +474,7 @@
       "domain": "documentation",
       "title": "SECURITY.md directs reporters to GitHub private vulnerability reporting, which the maintainer checklist shows as not yet enabled",
       "severity": "LOW",
-      "status": "NOT_REPRODUCED",
+      "status": "CLOSED",
       "first_seen_run": "20261007T120434Z",
       "last_seen_run": "20261007T120434Z",
       "history": [
@@ -491,6 +491,12 @@
           "source": "flight-check",
           "note": "not observed in an assessed domain; confirm resolution",
           "run_id": "20261012T194029Z"
+        },
+        {
+          "at": "2026-10-12T19:52:20Z",
+          "status": "CLOSED",
+          "source": "user",
+          "note": "Owner confirmed on 2026-10-12 that GitHub private vulnerability reporting is enabled for the repository."
         }
       ]
     },

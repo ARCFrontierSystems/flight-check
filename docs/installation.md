@@ -53,6 +53,7 @@ Flight Check runs `python3 <plugin directory>/scripts/flight_check.py` to valida
 ```json
 "Bash(python3 /absolute/path/to/plugins/flight-check/scripts/flight_check.py init-run *)",
 "Bash(python3 /absolute/path/to/plugins/flight-check/scripts/flight_check.py validate *)",
+"Bash(python3 /absolute/path/to/plugins/flight-check/scripts/flight_check.py save-reply *)",
 "Bash(python3 /absolute/path/to/plugins/flight-check/scripts/flight_check.py finalize *)",
 "Bash(python3 /absolute/path/to/plugins/flight-check/scripts/flight_check.py render *)"
 ```

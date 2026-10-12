@@ -319,6 +319,28 @@ class EndToEndTests(unittest.TestCase):
         self.assertEqual(len(out["entries"]), 2)
 
 
+class SaveReplyTests(unittest.TestCase):
+    def test_large_reply_saved_by_claude_code_is_copied_exactly(self):
+        tmp = tempfile.mkdtemp()
+        run_dir = helpers.write_run(parts=[], base=tmp)
+        part = helpers.base_part()
+        part["agent"] = "wrong-name"
+        part["findings"][0]["evidence"][0]["quote"] = "a &amp;gt; b"  # saved exactly as received, never decoded
+        reply = "[Subagent hand-back] text\n```json\n%s\n```\n<usage>tokens: 1</usage>" % json.dumps(part)
+        stored = os.path.join(tmp, "toolu_x.json")
+        write_json(stored, [{"type": "text", "text": reply}])
+        code, out = run_cli("save-reply", run_dir, "--from", stored, "--as", "part-appsec.json")
+        self.assertEqual(code, 0, out)
+        saved = read_json(os.path.join(run_dir, "part-appsec.json"))
+        self.assertEqual(saved["agent"], "appsec")
+        self.assertEqual(saved["findings"], part["findings"])
+        for bad in ("../x.json", "ledger.json", "part-A.json", "audit.final.json"):
+            code, out = run_cli("save-reply", run_dir, "--from", stored, "--as", bad)
+            self.assertEqual(code, 1, bad)
+        code, out = run_cli("save-reply", tmp, "--from", stored, "--as", "part-appsec.json")
+        self.assertEqual(code, 1)  # not a run directory
+
+
 class HandlerReviewTests(unittest.TestCase):
     """A handler reviewer reports findings for its files only; its NOT_MET controls outrank the main agent's."""
 

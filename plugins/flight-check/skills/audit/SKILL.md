@@ -3,7 +3,7 @@ name: audit
 description: Evidence-first ship-readiness audit: security, privacy, legal/business, compliance readiness, accessibility, reliability, production readiness. Deterministic ship gate and report.
 argument-hint: "[path] [--untrusted] [--out DIR] [--context FILE] [--evidence FILE ...] [--domains a,b]"
 disable-model-invocation: true
-allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py finalize *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render *)
+allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py save-reply *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py finalize *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render *)
 disallowed-tools: WebFetch, WebSearch, Edit, NotebookEdit, Skill
 ---
 
@@ -77,7 +77,7 @@ Launch the `flight-check:inventory` agent with the Agent tool, using this prompt
 
 > Audit root: `<absolute root>`. Scope: `<scope or "entire project">`. Inventory this project and decide domain applicability. Return only the JSON object described in your instructions.
 
-Extract the JSON object from its reply and write it unchanged to `<run_dir>/inventory.json`. Agent replies can arrive with `<`, `>`, and `&` HTML-escaped (for example `&lt;`); save them exactly as received and do not un-escape them. Flight Check's evidence check accounts for that escaping.
+Extract the JSON object from its reply and write it unchanged to `<run_dir>/inventory.json`. **Large replies:** if the Agent tool says an output was too large and saved it to a file, never retype it. Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py save-reply <run_dir> --from <that file> --as inventory.json` (or `--as part-<agent>.json`, `--as verification.json`), which copies the reply's JSON exactly. This applies to every agent reply in this skill. Agent replies can arrive with `<`, `>`, and `&` HTML-escaped (for example `&lt;`); save them exactly as received and do not un-escape them. Flight Check's evidence check accounts for that escaping.
 
 ## 3. Domain audits (in parallel)
 

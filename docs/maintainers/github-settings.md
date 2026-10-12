@@ -72,7 +72,7 @@ The repository is now `ARCFrontierSystems/flight-check`; GitHub redirects the ol
 ## Checklist
 
 - [ ] Description and topics corrected
-- [ ] Private vulnerability reporting on
+- [x] Private vulnerability reporting on (owner, 2026-10-12)
 - [ ] Secret scanning and push protection on
 - [ ] Dependabot alerts on (optional: `dependabot.yml` for Actions)
 - [ ] `FLIGHT_CHECK_LEAK_DENYLIST` secret added

@@ -112,6 +112,67 @@ def cmd_finalize(args):
     return 0 if result["ok"] else 1
 
 
+REPLY_NAME = re.compile(r"(inventory|verification|summary|part-[a-z0-9-]{2,40})\.json")
+MAX_REPLY_BYTES = 5 * 1024 * 1024
+
+
+def _reply_text(raw):
+    """Agent replies that Claude Code stored in a file are a JSON list of text blocks; otherwise plain text."""
+    try:
+        data = json.loads(raw)
+    except ValueError:
+        return raw
+    blocks = data if isinstance(data, list) else [data]
+    texts = [b.get("text") for b in blocks if isinstance(b, dict) and isinstance(b.get("text"), str)]
+    return "\n".join(texts) if texts else raw
+
+
+def extract_reply_json(text):
+    """Return the JSON object an agent returned: its last fenced json block that parses, else the first object."""
+    for block in reversed(re.findall(r"```json[ \t]*\n(.*?)\n```", text, re.S)):
+        try:
+            obj = json.loads(block)
+        except ValueError:
+            continue
+        if isinstance(obj, dict):
+            return obj
+    decoder = json.JSONDecoder()
+    for m in re.finditer(r"\{", text):
+        try:
+            obj, _ = decoder.raw_decode(text, m.start())
+        except ValueError:
+            continue
+        if isinstance(obj, dict) and len(obj) > 1:
+            return obj
+    return None
+
+
+def cmd_save_reply(args):
+    """Save an agent reply that was too large to come back inline, exactly as returned, without retyping it."""
+    name = args.as_name
+    if not REPLY_NAME.fullmatch(name):
+        return _fail("--as must be inventory.json, verification.json, summary.json, or part-<agent>.json")
+    run_dir = os.path.abspath(args.run_dir)
+    if not os.path.isfile(os.path.join(run_dir, "run.json")):
+        return _fail("%s is not a Flight Check run directory (no run.json)" % run_dir)
+    try:
+        if os.path.getsize(args.source) > MAX_REPLY_BYTES:
+            return _fail("the saved reply is larger than 5 MB")
+        with open(args.source, encoding="utf-8", errors="replace") as fh:
+            raw = fh.read()
+    except OSError as exc:
+        return _fail("cannot read %s: %s" % (args.source, exc))
+    obj = extract_reply_json(_reply_text(raw))
+    if obj is None:
+        return _fail("no JSON object found in %s" % args.source)
+    if name.startswith("part-"):
+        obj["agent"] = name[len("part-"):-len(".json")]
+    out = os.path.join(run_dir, name)
+    dump_json(out, obj)
+    _print({"ok": True, "path": out, "keys": sorted(obj)})
+    return 0
+
+
 def cmd_render(args):
     try:
         final = finalize.load_final(args.run_dir)
@@ -342,6 +403,12 @@ def build_parser():
     s.add_argument("--no-ledger", action="store_true", help="do not read or write a ledger")
     s.add_argument("--now")
     s.set_defaults(func=cmd_finalize)
+
+    s = sub.add_parser("save-reply", help="save an agent reply that Claude Code stored in a file into the run directory")
+    s.add_argument("run_dir")
+    s.add_argument("--from", dest="source", required=True, help="the file the reply was saved to")
+    s.add_argument("--as", dest="as_name", required=True, help="inventory.json, verification.json, summary.json, or part-<agent>.json")
+    s.set_defaults(func=cmd_save_reply)
 
     s = sub.add_parser("render", help="write report.md from audit.final.json and summary.json")
     s.add_argument("run_dir")
