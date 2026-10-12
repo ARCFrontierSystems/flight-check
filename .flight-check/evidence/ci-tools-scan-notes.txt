@@ -1,0 +1,18 @@
+Vulnerability scan of the tools this repository's CI installs (test and validation only; none ship in the plugin)
+Generated: 2026-10-04T23:04:03Z
+
+Python, from .github/workflows/ci.yml: pip install "jsonschema==4.23.0"
+  Installed with uv into clean environments for both CI Python versions, then audited with
+  pip-audit 2.9.0 (PyPI vulnerability service) using --path on the installed packages.
+  Python 3.9 install set:  attrs==26.1.0 jsonschema==4.23.0 jsonschema-specifications==2025.9.1 referencing==0.36.2 rpds-py==0.27.1 typing-extensions==4.16.0 
+  Python 3.12 install set: attrs==26.1.0 jsonschema==4.23.0 jsonschema-specifications==2025.9.1 referencing==0.37.0 rpds-py==2026.9.1 typing-extensions==4.16.0 
+  Result: no known vulnerabilities in either set (ci-tools-pip-audit-py3.9.json, ci-tools-pip-audit-py3.12.json).
+
+npm, from .github/workflows/ci.yml: npm install -g @anthropic-ai/claude-code@2.1.289
+  Lockfile generated with npm 10.9.4 (--package-lock-only --ignore-scripts), then npm audit --json.
+  Result: 0 vulnerabilities across 9 packages (ci-tools-npm-audit.json).
+
+Not covered:
+  - poppler-utils, installed with apt-get on ubuntu-24.04 runners (a system package, not scanned here).
+  - CI pins jsonschema but not its dependencies, so a later CI run may install newer versions than these.
+  - Results reflect the vulnerability databases at the time above; they go stale.

@@ -1,0 +1,22 @@
+{
+  "name": "flight-check",
+  "displayName": "Flight Check",
+  "version": "0.1.0",
+  "description": "Evidence-first ship-readiness audit for any software project: security, privacy, legal/business risk, compliance readiness, accessibility, reliability, and production readiness. Includes a Legal Review Assistant that prepares an Attorney Review Packet (PDF).",
+  "author": {
+    "name": "ARC Frontier Systems"
+  },
+  "homepage": "https://github.com/ARCFrontierSystems/flight-check",
+  "repository": "https://github.com/ARCFrontierSystems/flight-check",
+  "license": "Apache-2.0",
+  "keywords": [
+    "audit",
+    "security",
+    "privacy",
+    "compliance-readiness",
+    "accessibility",
+    "production-readiness",
+    "ship-readiness",
+    "legal-review"
+  ]
+}
