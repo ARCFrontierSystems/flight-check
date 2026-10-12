@@ -9,7 +9,7 @@ The user has asked for this to be remembered permanently: **every earlier name m
 - "DevGuard" was an interim name, dropped because of the OWASP DevGuard project. It also means Flight Check.
 - "Seaworthy" was the next name, dropped because similar products already use it. It also means Flight Check.
 - "Fairtide" was the name before Flight Check; finding IDs were `FT-` then. It also means Flight Check.
-- The user chose Flight Check knowing that other software already uses the one-word name "FlightCheck": a print-preflight product with a registered trademark, and an AI-agent readiness check from a large software vendor. Counsel review of the name is advised before public launch.
+- The user chose Flight Check knowing that other software already uses the one-word name "FlightCheck": a print-preflight product with a registered trademark, and an AI-agent readiness check from a large software vendor. The owner completed the name check on 2026-10-12 and kept the name (FC-0013 closed).
 - The GitHub repository was renamed from `project-guardian` to `flight-check` (`ARCFrontierSystems/flight-check`); old URLs redirect. It is the same project.
 
 ## Saved for later

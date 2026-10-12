@@ -567,7 +567,7 @@
       "domain": "legal-business",
       "title": "Product name \"Flight Check\" is acknowledged to overlap with existing marks; counsel review is deferred",
       "severity": "MEDIUM",
-      "status": "NOT_REPRODUCED",
+      "status": "CLOSED",
       "first_seen_run": "20261007T120434Z",
       "last_seen_run": "20261007T120434Z",
       "history": [
@@ -584,11 +584,17 @@
           "source": "flight-check",
           "note": "not observed in an assessed domain; confirm resolution",
           "run_id": "20261012T194029Z"
+        },
+        {
+          "at": "2026-10-12T20:12:44Z",
+          "status": "CLOSED",
+          "source": "user",
+          "note": "Owner reported on 2026-10-12: the name check is complete and the Flight Check name is fine to use."
         }
       ],
       "legal": {
         "classification": "LEGAL REVIEW REQUIRED",
-        "status": "OPEN",
+        "status": "CLOSED",
         "history": [
           {
             "at": "2026-10-07T12:12:32Z",
@@ -602,6 +608,18 @@
             "status": "OPEN",
             "source": "flight-check",
             "note": "included in attorney review packet attorney-review-packet.pdf"
+          },
+          {
+            "at": "2026-10-12T20:12:44Z",
+            "status": "DECISION_RECEIVED",
+            "source": "user",
+            "note": "Owner reported on 2026-10-12: the name check is complete and the Flight Check name is fine to use."
+          },
+          {
+            "at": "2026-10-12T20:12:44Z",
+            "status": "CLOSED",
+            "source": "user",
+            "note": "Owner reported on 2026-10-12: the name check is complete and the Flight Check name is fine to use."
           }
         ]
       }
