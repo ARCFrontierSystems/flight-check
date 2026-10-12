@@ -108,6 +108,8 @@ To limit usage:
 
 Flight Check organizes evidence and questions for qualified professionals. It is not legal advice and does not establish compliance with any law, regulation, standard, or contract. Results reflect only the evidence available in the audited scope. You remain responsible for your release decisions.
 
+Flight Check is free software provided under the [Apache License 2.0](LICENSE), including that license's disclaimer of warranty and limitation of liability. There are no separate terms of use.
+
 ## Project
 
 - License: [Apache-2.0](LICENSE) (see [NOTICE](NOTICE))

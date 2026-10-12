@@ -46,6 +46,15 @@ class TextSafetyTests(unittest.TestCase):
 
 
 class EvidenceCheckTests(unittest.TestCase):
+    def test_quote_escaped_twice_is_decoded(self):
+        root = tempfile.mkdtemp()
+        with open(os.path.join(root, "a.js"), "w") as fh:
+            fh.write("if (n > 1) {\n  card.addEventListener(\"click\", () => go(n));\n}\n")
+        ev = {"kind": "code", "path": "a.js", "start_line": 1, "end_line": 2,
+              "quote": "if (n &amp;gt; 1) {\n  card.addEventListener(\"click\", () =&amp;gt; go(n));"}
+        self.assertEqual(evidence.check_item(ev, root, evidence.FileCache()), "OK")
+        self.assertIn("=> go(n)", ev["quote"])
+
     def test_gap_heavy_quote_is_not_accepted(self):
         window = "def handler(req):\n    value = req.args['q']\n    return run(value)\n"
         self.assertIsNone(evidence.quote_matches("ret ... ] ... ;", window))  # mostly gaps: unchecked, never OK

@@ -106,11 +106,17 @@ def check_item(ev, root, cache):
     window = "\n".join(lines[lo:hi])
     result = quote_matches(ev["quote"], window)
     if result is False:
-        decoded = html.unescape(ev["quote"])
-        if decoded != ev["quote"] and quote_matches(decoded, window):
-            ev["quote"] = decoded
-            ev["note"] = ((ev.get("note") or "") + " " + DECODED_NOTE).strip()[:2000]
-            return OK
+        # Replies can arrive HTML-escaped more than once (for example "&amp;gt;"); undo up to three layers.
+        decoded = ev["quote"]
+        for _ in range(3):
+            once = html.unescape(decoded)
+            if once == decoded:
+                break
+            decoded = once
+            if quote_matches(decoded, window):
+                ev["quote"] = decoded
+                ev["note"] = ((ev.get("note") or "") + " " + DECODED_NOTE).strip()[:2000]
+                return OK
     if result is None:
         return "UNCHECKABLE_QUOTE"
     return OK if result else "QUOTE_MISMATCH"

@@ -39,6 +39,13 @@ Where things live:
 
 Do not add vulnerable applications to this repository. Test applications live in a separate repository; see [docs/blind-test-protocol.md](docs/blind-test-protocol.md). Changes motivated by blind-test results must be described in general terms.
 
+## Contribution terms
+
+- **License.** Contributions are accepted under the [Apache License 2.0](LICENSE), as its section 5 describes: anything you submit for inclusion is licensed under the same terms as the project.
+- **Sign-off.** Each commit must carry a Developer Certificate of Origin sign-off. It certifies that you wrote the change or otherwise have the right to submit it under this license; see [developercertificate.org](https://developercertificate.org/).
+  - Add it with `git commit -s`, which appends `Signed-off-by: Your Name <your@email>`.
+  - Use a name and an address you are willing to make public.
+
 ## Pull requests
 
 Describe what changed and why, how you tested it, and any effect on the ship gate or output format. Add a line to `CHANGELOG.md` under "Unreleased".
