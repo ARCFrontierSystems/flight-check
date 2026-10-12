@@ -8,7 +8,7 @@ Flight Check asks one question:
 
 It examines security, privacy, legal/business risk, compliance readiness, accessibility, reliability, and production readiness. It reports what it found with file-and-line evidence, what it verified as working, and what it could not verify. It never confuses "we did not find a problem" with "there is no problem".
 
-> **Status: pre-release (0.1.0).** Flight Check is under active development. Its blind evaluations are published: [Phase 5](docs/audits/2026-10-06-phase-5-blind-test.md), and the held-out test application in the [Phase 7 final report](docs/audits/2026-10-12-phase-7-final-report.md). Treat results as an aid to human judgment, not a substitute for it.
+> **Status: 1.0.0.** Flight Check's blind evaluations are published: [Phase 5](docs/audits/2026-10-06-phase-5-blind-test.md), the [Phase 7 final report](docs/audits/2026-10-12-phase-7-final-report.md), and the [1.0 release evaluation](docs/audits/2026-10-12-v1-release-evaluation.md) on a held-out test application. Treat results as an aid to human judgment, not a substitute for it.
 
 ## What Flight Check does
 
@@ -97,7 +97,7 @@ Details: [docs/methodology.md](docs/methodology.md).
 
 An audit runs an inventory agent, up to nine domain agents, and a verifier, each reading part of the project. Projects with more than 12 entry-point files add up to eight handler reviewers, and `--passes 2` or `3` runs each domain agent that many times. Usage grows with project size and with the number of applicable domains. Flight Check sets no token limit of its own; your Claude Code plan or provider settings govern spend.
 
-For reference, Flight Check's self-audit of its own repository (about 600 KB of text, ten agent tasks plus one retry) took about six minutes. The agents used roughly 800,000 input tokens and 50,000 output tokens, and the coordinating session about 1.6 million input tokens; most input tokens in both were cache reads. Treat these as an order of magnitude, not a quote. Prices depend on your plan and model.
+For reference, Flight Check's self-audit of its own repository (about 600 KB of text, ten agent tasks plus one retry) took about six minutes. The agents used roughly 800,000 input tokens and 50,000 output tokens, and the coordinating session about 1.6 million input tokens; most input tokens in both were cache reads. In the 1.0 release evaluation, an audit of a test web application of about 90 files cost $9–11 per run with `--passes 2`, against about $3.50 for a single pass on an earlier test application. Treat these as an order of magnitude, not a quote. Prices depend on your plan and model.
 
 To limit usage:
 - Restrict the audit to the domains you need with `--domains`. The other domains are then reported as not assessed, so the ship gate stays blocked.
