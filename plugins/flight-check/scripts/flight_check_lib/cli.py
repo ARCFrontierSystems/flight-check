@@ -239,9 +239,10 @@ def cmd_ledger_show(args):
 
 def _ledger_write(args, fn):
     try:
-        led = _load_ledger(args)
-        fn(led)
-        ledger.save(args.ledger, led)
+        with ledger.locked(args.ledger):
+            led = _load_ledger(args)
+            fn(led)
+            ledger.save(args.ledger, led)
     except (InputError, ledger.LedgerError) as exc:
         return _fail(str(exc))
     _print({"ok": True})
@@ -277,6 +278,14 @@ def cmd_ledger_close(args):
 
 
 def cmd_packet(args):
+    try:
+        with ledger.locked(args.ledger):
+            return _packet(args)
+    except ledger.LedgerError as exc:
+        return _fail(str(exc))
+
+
+def _packet(args):
     try:
         final = finalize.load_final(args.run_dir)
         request = load_json(args.request)

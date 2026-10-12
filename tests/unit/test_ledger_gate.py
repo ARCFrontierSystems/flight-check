@@ -209,6 +209,40 @@ class LedgerTests(unittest.TestCase):
             ledger.merge(led, audit_with([], "20261001T000000Z"), helpers.NOW, TODAY)
 
 
+class LedgerLockTests(unittest.TestCase):
+    def setUp(self):
+        import tempfile
+        self.dir = tempfile.mkdtemp()
+        self.path = os.path.join(self.dir, "ledger.json")
+        self.lock = self.path + ".lock"
+
+    def tearDown(self):
+        import shutil
+        shutil.rmtree(self.dir, ignore_errors=True)
+
+    def test_lock_is_held_inside_and_released_after(self):
+        with ledger.locked(self.path):
+            self.assertTrue(os.path.exists(self.lock))
+        self.assertFalse(os.path.exists(self.lock))
+
+    def test_second_writer_waits_then_fails_clearly(self):
+        with ledger.locked(self.path):
+            with self.assertRaises(ledger.LedgerError) as ctx:
+                with ledger.locked(self.path, wait=0.2):
+                    pass
+        self.assertIn("in use by another Flight Check command", str(ctx.exception))
+        self.assertFalse(os.path.exists(self.lock))
+
+    def test_stale_lock_from_a_crash_is_removed(self):
+        with open(self.lock, "w") as fh:
+            fh.write("12345")
+        old = os.path.getmtime(self.lock) - ledger.STALE_LOCK_SECONDS - 5
+        os.utime(self.lock, (old, old))
+        with ledger.locked(self.path, wait=0.2):
+            pass
+        self.assertFalse(os.path.exists(self.lock))
+
+
 class GateTests(unittest.TestCase):
     def _final(self, findings, controls=None, coverage_status="ASSESSED"):
         led = ledger.new_ledger("t")
