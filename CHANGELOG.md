@@ -4,6 +4,7 @@ All notable changes are recorded here. Versions follow [Semantic Versioning](htt
 
 ## [Unreleased] — 1.5.0 (in development)
 
+- **Project State persistence** (Phase 3): `.flight-check/project.json` (identity), `registers.json`, and a hash-chained `history.jsonl` log, created by `state init` or automatically by the next finalized audit or `ledger` command (a 1.0 ledger is backed up and kept unchanged). Every state change holds one lock, is schema-checked, journaled for crash recovery, and logged. New `state` commands: `show`, `check`, `recover`, `backup`, `backups`, `restore`, `export`, `import`, `adopt`. Runs record the project ID, and finalize refuses a run started for another project; state copied to another place in the repository must be adopted before use. Symbolic links in the state directory are refused.
 - **Design for Project State** (`docs/design/project-state.md`): storage layout, identity, profile, applicability, requirements, decisions, risks, legal review items, history log, freshness, finding lifecycle, readiness, recovery, and migration from 1.0. The schema definitions for the new state files are added and tested; nothing uses them yet.
 
 ## [1.0.0-rc.1] — 2026-10-12 (pre-release)

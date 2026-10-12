@@ -70,6 +70,24 @@ For your own projects only. Flight Check:
 
 A fix counts as verified only when the re-audit confirms it. Run a full `/flight-check:audit` before making a release decision.
 
+## Project state
+
+From version 1.5, Flight Check keeps project state next to the ledger in `.flight-check/`: `project.json` (identity, and later the profile and applicability), `registers.json` (requirements, decisions, risks, and legal review items, added in later 1.5 phases), and `history.jsonl`, an append-only log of every change. The design is in [design/project-state.md](design/project-state.md). The state is created by `state init`, or automatically by the next finalized audit or `ledger` command; an existing 1.0 ledger is kept unchanged and backed up first.
+
+Commands (`python3 <plugin>/scripts/flight_check.py state <command> --root <project>`):
+
+| Command | What it does |
+|---|---|
+| `show` | Summarize the state |
+| `check` | Verify the files, the history log's hash chain, revisions, and the project's location; exits 1 on any problem |
+| `recover` | Finish or roll back a command that was interrupted |
+| `backup --reason TEXT`, `backups` | Make or list backups in `.flight-check/backups/` |
+| `restore --from DIR` | Restore from a backup (the current state is backed up first; the history log is kept) |
+| `export --out FILE`, `import --from FILE` | Move the state as one JSON bundle; importing a bundle from another project needs `--adopt` |
+| `adopt --reason TEXT` | Confirm that the state belongs to the project at its current place in the repository, for example after moving an application inside a monorepo |
+
+Commit `project.json`, `registers.json`, `history.jsonl`, and `ledger.json` if your team shares the history. Flight Check writes `.flight-check/.gitignore` so run output, backups, and lock files stay local.
+
 ## Continuous integration
 
 The audit itself needs Claude. Teams typically run it before a release and commit the ledger. To gate a pipeline on a finished audit:

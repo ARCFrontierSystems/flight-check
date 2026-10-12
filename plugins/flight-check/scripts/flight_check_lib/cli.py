@@ -7,7 +7,7 @@ import os
 import re
 import sys
 
-from . import VERSION, catalog, constants, finalize, gate, ledger, minischema, packet, render_md, validate
+from . import VERSION, catalog, constants, finalize, gate, ledger, lockfile, minischema, packet, render_md, state, validate
 from .jsonio import InputError, dump_json, load_json, write_bytes, write_text
 
 
@@ -92,6 +92,13 @@ def cmd_init_run(args):
             dump_json(os.path.join(run_dir, "inventory.json"), load_json(src))
         except InputError as exc:
             return _fail("cannot reuse inventory: %s" % exc)
+    try:
+        ref = state.run_ref(os.path.dirname(base))
+    except (state.StateError, InputError):
+        ref = None
+    if ref:
+        # Lets finalize refuse to merge this run into another project's state.
+        dump_json(os.path.join(run_dir, "run-ref.json"), dict(ref, run_id=run_id))
     marker = os.path.join(base, ".gitignore")
     if not os.path.exists(marker):
         write_text(marker, "# Flight Check run output can quote project files; do not commit it.\n*\n")
@@ -111,7 +118,7 @@ def cmd_finalize(args):
     led_path = None if args.no_ledger else (args.ledger or os.path.join(os.path.abspath(args.root), ".flight-check", "ledger.json"))
     try:
         result = finalize.finalize(args.run_dir, args.root, led_path, args.now)
-    except (InputError, ledger.LedgerError) as exc:
+    except (InputError, ledger.LedgerError, state.StateError) as exc:
         return _fail(str(exc))
     _print(result)
     return 0 if result["ok"] else 1
@@ -237,61 +244,90 @@ def cmd_ledger_show(args):
     return 0
 
 
-def _ledger_write(args, fn):
+_FINDING_ID = re.compile(r"FC-[0-9]{4,}")
+_CONTROL_ID = re.compile(r"[A-Z0-9]+(-[A-Z0-9]+)+")
+
+
+def _record_of(ref):
+    if _FINDING_ID.fullmatch(ref or ""):
+        return ref
+    if _CONTROL_ID.fullmatch(ref or ""):
+        return "control:" + ref
+    return "state"
+
+
+def _status_of(led, ref):
+    entry = led["entries"].get(ref)
+    if entry is not None:
+        return {"status": entry["status"], "legal": (entry.get("legal") or {}).get("status")}
+    acc = led["control_acceptances"].get(ref)
+    return {"accepted": "yes" if acc else "no"}
+
+
+def _ledger_write(args, fn, command, ref, actor="user", reason=None):
+    now = _now(args)
     try:
-        with ledger.locked(args.ledger):
-            led = _load_ledger(args)
-            fn(led)
-            ledger.save(args.ledger, led)
-    except (InputError, ledger.LedgerError) as exc:
+        with state.transaction(os.path.dirname(os.path.abspath(args.ledger)), actor, command,
+                               now.strftime("%Y-%m-%dT%H:%M:%SZ"), ledger_name=os.path.basename(args.ledger),
+                               require_ledger=True) as tx:
+            before = _status_of(tx.ledger, ref)
+            fn(tx.ledger, now)
+            after = _status_of(tx.ledger, ref)
+            change = {k: [before.get(k), after.get(k)] for k in sorted(set(before) | set(after)) if before.get(k) != after.get(k)}
+            tx.event(_record_of(ref), change, reason)
+    except (InputError, ledger.LedgerError, state.StateError) as exc:
         return _fail(str(exc))
     _print({"ok": True})
     return 0
 
 
 def cmd_ledger_accept(args):
-    now = _now(args)
     fields = {"risk": args.risk, "reason": args.reason, "owner": args.owner, "date": args.date, "scope": args.scope,
               "compensating_controls": args.compensating_controls, "review_date": args.review_date}
-    return _ledger_write(args, lambda led: ledger.accept(led, args.ref, fields, now.strftime("%Y-%m-%dT%H:%M:%SZ"), now.date()))
+    return _ledger_write(args, lambda led, now: ledger.accept(led, args.ref, fields, now.strftime("%Y-%m-%dT%H:%M:%SZ"), now.date()),
+                         "ledger accept", args.ref, reason=args.reason)
 
 
 def cmd_ledger_revoke(args):
-    now = _now(args)
-    return _ledger_write(args, lambda led: ledger.revoke_acceptance(led, args.ref, args.note, now.strftime("%Y-%m-%dT%H:%M:%SZ")))
+    return _ledger_write(args, lambda led, now: ledger.revoke_acceptance(led, args.ref, args.note, now.strftime("%Y-%m-%dT%H:%M:%SZ")),
+                         "ledger revoke", args.ref, reason=args.note)
 
 
 def cmd_ledger_legal(args):
-    now = _now(args)
-    return _ledger_write(args, lambda led: ledger.set_legal_status(led, args.id, args.status, args.note, args.source,
-                                                                 now.strftime("%Y-%m-%dT%H:%M:%SZ"), args.reason))
+    return _ledger_write(args, lambda led, now: ledger.set_legal_status(led, args.id, args.status, args.note, args.source,
+                                                                      now.strftime("%Y-%m-%dT%H:%M:%SZ"), args.reason),
+                         "ledger legal", args.id, actor=args.source, reason=args.note or args.reason)
 
 
 def cmd_ledger_remediate(args):
-    now = _now(args)
-    return _ledger_write(args, lambda led: ledger.record_remediation(led, args.id, args.note, args.file or [], now.strftime("%Y-%m-%dT%H:%M:%SZ")))
+    return _ledger_write(args, lambda led, now: ledger.record_remediation(led, args.id, args.note, args.file or [], now.strftime("%Y-%m-%dT%H:%M:%SZ")),
+                         "ledger remediate", args.id, reason=args.note)
 
 
 def cmd_ledger_close(args):
-    now = _now(args)
-    return _ledger_write(args, lambda led: ledger.close(led, args.id, args.note, now.strftime("%Y-%m-%dT%H:%M:%SZ")))
+    return _ledger_write(args, lambda led, now: ledger.close(led, args.id, args.note, now.strftime("%Y-%m-%dT%H:%M:%SZ")),
+                         "ledger close", args.id, reason=args.note)
 
 
 def cmd_packet(args):
+    if not args.ledger:
+        return _packet(args, None)
     try:
-        with ledger.locked(args.ledger):
-            return _packet(args)
-    except ledger.LedgerError as exc:
+        with state.transaction(os.path.dirname(os.path.abspath(args.ledger)), "flight-check", "packet",
+                               _now(args).strftime("%Y-%m-%dT%H:%M:%SZ"), ledger_name=os.path.basename(args.ledger),
+                               require_ledger=True) as tx:
+            return _packet(args, tx)
+    except (InputError, ledger.LedgerError, state.StateError) as exc:
         return _fail(str(exc))
 
 
-def _packet(args):
+def _packet(args, tx):
     try:
         final = finalize.load_final(args.run_dir)
         request = load_json(args.request)
-        led = ledger.load(args.ledger, create=False) if args.ledger else None
     except (InputError, ledger.LedgerError) as exc:
         return _fail(str(exc))
+    led = tx.ledger if tx else None
     now = _now(args)
     try:
         data, md_text, meta = packet.build(final, request, led, now, args.page_size)
@@ -308,7 +344,7 @@ def _packet(args):
             if "legal" in entry:
                 entry["legal"]["history"].append({"at": stamp, "status": entry["legal"]["status"], "source": "flight-check",
                                                   "note": "included in attorney review packet %s" % os.path.basename(out)})
-        ledger.save(args.ledger, led)
+        tx.event("state", {}, "Attorney Review Packet %s covers %s." % (os.path.basename(out), ", ".join(meta["findings"]) or "no findings"))
     _print({"ok": True, "pdf": out, "markdown": md_out, "pages": meta["pages"], "findings": meta["findings"],
             "replaced_characters": meta["replaced_characters"]})
     return 0
@@ -377,6 +413,129 @@ def cmd_schema_check(args):
     errors = minischema.validate_def(doc, catalog.schema(), args.definition)
     _print({"ok": not errors, "errors": errors})
     return 0 if not errors else 1
+
+
+def _state_dir(args):
+    if getattr(args, "state_dir", None):
+        return os.path.abspath(args.state_dir)
+    if getattr(args, "root", None):
+        return state.default_state_dir(args.root)
+    raise state.StateError("give --root (the audit root) or --state-dir")
+
+
+def _stamp(args):
+    return _now(args).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _state_cmd(fn):
+    def run(args):
+        try:
+            result = fn(args)
+        except (InputError, ledger.LedgerError, state.StateError, lockfile.LockError) as exc:
+            return _fail(str(exc))
+        if isinstance(result, int):
+            return result
+        _print(dict({"ok": True}, **result))
+        return 0
+    return run
+
+
+@_state_cmd
+def cmd_state_init(args):
+    tx = state.init(_state_dir(args), args.root, _stamp(args), args.name)
+    return {"state_dir": tx.st.state_dir, "project_id": tx.project["identity"]["project_id"],
+            "migrated_from_1_0": tx.st.ledger is not None, "revision": tx.project["revision"]}
+
+
+@_state_cmd
+def cmd_state_show(args):
+    st = state.load(_state_dir(args), root=args.root, strict=False)
+    return {"state": state.summary(st)}
+
+
+@_state_cmd
+def cmd_state_check(args):
+    st = state.load(_state_dir(args), root=args.root, strict=False)
+    problems = list(st.problems) + state.check_identity(st, args.root)
+    _print({"ok": not problems, "state_dir": st.state_dir, "initialized": st.initialized, "events": len(st.events),
+            "revision": st.project["revision"] if st.initialized else None, "problems": problems})
+    return 0 if not problems else 1
+
+
+@_state_cmd
+def cmd_state_recover(args):
+    return state.recover(_state_dir(args))
+
+
+@_state_cmd
+def cmd_state_backup(args):
+    state_dir = _state_dir(args)
+    with lockfile.locked(state_dir):
+        st = state.load(state_dir, root=args.root)
+        if not st.initialized and st.ledger is None:
+            raise state.StateError("there is no Flight Check state to back up in %s" % state_dir)
+        return {"backup": state.backup(st, args.reason, _stamp(args))}
+
+
+@_state_cmd
+def cmd_state_backups(args):
+    return {"backups": state.list_backups(_state_dir(args))}
+
+
+@_state_cmd
+def cmd_state_restore(args):
+    return state.restore(_state_dir(args), args.source, root=args.root, now_iso=_stamp(args), by=args.by)
+
+
+@_state_cmd
+def cmd_state_export(args):
+    return state.export_bundle(_state_dir(args), args.out, _stamp(args))
+
+
+@_state_cmd
+def cmd_state_import(args):
+    return state.import_bundle(_state_dir(args), args.source, root=args.root, adopt_other=args.adopt,
+                               now_iso=_stamp(args), by=args.by)
+
+
+@_state_cmd
+def cmd_state_adopt(args):
+    return state.adopt(_state_dir(args), args.root, args.reason, _stamp(args), by=args.by)
+
+
+def _add_state_parsers(sub):
+    sp = sub.add_parser("state", help="inspect, check, back up, and recover Flight Check project state")
+    ssub = sp.add_subparsers(dest="state_command")
+    ssub.required = True
+
+    def add(name, func, help_text, root_required=False):
+        s = ssub.add_parser(name, help=help_text)
+        s.add_argument("--root", required=root_required, help="audit root (state defaults to <root>/.flight-check)")
+        s.add_argument("--state-dir", help="state directory, for state kept outside the project (--out)")
+        s.add_argument("--now")
+        s.set_defaults(func=func)
+        return s
+
+    s = add("init", cmd_state_init, "create project state (from an existing 1.0 ledger if there is one)", True)
+    s.add_argument("--name", help="display name (default: the ledger's project name or the directory name)")
+    add("show", cmd_state_show, "summarize the state")
+    add("check", cmd_state_check, "verify schemas, the history chain, revisions, and the project's location")
+    add("recover", cmd_state_recover, "finish or roll back a command that was interrupted")
+    s = add("backup", cmd_state_backup, "copy the state files to backups/")
+    s.add_argument("--reason", required=True)
+    add("backups", cmd_state_backups, "list backups")
+    s = add("restore", cmd_state_restore, "restore project, registers, and ledger from a backup (keeps the history log)")
+    s.add_argument("--from", dest="source", required=True, help="a directory under .flight-check/backups/")
+    s.add_argument("--by", help="who asked for the restore")
+    s = add("export", cmd_state_export, "write the committed state files to one JSON bundle")
+    s.add_argument("--out", required=True)
+    s = add("import", cmd_state_import, "replace the state with an exported bundle (backs up first)")
+    s.add_argument("--from", dest="source", required=True)
+    s.add_argument("--adopt", action="store_true", help="allow a bundle from a different project")
+    s.add_argument("--by")
+    s = add("adopt", cmd_state_adopt, "confirm that this state belongs to the project at its current location", True)
+    s.add_argument("--reason", required=True)
+    s.add_argument("--by")
 
 
 def build_parser():
@@ -450,6 +609,8 @@ def build_parser():
     s.add_argument("--definition", required=True)
     s.set_defaults(func=cmd_schema_check)
 
+    _add_state_parsers(sub)
+
     lp = sub.add_parser("ledger", help="inspect or update the finding ledger")
     lsub = lp.add_subparsers(dest="ledger_command")
     lsub.required = True
@@ -509,4 +670,6 @@ def main(argv=None):
     except ledger.LedgerError as exc:
         return _fail(str(exc))
     except InputError as exc:
+        return _fail(str(exc))
+    except (state.StateError, lockfile.LockError) as exc:
         return _fail(str(exc))

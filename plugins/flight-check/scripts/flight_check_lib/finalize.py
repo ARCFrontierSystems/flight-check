@@ -3,7 +3,7 @@
 import datetime
 import os
 
-from . import VERSION, assemble, catalog, constants, evidence, gate, ledger, minischema, validate
+from . import VERSION, assemble, catalog, constants, evidence, gate, ledger, minischema, state, validate
 from .jsonio import dump_json, load_json
 
 
@@ -41,6 +41,16 @@ def _index_evidence(final):
     return index
 
 
+def _run_ref(run_dir):
+    path = os.path.join(run_dir, "run-ref.json")
+    if not os.path.isfile(path):
+        return None
+    ref = load_json(path)
+    if not isinstance(ref, dict) or not isinstance(ref.get("project_id"), str):
+        raise state.StateError("%s is not a valid run reference" % path)
+    return ref
+
+
 def finalize(run_dir, root, ledger_path=None, now_iso=None):
     """Returns a result dict. On validation failure nothing is written and ok is False."""
     errors, warnings = validate.validate_run_dir(run_dir)
@@ -73,10 +83,8 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         if item.get("evidence"):
             evidence.annotate(item["evidence"], root, cache)
 
-    with ledger.locked(ledger_path):
-        led = ledger.load(ledger_path, create=True, project_name=audit["run"]["target"]["name"]) if ledger_path else ledger.new_ledger(audit["run"]["target"]["name"])
+    def merge_and_gate(led):
         lifecycle = ledger.merge(led, audit, now, today)
-
         local_to_id = {f["local_id"]: f["id"] for f in audit["findings"]}
         for f in audit["findings"]:
             f["effective_confidence"] = gate.effective_confidence(f)
@@ -87,11 +95,30 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         for i, p in enumerate(audit["positive_controls"], 1):
             p["id"] = "PC-%03d" % i
         audit["findings"].sort(key=lambda f: (constants.SEVERITY_RANK[f["severity"]], f["id"]))
-
         decision = gate.decide(audit, led, today, lifecycle)
         ledger.record_run(led, audit["run"]["run_id"], now, decision["decision"], audit["run"]["mode"])
-        if ledger_path:
-            ledger.save(ledger_path, led)
+        return lifecycle, decision
+
+    run_id = audit["run"]["run_id"]
+    if ledger_path:
+        state_dir = os.path.dirname(os.path.abspath(ledger_path))
+        with state.transaction(state_dir, "flight-check", "finalize", now, root=root, run_id=run_id,
+                               ledger_name=os.path.basename(ledger_path), create_ledger=True,
+                               project_name=audit["run"]["target"]["name"]) as tx:
+            ref = _run_ref(run_dir)
+            if ref and ref["project_id"] != tx.project["identity"]["project_id"]:
+                raise state.StateError("run %s was started for project %s, but this state belongs to project %s; "
+                                       "it will not be merged" % (run_id, ref["project_id"], tx.project["identity"]["project_id"]))
+            prev = (tx.ledger["runs"][-1]["gate"] if tx.ledger.get("runs") else None)
+            lifecycle, decision = merge_and_gate(tx.ledger)
+            led = tx.ledger
+            counts = {k: len(v) for k, v in lifecycle.items() if isinstance(v, list) and v and k != "ledger_entries"}
+            tx.event("state", {"gate": [prev, decision["decision"]]},
+                     "Audit run %s finalized. %s" % (run_id, ", ".join("%s: %d" % kv for kv in sorted(counts.items())) or "No lifecycle changes."))
+            tx.readiness = (decision["decision"], run_id, audit["run"]["target"].get("commit"))
+    else:
+        led = ledger.new_ledger(audit["run"]["target"]["name"])
+        lifecycle, decision = merge_and_gate(led)
 
     final = {
         "schema_version": constants.SCHEMA_VERSION,
