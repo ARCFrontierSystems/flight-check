@@ -467,6 +467,334 @@
           }
         }
       }
+    },
+    "stateTime": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$"},
+    "stateRelPath": {"type": "string", "pattern": "^(?![/\\\\])(?![A-Za-z]:)(?!.*(^|[/\\\\])\\.\\.([/\\\\]|$))[^\\n]{1,1024}$"},
+    "origin": {"type": "string", "enum": ["observed", "declared", "inferred", "unknown", "historical"]},
+    "source": {"type": "string", "enum": ["user", "flight-check"]},
+    "evidenceRef": {
+      "type": "object",
+      "required": ["kind"],
+      "additionalProperties": false,
+      "properties": {
+        "kind": {"type": "string", "enum": ["code", "config", "documentation", "dependency", "absence", "user-provided"]},
+        "path": {"$ref": "#/$defs/stateRelPath"},
+        "start_line": {"type": "integer", "minimum": 1},
+        "end_line": {"type": "integer", "minimum": 1},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "anchor_hash": {"type": "string", "pattern": "^([0-9a-f]{16})?$"},
+        "searched": {"type": "string", "maxLength": 1000},
+        "observed_at": {"$ref": "#/$defs/stateTime"},
+        "run_id": {"type": "string", "maxLength": 80}
+      }
+    },
+    "recordEvent": {
+      "type": "object",
+      "required": ["at", "status", "source"],
+      "additionalProperties": false,
+      "properties": {
+        "at": {"$ref": "#/$defs/stateTime"},
+        "status": {"type": "string", "maxLength": 40},
+        "source": {"$ref": "#/$defs/source"},
+        "by": {"type": "string", "maxLength": 200},
+        "run_id": {"type": "string", "maxLength": 80},
+        "note": {"type": "string", "maxLength": 4000}
+      }
+    },
+    "recordLinks": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "findings": {"type": "array", "maxItems": 500, "items": {"type": "string", "pattern": "^FC-[0-9]{4,}$"}},
+        "requirements": {"type": "array", "maxItems": 500, "items": {"type": "string", "pattern": "^REQ-[0-9]{4,}$"}},
+        "decisions": {"type": "array", "maxItems": 500, "items": {"type": "string", "pattern": "^DEC-[0-9]{4,}$"}},
+        "risks": {"type": "array", "maxItems": 500, "items": {"type": "string", "pattern": "^RISK-[0-9]{4,}$"}},
+        "legal": {"type": "array", "maxItems": 500, "items": {"type": "string", "pattern": "^LR-[0-9]{4,}$"}},
+        "profile": {"type": "array", "maxItems": 500, "items": {"type": "string", "pattern": "^PF-[0-9]{4,}$"}}
+      }
+    },
+    "profileCorrection": {
+      "type": "object",
+      "required": ["at", "source", "assertion", "reason", "active"],
+      "additionalProperties": false,
+      "properties": {
+        "at": {"$ref": "#/$defs/stateTime"},
+        "by": {"type": "string", "maxLength": 200},
+        "source": {"const": "user"},
+        "assertion": {"type": "string", "enum": ["not_used", "excluded", "replace", "scope"]},
+        "value": {"type": "string", "maxLength": 2000},
+        "reason": {"type": "string", "minLength": 3, "maxLength": 2000},
+        "active": {"type": "boolean"}
+      }
+    },
+    "profileFact": {
+      "type": "object",
+      "required": ["id", "aspect", "value", "origin", "source", "status", "evidence", "first_observed", "last_observed", "history"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "pattern": "^PF-[0-9]{4,}$"},
+        "aspect": {"type": "string", "pattern": "^[a-z][a-z0-9-]*(\\.[a-z0-9-]+)*$", "maxLength": 120},
+        "value": {"type": "string", "minLength": 1, "maxLength": 2000},
+        "origin": {"$ref": "#/$defs/origin"},
+        "source": {"$ref": "#/$defs/source"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "status": {"type": "string", "enum": ["current", "historical", "superseded"]},
+        "evidence": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/evidenceRef"}},
+        "first_observed": {"$ref": "#/$defs/stateTime"},
+        "last_observed": {"$ref": "#/$defs/stateTime"},
+        "run_id": {"type": "string", "maxLength": 80},
+        "corrections": {"type": "array", "maxItems": 50, "items": {"$ref": "#/$defs/profileCorrection"}},
+        "contradiction": {"type": "boolean"},
+        "history": {"type": "array", "items": {"$ref": "#/$defs/recordEvent"}}
+      }
+    },
+    "applicabilityEntry": {
+      "type": "object",
+      "required": ["domain", "classification", "reasoning", "evidence", "evaluated_at"],
+      "additionalProperties": false,
+      "properties": {
+        "domain": {"$ref": "#/$defs/domainId"},
+        "classification": {"type": "string", "enum": ["applicable", "not_applicable", "uncertain"]},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "reasoning": {"type": "string", "minLength": 1, "maxLength": 2000},
+        "evidence": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/evidenceRef"}},
+        "components": {"type": "array", "maxItems": 50, "items": {"$ref": "#/$defs/stateRelPath"}},
+        "evaluated_at": {"$ref": "#/$defs/stateTime"},
+        "run_id": {"type": "string", "maxLength": 80},
+        "override": {
+          "type": ["object", "null"],
+          "required": ["classification", "source", "at", "reason"],
+          "additionalProperties": false,
+          "properties": {
+            "classification": {"type": "string", "enum": ["applicable", "not_applicable"]},
+            "source": {"const": "user"},
+            "by": {"type": "string", "maxLength": 200},
+            "at": {"$ref": "#/$defs/stateTime"},
+            "reason": {"type": "string", "minLength": 3, "maxLength": 2000}
+          }
+        },
+        "contradiction": {"type": "boolean"}
+      }
+    },
+    "readinessStamp": {
+      "type": "object",
+      "required": ["decision", "at", "run_id", "revision"],
+      "additionalProperties": false,
+      "properties": {
+        "decision": {"type": "string", "enum": ["READY FOR RELEASE", "READY WITH ACCEPTED RISKS", "NOT READY — REMEDIATION REQUIRED", "BLOCKED — INSUFFICIENT EVIDENCE", "BLOCKED — CRITICAL RISK"]},
+        "at": {"$ref": "#/$defs/stateTime"},
+        "run_id": {"type": "string", "maxLength": 80},
+        "revision": {"type": "integer", "minimum": 0},
+        "commit": {"type": "string", "maxLength": 80}
+      }
+    },
+    "projectState": {
+      "type": "object",
+      "required": ["schema_version", "revision", "identity", "profile", "applicability"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {"const": "2.0"},
+        "revision": {"type": "integer", "minimum": 0},
+        "identity": {
+          "type": "object",
+          "required": ["project_id", "created_at", "name", "root", "vcs"],
+          "additionalProperties": false,
+          "properties": {
+            "project_id": {"type": "string", "pattern": "^[0-9a-f]{32}$"},
+            "created_at": {"$ref": "#/$defs/stateTime"},
+            "name": {"type": "string", "minLength": 1, "maxLength": 200},
+            "root": {"$ref": "#/$defs/stateRelPath"},
+            "vcs": {"type": "string", "enum": ["git", "none"]},
+            "repository": {"type": "string", "maxLength": 300}
+          }
+        },
+        "profile": {
+          "type": "object",
+          "required": ["next_id", "facts"],
+          "additionalProperties": false,
+          "properties": {
+            "next_id": {"type": "integer", "minimum": 1},
+            "facts": {"type": "array", "maxItems": 500, "items": {"$ref": "#/$defs/profileFact"}}
+          }
+        },
+        "applicability": {"type": "array", "maxItems": 19, "items": {"$ref": "#/$defs/applicabilityEntry"}},
+        "readiness": {"type": "array", "maxItems": 200, "items": {"$ref": "#/$defs/readinessStamp"}}
+      }
+    },
+    "riskAcceptance": {
+      "type": "object",
+      "required": ["reason", "owner", "date", "scope", "compensating_controls"],
+      "additionalProperties": false,
+      "properties": {
+        "reason": {"type": "string", "minLength": 5, "maxLength": 2000},
+        "owner": {"type": "string", "minLength": 2, "maxLength": 200},
+        "date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        "scope": {"type": "string", "minLength": 3, "maxLength": 1000},
+        "compensating_controls": {"type": "string", "minLength": 2, "maxLength": 2000},
+        "conditions": {"type": "string", "maxLength": 2000},
+        "review_date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        "review_trigger": {"type": "string", "maxLength": 1000}
+      }
+    },
+    "requirement": {
+      "type": "object",
+      "required": ["id", "title", "description", "category", "criticality", "status", "origin", "source", "created_at", "updated_at", "links", "evidence", "history"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "pattern": "^REQ-[0-9]{4,}$"},
+        "title": {"type": "string", "minLength": 3, "maxLength": 300},
+        "description": {"type": "string", "minLength": 3, "maxLength": 4000},
+        "category": {"type": "string", "enum": ["security", "privacy", "compliance-readiness", "accessibility", "reliability", "data-lifecycle", "authentication", "authorization", "infrastructure", "deployment", "legal-business", "product-behavior", "release"]},
+        "criticality": {"type": "string", "enum": ["release-critical", "high", "normal"]},
+        "applicability": {"type": "string", "maxLength": 300},
+        "components": {"type": "array", "maxItems": 50, "items": {"$ref": "#/$defs/stateRelPath"}},
+        "status": {"type": "string", "enum": ["PROPOSED", "ACCEPTED", "IMPLEMENTED", "VERIFIED", "BLOCKED", "SUPERSEDED", "REJECTED"]},
+        "origin": {"$ref": "#/$defs/origin"},
+        "source": {"$ref": "#/$defs/source"},
+        "verification": {
+          "type": "object",
+          "required": ["state"],
+          "additionalProperties": false,
+          "properties": {
+            "state": {"type": "string", "enum": ["current", "stale", "unverified"]},
+            "at": {"$ref": "#/$defs/stateTime"},
+            "run_id": {"type": "string", "maxLength": 80}
+          }
+        },
+        "created_at": {"$ref": "#/$defs/stateTime"},
+        "updated_at": {"$ref": "#/$defs/stateTime"},
+        "last_review": {"$ref": "#/$defs/stateTime"},
+        "links": {"$ref": "#/$defs/recordLinks"},
+        "evidence": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/evidenceRef"}},
+        "history": {"type": "array", "items": {"$ref": "#/$defs/recordEvent"}}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "required": ["id", "title", "context", "decision", "status", "origin", "source", "created_at", "updated_at", "links", "evidence", "history"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "pattern": "^DEC-[0-9]{4,}$"},
+        "title": {"type": "string", "minLength": 3, "maxLength": 300},
+        "context": {"type": "string", "minLength": 3, "maxLength": 4000},
+        "decision": {"type": "string", "minLength": 3, "maxLength": 4000},
+        "rationale": {"type": "string", "maxLength": 4000},
+        "alternatives": {"type": "string", "maxLength": 4000},
+        "owner": {"type": "string", "maxLength": 200},
+        "date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        "review_triggers": {"type": "array", "maxItems": 50, "items": {"type": "string", "minLength": 1, "maxLength": 300}},
+        "assertions": {"type": "array", "maxItems": 20, "items": {"type": "string", "minLength": 3, "maxLength": 500}},
+        "superseded_by": {"type": "string", "pattern": "^DEC-[0-9]{4,}$"},
+        "status": {"type": "string", "enum": ["PROPOSED", "ACCEPTED", "SUPERSEDED", "REVERSED", "NEEDS_REVIEW"]},
+        "origin": {"$ref": "#/$defs/origin"},
+        "source": {"$ref": "#/$defs/source"},
+        "created_at": {"$ref": "#/$defs/stateTime"},
+        "updated_at": {"$ref": "#/$defs/stateTime"},
+        "links": {"$ref": "#/$defs/recordLinks"},
+        "evidence": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/evidenceRef"}},
+        "history": {"type": "array", "items": {"$ref": "#/$defs/recordEvent"}}
+      }
+    },
+    "risk": {
+      "type": "object",
+      "required": ["id", "title", "description", "domain", "severity", "status", "origin", "source", "created_at", "updated_at", "links", "evidence", "history"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "pattern": "^RISK-[0-9]{4,}$"},
+        "title": {"type": "string", "minLength": 3, "maxLength": 300},
+        "description": {"type": "string", "minLength": 3, "maxLength": 4000},
+        "domain": {"$ref": "#/$defs/domainId"},
+        "severity": {"$ref": "#/$defs/severity"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "impact": {"type": "string", "maxLength": 2000},
+        "likelihood": {"type": "string", "maxLength": 1000},
+        "owner": {"type": "string", "maxLength": 200},
+        "mitigation_plan": {"type": "string", "maxLength": 4000},
+        "acceptance": {"$ref": "#/$defs/riskAcceptance"},
+        "first_observed": {"$ref": "#/$defs/stateTime"},
+        "last_reviewed": {"$ref": "#/$defs/stateTime"},
+        "next_review": {"type": "string", "maxLength": 300},
+        "resolution_evidence": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/evidenceRef"}},
+        "status": {"type": "string", "enum": ["OPEN", "UNDER_REVIEW", "MITIGATION_PLANNED", "MITIGATED", "ACCEPTED", "RESOLVED", "REOPENED"]},
+        "origin": {"$ref": "#/$defs/origin"},
+        "source": {"$ref": "#/$defs/source"},
+        "created_at": {"$ref": "#/$defs/stateTime"},
+        "updated_at": {"$ref": "#/$defs/stateTime"},
+        "links": {"$ref": "#/$defs/recordLinks"},
+        "evidence": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/evidenceRef"}},
+        "history": {"type": "array", "items": {"$ref": "#/$defs/recordEvent"}}
+      }
+    },
+    "legalItem": {
+      "type": "object",
+      "required": ["id", "title", "category", "description", "trigger", "status", "origin", "source", "created_at", "updated_at", "links", "evidence", "history"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"type": "string", "pattern": "^LR-[0-9]{4,}$"},
+        "title": {"type": "string", "minLength": 3, "maxLength": 300},
+        "category": {"type": "string", "minLength": 2, "maxLength": 120},
+        "description": {"type": "string", "minLength": 3, "maxLength": 4000},
+        "trigger": {"type": "string", "minLength": 3, "maxLength": 1000},
+        "classification": {"type": "string", "enum": ["LEGAL REVIEW REQUIRED", "BUSINESS DECISION REQUIRED", "POLICY GAP", "POLICY/IMPLEMENTATION CONTRADICTION", "POTENTIAL LEGAL RISK", "INFORMATIONAL"]},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "jurisdiction": {"type": "string", "maxLength": 300},
+        "jurisdiction_unknown": {"type": "boolean"},
+        "questions": {"type": "array", "maxItems": 20, "items": {"type": "string", "minLength": 5, "maxLength": 1000}},
+        "owner": {"type": "string", "maxLength": 200},
+        "review_date": {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        "resolution_notes": {"type": "string", "maxLength": 4000},
+        "references": {"type": "array", "maxItems": 20, "items": {"type": "string", "maxLength": 500}},
+        "status": {"type": "string", "enum": ["NEEDS_REVIEW", "AWAITING_BUSINESS_DECISION", "AWAITING_COUNSEL", "REVIEWED", "ACTION_REQUIRED", "RESOLVED", "NOT_APPLICABLE"]},
+        "origin": {"$ref": "#/$defs/origin"},
+        "source": {"$ref": "#/$defs/source"},
+        "created_at": {"$ref": "#/$defs/stateTime"},
+        "updated_at": {"$ref": "#/$defs/stateTime"},
+        "links": {"$ref": "#/$defs/recordLinks"},
+        "evidence": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/evidenceRef"}},
+        "history": {"type": "array", "items": {"$ref": "#/$defs/recordEvent"}}
+      }
+    },
+    "registers": {
+      "type": "object",
+      "required": ["schema_version", "next_ids", "requirements", "decisions", "risks", "legal"],
+      "additionalProperties": false,
+      "properties": {
+        "schema_version": {"const": "2.0"},
+        "next_ids": {
+          "type": "object",
+          "required": ["REQ", "DEC", "RISK", "LR"],
+          "additionalProperties": false,
+          "properties": {
+            "REQ": {"type": "integer", "minimum": 1},
+            "DEC": {"type": "integer", "minimum": 1},
+            "RISK": {"type": "integer", "minimum": 1},
+            "LR": {"type": "integer", "minimum": 1}
+          }
+        },
+        "requirements": {"type": "array", "maxItems": 2000, "items": {"$ref": "#/$defs/requirement"}},
+        "decisions": {"type": "array", "maxItems": 2000, "items": {"$ref": "#/$defs/decision"}},
+        "risks": {"type": "array", "maxItems": 2000, "items": {"$ref": "#/$defs/risk"}},
+        "legal": {"type": "array", "maxItems": 2000, "items": {"$ref": "#/$defs/legalItem"}}
+      }
+    },
+    "logEvent": {
+      "type": "object",
+      "required": ["seq", "at", "actor", "command", "record", "change", "revision", "prev", "hash"],
+      "additionalProperties": false,
+      "properties": {
+        "seq": {"type": "integer", "minimum": 1},
+        "at": {"$ref": "#/$defs/stateTime"},
+        "actor": {"$ref": "#/$defs/source"},
+        "by": {"type": "string", "maxLength": 200},
+        "command": {"type": "string", "minLength": 1, "maxLength": 80},
+        "record": {"type": "string", "pattern": "^(state|(FC|PF|PC|REQ|DEC|RISK|LR)-[0-9]{4,}|domain:[a-z-]+)$"},
+        "change": {"type": "object", "additionalProperties": {"type": "array", "maxItems": 2}},
+        "reason": {"type": "string", "maxLength": 4000},
+        "run_id": {"type": ["string", "null"], "maxLength": 80},
+        "revision": {"type": "integer", "minimum": 1},
+        "prev": {"type": "string", "pattern": "^([0-9a-f]{64})?$"},
+        "hash": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
     }
   }
 }
