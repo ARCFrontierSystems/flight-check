@@ -384,7 +384,7 @@
       "domain": "ai-llm",
       "title": "Mechanical quote check accepts gap-heavy or very short segments, so a fabricated quote can still pass as OK",
       "severity": "LOW",
-      "status": "REMEDIATED",
+      "status": "VERIFIED",
       "first_seen_run": "20261007T120434Z",
       "last_seen_run": "20261007T120434Z",
       "history": [
@@ -400,6 +400,13 @@
           "status": "REMEDIATED",
           "source": "flight-check",
           "note": "remediation recorded; pending verification by re-audit: Quotes that skip lines with '...' must contain at least 12 checkable characters, or they are UNCHECKABLE instead of OK."
+        },
+        {
+          "at": "2026-10-12T19:46:17Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: quote_matches now returns None when the quote contains an elision (\"...\" or an ellipsis character) and its checkable segments total fewer than 12 characters. check_item turns None into UNCHECKABLE_QUOTE, which is in the UNCHECKED set, so these quotes no longer count as OK. Segments under 3 characters are dropped before the count. I could not run the code, so this rests on reading it. A gap-heavy quote with 12 or more checkable characters is still allowed, as the note describes. A quote whose only gaps are [REDACTED] markers is not covered by the 12-character floor, because only elisions trigger it. That is a narrower, separate case.",
+          "run_id": "20261012T194029Z"
         }
       ],
       "remediations": [
@@ -422,7 +429,7 @@
       "domain": "documentation",
       "title": "README says the blind evaluation is unpublished, but a Phase 5 blind-test record is in the repository",
       "severity": "LOW",
-      "status": "REMEDIATED",
+      "status": "VERIFIED",
       "first_seen_run": "20261007T120434Z",
       "last_seen_run": "20261007T120434Z",
       "history": [
@@ -438,6 +445,13 @@
           "status": "REMEDIATED",
           "source": "flight-check",
           "note": "remediation recorded; pending verification by re-audit: README status now links the published Phase 5 blind-test record."
+        },
+        {
+          "at": "2026-10-12T19:46:17Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: README line 11 no longer says the evaluation is unpublished. It links docs/audits/2026-10-06-phase-5-blind-test.md, and Glob confirms that file exists. The README now says held-out test application results are scored at release, which fits a pre-release status. I did not read the record itself to check that the README's description matches its contents.",
+          "run_id": "20261012T194029Z"
         }
       ],
       "remediations": [
@@ -460,7 +474,7 @@
       "domain": "documentation",
       "title": "SECURITY.md directs reporters to GitHub private vulnerability reporting, which the maintainer checklist shows as not yet enabled",
       "severity": "LOW",
-      "status": "OPEN",
+      "status": "NOT_REPRODUCED",
       "first_seen_run": "20261007T120434Z",
       "last_seen_run": "20261007T120434Z",
       "history": [
@@ -470,6 +484,13 @@
           "source": "flight-check",
           "note": "first observed",
           "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-12T19:46:17Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261012T194029Z"
         }
       ]
     },
@@ -482,7 +503,7 @@
       "domain": "legal-business",
       "title": "Run directories keep raw agent replies containing audited content; no retention or deletion guidance beyond gitignore",
       "severity": "LOW",
-      "status": "REMEDIATED",
+      "status": "VERIFIED",
       "first_seen_run": "20261007T120434Z",
       "last_seen_run": "20261007T120434Z",
       "history": [
@@ -498,6 +519,13 @@
           "status": "REMEDIATED",
           "source": "flight-check",
           "note": "remediation recorded; pending verification by re-audit: README tells users that run directories hold quoted project content and can be deleted; the ledger keeps finding history."
+        },
+        {
+          "at": "2026-10-12T19:46:17Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: The README Privacy and data handling section now says the raw agent replies in run directories are kept as received and can contain quoted project content. It tells users to delete `.flight-check/runs/<run>/` directories they no longer need, and says the ledger keeps finding history without them. It also says run directories are gitignored automatically. The finding asked for retention and deletion guidance, and this supplies it as documentation. The tool has no automatic purge, so the guidance is manual.",
+          "run_id": "20261012T194029Z"
         }
       ],
       "legal": {
@@ -533,7 +561,7 @@
       "domain": "legal-business",
       "title": "Product name \"Flight Check\" is acknowledged to overlap with existing marks; counsel review is deferred",
       "severity": "MEDIUM",
-      "status": "OPEN",
+      "status": "NOT_REPRODUCED",
       "first_seen_run": "20261007T120434Z",
       "last_seen_run": "20261007T120434Z",
       "history": [
@@ -543,6 +571,13 @@
           "source": "flight-check",
           "note": "first observed",
           "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-12T19:46:17Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261012T194029Z"
         }
       ],
       "legal": {
@@ -568,7 +603,7 @@
       "domain": "legal-business",
       "title": "No terms of use, governing-law decision or contribution-terms statement beyond the Apache-2.0 license",
       "severity": "LOW",
-      "status": "OPEN",
+      "status": "NOT_REPRODUCED",
       "first_seen_run": "20261007T120434Z",
       "last_seen_run": "20261007T120434Z",
       "history": [
@@ -578,6 +613,13 @@
           "source": "flight-check",
           "note": "first observed",
           "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-12T19:46:17Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261012T194029Z"
         }
       ],
       "legal": {
@@ -603,7 +645,7 @@
       "domain": "supply-chain",
       "title": "CI installs jsonschema without a lockfile, so transitive Python dependencies float; the npm install is pinned only at the top level",
       "severity": "LOW",
-      "status": "OPEN",
+      "status": "NOT_REPRODUCED",
       "first_seen_run": "20261007T120434Z",
       "last_seen_run": "20261007T120434Z",
       "history": [
@@ -613,6 +655,13 @@
           "source": "flight-check",
           "note": "first observed",
           "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-12T19:46:17Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261012T194029Z"
         }
       ]
     }
@@ -640,6 +689,12 @@
     {
       "run_id": "20261007T120434Z",
       "at": "2026-10-07T12:12:32Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    },
+    {
+      "run_id": "20261012T194029Z",
+      "at": "2026-10-12T19:46:17Z",
       "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
       "mode": "audit"
     }
