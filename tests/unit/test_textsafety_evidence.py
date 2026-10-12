@@ -28,6 +28,16 @@ class TextSafetyTests(unittest.TestCase):
             self.assertGreater(n, 0, s)
             self.assertIn("[REDACTED", red)
 
+    def test_paths_are_not_redacted_but_random_tokens_are(self):
+        for s in ("see docs/audits/2026-10-12-phase-7-final-report.md line 4",
+                  "plugins/flight-check/scripts/flight_check_lib/textsafety.py"):
+            self.assertEqual(textsafety.redact(s), (s, 0))
+        # Built at runtime: mixed letters and digits in long parts still count as a secret, even with separators.
+        token = "-".join(["q8Zr2LmN4vPx", "7TbK9wYsD3hJ", "k5Fn1RcV6gQe"])
+        red, n = textsafety.redact("value " + token)
+        self.assertEqual(n, 1)
+        self.assertNotIn(token, red)
+
     def test_placeholders_are_not_redacted(self):
         for s in ('password = "${DB_PASSWORD}"', "api_key: process.env.API_KEY", 'secret = "changeme"', "token = <your-token>"):
             red, n = textsafety.redact(s)

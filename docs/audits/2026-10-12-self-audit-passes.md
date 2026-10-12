@@ -21,6 +21,6 @@ Other controls left open: test results for the audited revision were not importe
 ## What this showed about Flight Check
 
 - **Repeat passes steady the controls more than they add findings.** The second pass reported one finding, which the verifier rejected, so no duplicates needed merging. Merging is covered by unit tests and should be checked on a larger project.
-- **Masking false positive.** The high-entropy secret rule redacted a long dated file path (`docs/audits/<date>-...`) in finding text, which makes the affected component unreadable. Not fixed yet: narrowing a secret-masking rule needs care, because a missed secret is worse than an over-masked path.
+- **Masking false positive.** The high-entropy secret rule redacted a long dated file path (`docs/audits/<date>-...`) in finding text, which makes the affected component unreadable. Fixed afterwards with the owner's approval: a token is no longer masked when every part between `/`, `-`, `_`, and `.` is a word, a number, or at most three characters. Tokens that mix letters and digits in longer parts are still masked. The trade-off is that a secret made only of separated words or numbers is no longer caught by this rule.
 
 The follow-up audit verifies the REMEDIATED items. This record reflects only the evidence examined. It is not a certification or legal advice.
