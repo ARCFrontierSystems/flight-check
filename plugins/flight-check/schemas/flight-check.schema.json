@@ -539,6 +539,7 @@
         "source": {"$ref": "#/$defs/source"},
         "confidence": {"$ref": "#/$defs/confidence"},
         "status": {"type": "string", "enum": ["current", "historical", "superseded"]},
+        "presence": {"type": "string", "enum": ["present", "absent", "unclear"]},
         "evidence": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/evidenceRef"}},
         "first_observed": {"$ref": "#/$defs/stateTime"},
         "last_observed": {"$ref": "#/$defs/stateTime"},

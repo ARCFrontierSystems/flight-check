@@ -86,6 +86,21 @@ Commands (`python3 <plugin>/scripts/flight_check.py state <command> --root <proj
 | `export --out FILE`, `import --from FILE` | Move the state as one JSON bundle; importing a bundle from another project needs `--adopt` |
 | `adopt --reason TEXT` | Confirm that the state belongs to the project at its current place in the repository, for example after moving an application inside a monorepo |
 
+### Profile and applicability
+
+Each finalized audit turns the inventory into **profile facts** (what the project uses, with the files that show it, labelled observed, inferred, or unknown) and an **applicability** entry per audit domain (applicable, not applicable, or uncertain). A domain counts as not applicable only with evidence of what was searched; otherwise it is uncertain and still assessed.
+
+| Command | What it does |
+|---|---|
+| `profile show [--all]` | Current facts (`--all` adds superseded and historical ones) |
+| `profile correct --id PF-0004 --assertion not_used\|excluded\|replace\|scope --reason TEXT [--value V] [--by NAME]` | Correct an observation. The observation and its evidence stay; if later evidence contradicts your correction, the fact is flagged |
+| `profile correct --id PF-0004 --withdraw --reason TEXT` | Withdraw your corrections of a fact |
+| `profile declare --aspect deployment.model --value "offline desktop app" --reason TEXT` | State a fact yourself; it is shown as declared, beside any observations |
+| `applicability show` | Each domain's classification from evidence, your override, and the effective result |
+| `applicability override --domain ai-llm --classification not_applicable --reason TEXT` (or `--clear`) | Declare a domain applicable or not applicable |
+
+An override decides only what evidence leaves open. Declaring an uncertain domain not applicable lets the audit record it as not applicable ("declared by the project owner") when no agent assessed it. Declaring a domain not applicable when the evidence shows it applies is recorded as a contradiction, and the domain is still assessed. Declaring a domain applicable always keeps it in scope.
+
 Commit `project.json`, `registers.json`, `history.jsonl`, and `ledger.json` if your team shares the history. Flight Check writes `.flight-check/.gitignore` so run output, backups, and lock files stay local.
 
 ## Continuous integration

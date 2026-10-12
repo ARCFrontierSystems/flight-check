@@ -251,6 +251,19 @@ def check_consistency():
             err("consistency", "control %s has unknown domain %s" % (c["id"], c["domain"]))
         if not re.fullmatch(defs["controlId"]["pattern"].strip("^$"), c["id"]):
             err("consistency", "control id %s does not match the schema pattern" % c["id"])
+    aspects = catalog.profile_aspects()
+    keys = [a["key"] for a in aspects]
+    if len(set(keys)) != len(keys):
+        err("consistency", "duplicate profile aspect keys in references/profile-aspects.json")
+    with open(os.path.join(PLUGIN, "agents", "inventory.md"), encoding="utf-8") as fh:
+        m = re.search(r"^Aspects: (.+)$", fh.read(), re.M)
+    labels = [x.strip().rstrip(".") for x in m.group(1).split(";")] if m else []
+    if not labels:
+        err("consistency", "agents/inventory.md has no 'Aspects:' line")
+    mapped = {label for a in aspects for label in a["labels"]}
+    for label in labels:
+        if label not in mapped:
+            err("consistency", "inventory aspect %r is not mapped in references/profile-aspects.json" % label)
     ctrl_ids = [c["id"] for c in catalog.controls()]
     if len(set(ctrl_ids)) != len(ctrl_ids):
         err("consistency", "duplicate control ids")

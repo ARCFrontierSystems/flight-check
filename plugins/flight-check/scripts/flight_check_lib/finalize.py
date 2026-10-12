@@ -3,7 +3,7 @@
 import datetime
 import os
 
-from . import VERSION, assemble, catalog, constants, evidence, gate, ledger, minischema, state, validate
+from . import VERSION, assemble, catalog, constants, evidence, gate, ledger, minischema, profile, state, validate
 from .jsonio import dump_json, load_json
 
 
@@ -60,7 +60,13 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
     if os.path.exists(final_path):
         return {"ok": False, "errors": ["%s already exists; this run was finalized. Use 'render' to regenerate the report." % final_path], "warnings": warnings}
 
-    audit, more = assemble.assemble(run_dir)
+    overrides = {}
+    if ledger_path:
+        # Owner overrides of applicability (read before the merge; the merge re-checks them against this run).
+        prior = state.load(os.path.dirname(os.path.abspath(ledger_path)), strict=False)
+        if prior.initialized and not prior.problems:
+            overrides = {a["domain"]: a["override"] for a in prior.project["applicability"] if a.get("override")}
+    audit, more = assemble.assemble(run_dir, overrides)
     warnings.extend(more)
     now, today = _now(now_iso)
     cache = evidence.FileCache()
@@ -113,8 +119,23 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
             lifecycle, decision = merge_and_gate(tx.ledger)
             led = tx.ledger
             counts = {k: len(v) for k, v in lifecycle.items() if isinstance(v, list) and v and k != "ledger_entries"}
+            profile_changes = profile.merge(tx.project, audit["inventory"], root, now, run_id)
+            kinds = {}
+            for change in profile_changes:
+                kinds[change[0]] = kinds.get(change[0], 0) + 1
             tx.event("state", {"gate": [prev, decision["decision"]]},
-                     "Audit run %s finalized. %s" % (run_id, ", ".join("%s: %d" % kv for kv in sorted(counts.items())) or "No lifecycle changes."))
+                     "Audit run %s finalized. Findings: %s. Profile: %s." % (
+                         run_id, ", ".join("%s %d" % kv for kv in sorted(counts.items())) or "no lifecycle changes",
+                         ", ".join("%s %d" % kv for kv in sorted(kinds.items())) or "unchanged"))
+            for change in profile_changes:
+                if change[0] == "applicability":
+                    tx.event("domain:" + change[1], {"applicability": change[2]}, "Evaluated by the inventory in run %s." % run_id)
+                elif change[0] == "override_contradiction":
+                    tx.event("domain:" + change[1], {"contradiction": [False, True]},
+                             "The owner's override (%s) contradicts the evidence in run %s; the evidence is used." % (change[2], run_id))
+                elif change[0] == "contradiction":
+                    tx.event(change[1], {"contradiction": [False, True]},
+                             "The latest observation of %s contradicts an active correction." % change[2])
             tx.readiness = (decision["decision"], run_id, audit["run"]["target"].get("commit"))
     else:
         led = ledger.new_ledger(audit["run"]["target"]["name"])
