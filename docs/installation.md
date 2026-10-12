@@ -67,6 +67,17 @@ The script never makes network connections and never runs your project's code. T
 ## Updates and removal
 
 - Update: `claude plugin update flight-check@arc-frontier-systems`. Automatic updates are off by default for third-party marketplaces.
+- **Use a specific version, or go back to an earlier one.** Each release is tagged `vX.Y.Z` (see [CHANGELOG.md](../CHANGELOG.md)). Clone that tag and add the clone as the marketplace instead of the GitHub repository:
+
+  ```bash
+  claude plugin uninstall flight-check@arc-frontier-systems
+  claude plugin marketplace remove arc-frontier-systems
+  git clone --depth 1 --branch v1.0.0 https://github.com/ARCFrontierSystems/flight-check.git ~/flight-check-v1.0.0
+  claude plugin marketplace add ~/flight-check-v1.0.0
+  claude plugin install flight-check@arc-frontier-systems
+  ```
+
+  Replace `v1.0.0` with the version you want. Before going back to an earlier version, keep a copy of each project's `.flight-check/ledger.json`, since an older version may not understand fields that a newer one added.
 - Remove: `claude plugin uninstall flight-check@arc-frontier-systems`.
 - Flight Check's data lives in each project's `.flight-check/` directory (run output and the ledger). Delete it if you no longer need it.
 

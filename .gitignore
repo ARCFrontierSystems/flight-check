@@ -6,6 +6,8 @@
 .env.*
 # Local leak-gate denylist (never commit; see CONTRIBUTING.md)
 .flight-check-denylist*
+# CI tool install (tools/ci-npm)
+node_modules/
 # Python
 __pycache__/
 *.pyc

@@ -1,0 +1,8 @@
+{
+  "name": "flight-check-ci-tools",
+  "private": true,
+  "description": "Pinned command-line tools for Flight Check's CI. Not part of the plugin.",
+  "dependencies": {
+    "@anthropic-ai/claude-code": "2.1.289"
+  }
+}
