@@ -184,7 +184,6 @@ class InventoryEntryPointTests(unittest.TestCase):
             self.assertTrue(errors, bad)
 
 
-@unittest.skipIf(jsonschema is None, "jsonschema not installed")
 class ControlMergeTests(unittest.TestCase):
     EV = [{"kind": "code", "path": "a.py", "start_line": 1, "end_line": 1, "quote": "x"}]
 
@@ -207,6 +206,7 @@ class ControlMergeTests(unittest.TestCase):
         self.assertEqual(self.merge(("appsec", {"state": "VERIFIED"}), ("appsec-p2", u)), "UNVERIFIED")
 
 
+@unittest.skipIf(jsonschema is None, "jsonschema not installed")
 class SchemaAgreementTests(unittest.TestCase):
     """The built-in validator must agree with a reference JSON Schema implementation."""
 

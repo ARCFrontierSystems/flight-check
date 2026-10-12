@@ -88,6 +88,14 @@ def _entropy(s):
 
 
 _HIGH_ENTROPY = re.compile(r"[A-Za-z0-9+/=_-]{32,}")
+_WORDY_PART = re.compile(r"^(?:[A-Za-z]+|[0-9]+|[A-Za-z0-9]{1,3})$")
+
+
+def _looks_like_words(token):
+    """True for paths and slugs such as docs/audits/2026-10-12-phase-7-final-report: every part
+    between separators is a word, a number, or very short. Random secrets mix letters and digits."""
+    parts = [p for p in re.split(r"[/._-]+", token) if p]
+    return len(parts) >= 3 and all(_WORDY_PART.match(p) for p in parts)
 
 
 def redact(text):
@@ -116,7 +124,7 @@ def redact(text):
     def entropy(m):
         nonlocal count
         token = m.group(0)
-        if REDACTION_MARKER.search(token):
+        if REDACTION_MARKER.search(token) or _looks_like_words(token):
             return token
         has_digit = any(c.isdigit() for c in token)
         has_alpha = any(c.isalpha() for c in token)
