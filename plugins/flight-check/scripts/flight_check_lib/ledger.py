@@ -8,9 +8,11 @@ Rules enforced here:
   * An expired or incomplete acceptance does not count as accepted.
 """
 
+import contextlib
 import datetime
 import os
 import re
+import time
 
 from . import catalog, constants, fingerprint, minischema
 from .jsonio import dump_json, load_json
@@ -46,6 +48,51 @@ def load(path, create=True, project_name=None):
     if errors:
         raise LedgerError("ledger %s is invalid: %s" % (path, "; ".join(errors[:10])))
     return led
+
+
+LOCK_WAIT_SECONDS = 30
+STALE_LOCK_SECONDS = 600
+
+
+@contextlib.contextmanager
+def locked(path, wait=LOCK_WAIT_SECONDS):
+    """Hold <ledger>.lock while a command reads, changes, and writes the ledger.
+
+    Two Flight Check commands updating the same ledger at once would otherwise each write their own copy,
+    and one set of updates would be lost. A lock file older than STALE_LOCK_SECONDS is left over from a
+    crash and is removed.
+    """
+    if not path:
+        yield
+        return
+    lock = os.path.abspath(path) + ".lock"
+    os.makedirs(os.path.dirname(lock), exist_ok=True)
+    deadline = time.monotonic() + wait
+    while True:
+        try:
+            fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
+        except FileExistsError:
+            try:
+                if time.time() - os.path.getmtime(lock) > STALE_LOCK_SECONDS:
+                    os.unlink(lock)
+                    continue
+            except FileNotFoundError:
+                continue
+            if time.monotonic() >= deadline:
+                raise LedgerError("ledger %s is in use by another Flight Check command (lock file %s); try again, "
+                                  "or delete the lock file if no Flight Check command is running" % (path, lock))
+            time.sleep(0.1)
+            continue
+        os.write(fd, str(os.getpid()).encode("ascii"))
+        os.close(fd)
+        break
+    try:
+        yield
+    finally:
+        try:
+            os.unlink(lock)
+        except FileNotFoundError:
+            pass
 
 
 def save(path, led):

@@ -39,6 +39,19 @@ MANIFEST = {
 
 
 class ScorerTests(unittest.TestCase):
+    def test_primary_location_outranks_a_larger_alternate_overlap(self):
+        manifest = {"fixture": {"name": "unit"}, "secure_controls": [], "issues": [
+            {"id": "GT-A", "domains": ["payments"], "severity": "CRITICAL", "tier": "must",
+             "locations": [{"path": "w.go", "start_line": 25, "end_line": 31}],
+             "alternate_locations": [{"path": "w.go", "start_line": 64, "end_line": 80}]},
+            {"id": "GT-B", "domains": ["payments"], "severity": "MEDIUM", "tier": "must",
+             "locations": [{"path": "w.go", "start_line": 64, "end_line": 80}]}]}
+        findings = [finding("FC-1", "payments", "w.go", 64, 82, severity="MEDIUM"),
+                    finding("FC-2", "payments", "w.go", 25, 31, severity="CRITICAL")]
+        r = score.score(final_with(findings), manifest)
+        got = {p["issue"]: p["finding"] for p in r["per_issue"]}
+        self.assertEqual(got, {"GT-A": "FC-2", "GT-B": "FC-1"})
+
     def test_matching_decoys_unlisted_and_metrics(self):
         findings = [
             finding("FC-1", "authorization", "src/a.ts", 44, 47),

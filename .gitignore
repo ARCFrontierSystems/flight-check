@@ -4,6 +4,8 @@
 # Environment files can hold real credentials; this repository needs none
 .env
 .env.*
+# Ledger lock held while a Flight Check command updates the ledger
+.flight-check/*.lock
 # Local leak-gate denylist (never commit; see CONTRIBUTING.md)
 .flight-check-denylist*
 # CI tool install (tools/ci-npm)

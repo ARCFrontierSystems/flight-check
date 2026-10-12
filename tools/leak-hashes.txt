@@ -5,3 +5,5 @@
 c36333452c09e2516bf0b48a0a2fe2279cb6fe8ce3aace4d0fb9bd43d5c59fb6
 # testbed App B canary (held out)
 9ea645f918b39760467bf0c055f932e6becb0295485d415c85cb49d068f0caf3
+# testbed App C canary (held out)
+39aeea6f10c2644929186b8cfffb3cd1cd804dcca3be0d9625ac72e48b2f0b36

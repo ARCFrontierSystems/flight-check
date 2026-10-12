@@ -73,24 +73,25 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         if item.get("evidence"):
             evidence.annotate(item["evidence"], root, cache)
 
-    led = ledger.load(ledger_path, create=True, project_name=audit["run"]["target"]["name"]) if ledger_path else ledger.new_ledger(audit["run"]["target"]["name"])
-    lifecycle = ledger.merge(led, audit, now, today)
+    with ledger.locked(ledger_path):
+        led = ledger.load(ledger_path, create=True, project_name=audit["run"]["target"]["name"]) if ledger_path else ledger.new_ledger(audit["run"]["target"]["name"])
+        lifecycle = ledger.merge(led, audit, now, today)
 
-    local_to_id = {f["local_id"]: f["id"] for f in audit["findings"]}
-    for f in audit["findings"]:
-        f["effective_confidence"] = gate.effective_confidence(f)
-        f["release_blocking_effective"] = gate.release_blocking_effective(f)
-    for c in audit["controls"]:
-        if c.get("related_findings"):
-            c["related_findings"] = [local_to_id.get(r, r + " (rejected)") for r in c["related_findings"]]
-    for i, p in enumerate(audit["positive_controls"], 1):
-        p["id"] = "PC-%03d" % i
-    audit["findings"].sort(key=lambda f: (constants.SEVERITY_RANK[f["severity"]], f["id"]))
+        local_to_id = {f["local_id"]: f["id"] for f in audit["findings"]}
+        for f in audit["findings"]:
+            f["effective_confidence"] = gate.effective_confidence(f)
+            f["release_blocking_effective"] = gate.release_blocking_effective(f)
+        for c in audit["controls"]:
+            if c.get("related_findings"):
+                c["related_findings"] = [local_to_id.get(r, r + " (rejected)") for r in c["related_findings"]]
+        for i, p in enumerate(audit["positive_controls"], 1):
+            p["id"] = "PC-%03d" % i
+        audit["findings"].sort(key=lambda f: (constants.SEVERITY_RANK[f["severity"]], f["id"]))
 
-    decision = gate.decide(audit, led, today, lifecycle)
-    ledger.record_run(led, audit["run"]["run_id"], now, decision["decision"], audit["run"]["mode"])
-    if ledger_path:
-        ledger.save(ledger_path, led)
+        decision = gate.decide(audit, led, today, lifecycle)
+        ledger.record_run(led, audit["run"]["run_id"], now, decision["decision"], audit["run"]["mode"])
+        if ledger_path:
+            ledger.save(ledger_path, led)
 
     final = {
         "schema_version": constants.SCHEMA_VERSION,

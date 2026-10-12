@@ -96,17 +96,23 @@ def score(final, manifest, tol=5):
     issues = manifest.get("issues", [])
     decoys = manifest.get("secure_controls", [])
 
+    # A finding at an issue's primary location outranks one that only touches an alternate location, so
+    # a finding about a neighbouring issue that lists this location as an alternate cannot claim it first.
+    def ranked(f, issue):
+        primary = best_overlap(f, issue["locations"], tol)
+        return primary, best_overlap(f, issue["locations"] + issue.get("alternate_locations", []), tol)
+
     candidates = []
     for fi, f in enumerate(findings):
         for ii, issue in enumerate(issues):
             if f["domain"] not in issue["domains"]:
                 continue
-            ov = best_overlap(f, issue["locations"] + issue.get("alternate_locations", []), tol)
+            primary, ov = ranked(f, issue)
             if ov > 0:
-                candidates.append((ov, fi, ii))
-    candidates.sort(key=lambda c: (-c[0], c[1], c[2]))
+                candidates.append((primary, ov, fi, ii))
+    candidates.sort(key=lambda c: (-c[0], -c[1], c[2], c[3]))
     used_f, used_i, matches = set(), set(), {}
-    for ov, fi, ii in candidates:
+    for _, ov, fi, ii in candidates:
         if fi in used_f or ii in used_i:
             continue
         used_f.add(fi)
@@ -123,12 +129,12 @@ def score(final, manifest, tol=5):
         for ii, issue in enumerate(issues):
             if ii in used_i:
                 continue
-            ov = best_overlap(f, issue["locations"] + issue.get("alternate_locations", []), tol)
+            primary, ov = ranked(f, issue)
             if ov > 0:
-                loose.append((ov, fi, ii))
-    loose.sort(key=lambda c: (-c[0], c[1], c[2]))
+                loose.append((primary, ov, fi, ii))
+    loose.sort(key=lambda c: (-c[0], -c[1], c[2], c[3]))
     location_only = {}
-    for ov, fi, ii in loose:
+    for _, ov, fi, ii in loose:
         if fi in used_f or ii in used_i:
             continue
         used_f.add(fi)

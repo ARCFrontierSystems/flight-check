@@ -2,10 +2,13 @@
 
 All notable changes are recorded here. Versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] — 0.1.0
+## [1.0.0-rc.1] — 2026-10-12 (pre-release)
 
-First development version. Blind-tested in Phase 5 (`docs/audits/2026-10-06-phase-5-blind-test.md`) and on a held-out application in Phase 7 (`docs/audits/2026-10-12-phase-7-final-report.md`).
+Release candidate for 1.0; not yet published as a release. Development versions (0.1.0) were never published as releases. Blind-tested in Phase 5 (`docs/audits/2026-10-06-phase-5-blind-test.md`), on a held-out application in Phase 7 (`docs/audits/2026-10-12-phase-7-final-report.md`), and on a second held-out application for this release candidate (`docs/audits/2026-10-12-v1-release-evaluation.md`).
 
+- Changes from the release self-audit:
+  - **Security map first.** Domain agents read a project's own security documentation early, use it only as a map to the files and tests it names, and verify each control there. Documentation alone never verifies a control. `docs/security-design.md` now also covers AI data boundaries and ledger integrity.
+  - **Ledger lock.** Commands that change the ledger hold a lock file from read to write, so two commands running at once cannot lose each other's updates.
 - Renamed the project from Fairtide to **Flight Check**: plugin id `flight-check`, commands `/flight-check:*`, script `flight_check.py`, working directory `.flight-check/`, finding IDs `FC-0001` (existing ledger IDs `FT-` became `FC-` with the same numbers), packet title "FLIGHT CHECK — ATTORNEY REVIEW PACKET", and the CI secret `FLIGHT_CHECK_LEAK_DENYLIST`. Nothing had been released under the old names.
 - Changes after the Phase 7 final report:
   - **Fewer masked file paths.** The high-entropy secret rule no longer masks paths and slugs (for example a long dated file name), which had made affected components unreadable. Tokens that mix letters and digits in longer parts are still masked.

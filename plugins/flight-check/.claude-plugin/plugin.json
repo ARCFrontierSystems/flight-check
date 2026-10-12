@@ -1,7 +1,7 @@
 {
   "name": "flight-check",
   "displayName": "Flight Check",
-  "version": "0.1.0",
+  "version": "1.0.0-rc.1",
   "description": "Evidence-first ship-readiness audit for any software project: security, privacy, legal/business risk, compliance readiness, accessibility, reliability, and production readiness. Includes a Legal Review Assistant that prepares an Attorney Review Packet (PDF).",
   "author": {
     "name": "ARC Frontier Systems"

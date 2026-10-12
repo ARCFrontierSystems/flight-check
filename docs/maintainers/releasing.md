@@ -11,7 +11,7 @@ A release is a version bump merged to `main`, then a GitHub release with a `vX.Y
    Also update the status line in `README.md` and the supported version in `SECURITY.md`.
 2. Run the checks listed in `CLAUDE.md` (unit tests, agent sync, lint with the private denylist, strict plugin validation).
 3. Open a pull request, wait for CI and the DCO check, and merge it.
-4. On GitHub: Releases → Draft a new release → choose a tag, type `vX.Y.Z`, target `main` → title "Flight Check X.Y.Z" → paste the CHANGELOG section → Publish. Tick "Set as a pre-release" for versions below 1.0.0.
+4. On GitHub: Releases → Draft a new release → choose a tag, type `vX.Y.Z`, target `main` → title "Flight Check X.Y.Z" → paste the CHANGELOG section → Publish. Tick "Set as a pre-release" for versions below 1.0.0 or with a pre-release suffix such as `-rc.1`.
 5. From a clean directory, check the published install: `claude plugin marketplace add ARCFrontierSystems/flight-check`, `claude plugin install flight-check@arc-frontier-systems`, then `/flight-check:audit` on a small project.
 
 ## Rolling back
