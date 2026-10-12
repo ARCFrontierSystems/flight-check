@@ -104,18 +104,17 @@ Release build, generated test applications. Strict matching means the same locat
 - A user may treat a clean-looking report as proof of safety. The report and README state the opposite, but over-reliance remains the main risk of a tool like this.
 - Missed issues: roughly one in five must-find planted issues was missed in a typical run, by strict matching.
 - Limitations 2 and 3 above can hide or weaken real findings until they are fixed.
-- The product name overlaps existing marks (FC-0013), and counsel review is still pending.
 
 ## Legal and business review status (this project)
 
 | Item | Status |
 |---|---|
 | FC-0001: untagged PDF | ACCEPTED_RISK by the owner on 2026-10-12, review 2027-04-12 |
-| FC-0013: name overlaps existing marks | Open: counsel review before public launch. An Attorney Review Packet was prepared on 2026-10-12 |
+| FC-0013: name overlaps existing marks | CLOSED: the owner reported on 2026-10-12 that the name check is complete and the name is fine to use (an Attorney Review Packet was prepared for it) |
 | FC-0014: terms of use, governing law, contribution terms | Owner decided on 2026-10-12: no separate terms of use (license plus disclaimers), no governing-law clause while there are no separate terms, and contributions under Apache-2.0 with a Developer Certificate of Origin sign-off. README and CONTRIBUTING.md updated |
 | FC-0011: private vulnerability reporting | CLOSED: the owner enabled it on 2026-10-12 |
 
-FC-0013 shows as NOT_REPRODUCED in the ledger because the last self-audit did not report it again. It is still open; close it only once counsel has reviewed the name.
+All of this project's legal and business items are now decided or closed.
 
 ## Attorney Review Packet status
 
@@ -130,7 +129,7 @@ FC-0013 shows as NOT_REPRODUCED in the ledger because the last self-audit did no
   - the Phase 6 checklist passed: no secrets or private information in the history, packaging, license, documentation, disclaimers, tests, and local install;
   - Apache-2.0 license.
 - **Before a public launch:**
-  - get counsel's review of the name (FC-0013); the Attorney Review Packet is ready.
+  - nothing remains open; the name check (FC-0013) is complete.
 - **Done after this report:** terms and contribution terms decided (FC-0014), and CI tool installs locked with hashes (FC-0015).
 - **Recommended next fixes** (owner approval needed):
   1. Done after this report: decode quotes escaped more than once, and save oversized agent replies with `save-reply`.
