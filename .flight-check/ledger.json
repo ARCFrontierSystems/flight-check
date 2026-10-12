@@ -1,6 +1,6 @@
 {
   "schema_version": "1.0",
-  "next_id": 21,
+  "next_id": 26,
   "entries": {
     "23182de0fc497035": {
       "id": "FC-0001",
@@ -687,7 +687,7 @@
       "domain": "supply-chain",
       "title": "CI installs jsonschema without a lockfile, so transitive Python dependencies float; the npm install is pinned only at the top level",
       "severity": "LOW",
-      "status": "REMEDIATED",
+      "status": "VERIFIED",
       "first_seen_run": "20261007T120434Z",
       "last_seen_run": "20261007T120434Z",
       "history": [
@@ -723,6 +723,13 @@
           "status": "REMEDIATED",
           "source": "flight-check",
           "note": "remediation recorded; pending verification by re-audit: npm half fixed: CI installs Claude Code with npm ci from tools/ci-npm/package-lock.json (integrity-pinned); pip half was already hash-locked."
+        },
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: Both halves are locked. The pip install uses --require-hashes and --only-binary with tools/ci-requirements.txt. That file pins all 6 distinct packages, with environment markers for the Python-version-specific ones, and each carries a sha256 hash. The npm install uses npm ci against tools/ci-npm/package-lock.json, which has integrity entries. The package.json pins version 2.1.289.",
+          "run_id": "20261012T220354Z"
         }
       ],
       "remediations": [
@@ -752,7 +759,7 @@
       "domain": "documentation",
       "title": "Final report says CI runs 91 tests on Python 3.9, 3.11 and 3.12, but the CI matrix has only 3.9 and 3.12",
       "severity": "LOW",
-      "status": "REMEDIATED",
+      "status": "VERIFIED",
       "first_seen_run": "20261012T202214Z",
       "last_seen_run": "20261012T202214Z",
       "history": [
@@ -768,6 +775,13 @@
           "status": "REMEDIATED",
           "source": "flight-check",
           "note": "remediation recorded; pending verification by re-audit: Final report now says 3.9 and 3.12 in CI, 3.9 and 3.11 locally."
+        },
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: The Phase 7 report now matches the CI matrix, which has only 3.9 and 3.12. The 91 tests figure differs from the 96 in the local-checks evidence. That is a possible staleness issue, but it is not the finding's claim.",
+          "run_id": "20261012T220354Z"
         }
       ],
       "remediations": [
@@ -788,7 +802,7 @@
       "domain": "documentation",
       "title": "README and CHANGELOG say the held-out fixture 'is scored at release', but the Phase 7 report already publishes held-out scores",
       "severity": "LOW",
-      "status": "REMEDIATED",
+      "status": "VERIFIED",
       "first_seen_run": "20261012T202214Z",
       "last_seen_run": "20261012T202214Z",
       "history": [
@@ -804,6 +818,13 @@
           "status": "REMEDIATED",
           "source": "flight-check",
           "note": "remediation recorded; pending verification by re-audit: README status and CHANGELOG now link the published Phase 7 held-out results."
+        },
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: The README status and the CHANGELOG no longer say the held-out fixture is scored at release. They link the published held-out results. 'Scored at release time' remains only in the Phase 5 record and the protocol document, which are historical or forward-looking process descriptions rather than status claims.",
+          "run_id": "20261012T220354Z"
         }
       ],
       "remediations": [
@@ -824,7 +845,7 @@
       "domain": "documentation",
       "title": "README says an audit runs 'up to eleven agent tasks', but the audit skill can launch more (handler reviewers and repeat passes)",
       "severity": "LOW",
-      "status": "REMEDIATED",
+      "status": "VERIFIED",
       "first_seen_run": "20261012T202214Z",
       "last_seen_run": "20261012T202214Z",
       "history": [
@@ -840,6 +861,13 @@
           "status": "REMEDIATED",
           "source": "flight-check",
           "note": "remediation recorded; pending verification by re-audit: README usage section now counts handler reviewers and repeat passes."
+        },
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: The README usage section now counts handler reviewers (up to eight) and repeat passes. No 'up to eleven' wording remains in any Markdown file.",
+          "run_id": "20261012T220354Z"
         }
       ],
       "remediations": [
@@ -860,7 +888,7 @@
       "domain": "legal-business",
       "title": "Repository records that the name overlaps a registered mark; closure rests on the owner's own report, with no evidence of counsel review",
       "severity": "LOW",
-      "status": "OPEN",
+      "status": "NOT_REPRODUCED",
       "first_seen_run": "20261012T202214Z",
       "last_seen_run": "20261012T202214Z",
       "history": [
@@ -870,6 +898,13 @@
           "source": "flight-check",
           "note": "first observed",
           "run_id": "20261012T202214Z"
+        },
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261012T220354Z"
         }
       ],
       "legal": {
@@ -901,7 +936,7 @@
       "domain": "supply-chain",
       "title": "CI installs @anthropic-ai/claude-code with only the top-level version pinned, with no lockfile or integrity check",
       "severity": "LOW",
-      "status": "REMEDIATED",
+      "status": "VERIFIED",
       "first_seen_run": "20261012T202214Z",
       "last_seen_run": "20261012T202214Z",
       "history": [
@@ -917,6 +952,13 @@
           "status": "REMEDIATED",
           "source": "flight-check",
           "note": "remediation recorded; pending verification by re-audit: CI installs Claude Code with npm ci from tools/ci-npm/package-lock.json, which pins every package with its integrity hash."
+        },
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: CI installs Claude Code through npm ci from a committed lockfile with integrity entries, and the top-level version is pinned to 2.1.289.",
+          "run_id": "20261012T220354Z"
         }
       ],
       "remediations": [
@@ -925,6 +967,154 @@
           "note": "CI installs Claude Code with npm ci from tools/ci-npm/package-lock.json, which pins every package with its integrity hash.",
           "files": [],
           "source": "flight-check"
+        }
+      ]
+    },
+    "adf5f10744d5ccb9": {
+      "id": "FC-0021",
+      "fingerprint": "adf5f10744d5ccb9",
+      "match_key": "ai-llm.unverified-model-claims-drive-ship-gate|plugins/flight-check/scripts/flight_check_lib/gate.py",
+      "anchor_hash": "4fd3b4b10d76873f",
+      "rule": "ai-llm.unverified-model-claims-drive-ship-gate",
+      "domain": "ai-llm",
+      "title": "VERIFIED control claims and absent findings reach the ship gate with only a mechanical quote check and no verifier review",
+      "severity": "LOW",
+      "status": "OPEN",
+      "first_seen_run": "20261012T220354Z",
+      "last_seen_run": "20261012T220354Z",
+      "history": [
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T220354Z"
+        }
+      ]
+    },
+    "96f5e8a95c42bedf": {
+      "id": "FC-0022",
+      "fingerprint": "96f5e8a95c42bedf",
+      "match_key": "documentation.repository-description-overclaims|docs/maintainers/github-settings.md",
+      "anchor_hash": "06e0a84431323d37",
+      "rule": "documentation.repository-description-overclaims",
+      "domain": "documentation",
+      "title": "GitHub repository description reportedly claims the project will 'enforce secure development practices'; the correction is still unchecked in the maintainer checklist",
+      "severity": "LOW",
+      "status": "OPEN",
+      "first_seen_run": "20261012T220354Z",
+      "last_seen_run": "20261012T220354Z",
+      "history": [
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T220354Z"
+        }
+      ]
+    },
+    "542c65caa70a34bc": {
+      "id": "FC-0023",
+      "fingerprint": "542c65caa70a34bc",
+      "match_key": "legal-business.no-terms-or-governing-law-decision|README.md",
+      "anchor_hash": "75ffc6728f5a45ef",
+      "rule": "legal-business.no-terms-or-governing-law-decision",
+      "domain": "legal-business",
+      "title": "No terms of use or governing-law decision beyond Apache-2.0 for a publicly distributed audit tool whose output users may rely on",
+      "severity": "INFORMATIONAL",
+      "status": "OPEN",
+      "first_seen_run": "20261012T220354Z",
+      "last_seen_run": "20261012T220354Z",
+      "history": [
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T220354Z"
+        }
+      ],
+      "legal": {
+        "classification": "BUSINESS DECISION REQUIRED",
+        "status": "CLOSED",
+        "history": [
+          {
+            "at": "2026-10-12T22:14:45Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified BUSINESS DECISION REQUIRED",
+            "run_id": "20261012T220354Z"
+          },
+          {
+            "at": "2026-10-12T22:16:06Z",
+            "status": "CLOSED",
+            "source": "user",
+            "note": "Owner on 2026-10-12: 'license plus disclaimers should be enough since it is free and not operating on its own software'; README states there are no separate terms of use. | reason: Owner decision on terms"
+          }
+        ]
+      }
+    },
+    "80b80694ac9fe4b9": {
+      "id": "FC-0024",
+      "fingerprint": "80b80694ac9fe4b9",
+      "match_key": "legal-business.product-name-overlap-without-counsel-evidence|CLAUDE.md",
+      "anchor_hash": "e56f4fe65a2a98de",
+      "rule": "legal-business.product-name-overlap-without-counsel-evidence",
+      "domain": "legal-business",
+      "title": "Product name 'Flight Check' is publicly distributed although the repository records overlap with a registered mark and shows no counsel review",
+      "severity": "LOW",
+      "status": "OPEN",
+      "first_seen_run": "20261012T220354Z",
+      "last_seen_run": "20261012T220354Z",
+      "history": [
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T220354Z"
+        }
+      ],
+      "legal": {
+        "classification": "POTENTIAL LEGAL RISK",
+        "status": "CLOSED",
+        "history": [
+          {
+            "at": "2026-10-12T22:14:45Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified POTENTIAL LEGAL RISK",
+            "run_id": "20261012T220354Z"
+          },
+          {
+            "at": "2026-10-12T22:16:06Z",
+            "status": "CLOSED",
+            "source": "user",
+            "note": "Same subject as FC-0013 and FC-0019. Owner on 2026-10-12: 'Name check is good. No need to keep that open anymore.' | reason: Owner decision on the name check"
+          }
+        ]
+      }
+    },
+    "3d0e1e0cf38ca9d1": {
+      "id": "FC-0025",
+      "fingerprint": "3d0e1e0cf38ca9d1",
+      "match_key": "reliability.ledger-unlocked-read-modify-write|plugins/flight-check/scripts/flight_check_lib/ledger.py",
+      "anchor_hash": "d588001f2170b8a1",
+      "rule": "reliability.ledger-unlocked-read-modify-write",
+      "domain": "reliability",
+      "title": "Ledger load and save have no file locking, so concurrent CLI invocations can lose updates",
+      "severity": "LOW",
+      "status": "OPEN",
+      "first_seen_run": "20261012T220354Z",
+      "last_seen_run": "20261012T220354Z",
+      "history": [
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T220354Z"
         }
       ]
     }
@@ -964,6 +1154,12 @@
     {
       "run_id": "20261012T202214Z",
       "at": "2026-10-12T20:32:33Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    },
+    {
+      "run_id": "20261012T220354Z",
+      "at": "2026-10-12T22:14:45Z",
       "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
       "mode": "audit"
     }

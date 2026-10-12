@@ -42,6 +42,25 @@ While scoring, the blind-test scorer (`tools/blindtest/score.py`, development-on
 
 ## Release self-audit
 
-Pending; this section is completed when the run finishes.
+One audit of this repository at the release candidate (run `20261012T220354Z`, version 1.0.0, `--passes 2`, about $5.26), with the local test results and the CI vulnerability-scan output imported as evidence. An earlier attempt stopped partway when a safety classifier interrupted the coordinating session while it saved one agent's results; nothing from it reached the ledger.
+
+- **Ship decision: BLOCKED — INSUFFICIENT EVIDENCE.** Two release-critical controls were left UNVERIFIED by both passes: output encoding of quoted project text, and the data boundary of the model provider. Both had been VERIFIED with checked evidence in the self-audit earlier the same day, and the code behind them has changed since only in the secret-masking rule for file paths. This is run-to-run variance that repeat passes reduce but do not remove (see "Limitations" below). The model-provider control also depends on the user's own provider terms, which no repository can show.
+- **Fixes verified:** all five findings recorded as REMEDIATED after the previous self-audit (FC-0015 to FC-0018 and FC-0020) were checked and marked VERIFIED. Test execution was verified from the imported test results, and four controls the previous self-audit left open (dependency lockfiles, rollback, documentation claims, sensitive-data handling) were VERIFIED.
+- **Findings:** 4 LOW and 1 INFORMATIONAL; no CRITICAL, HIGH, or MEDIUM.
+
+| ID | Finding | Status |
+|---|---|---|
+| FC-0021 | Controls reported VERIFIED reach the gate with a mechanical quote check but no verifier review | Open; design limitation, see below |
+| FC-0022 | The GitHub repository description still overclaims ("enforce secure development practices") | Owner: change the description (`docs/maintainers/github-settings.md`, section 1) |
+| FC-0023 | No terms of use beyond Apache-2.0 | Owner decision recorded: the license and its disclaimers |
+| FC-0024 | The name overlaps a registered mark | Owner decision recorded (same subject as FC-0013) |
+| FC-0025 | The ledger is not locked against two Flight Check commands writing it at the same time | Open; low impact for single-user use |
+
+## Limitations at release
+
+- **Variance remains.** With `--passes 2`, run-to-run overlap of detected issues was 0.90 on App C, but a whole control can still be left UNVERIFIED by both passes, as in the release self-audit. A BLOCKED — INSUFFICIENT EVIDENCE decision means "not established", never "found wrong"; check the named controls by hand or re-run.
+- **Controls are not re-verified.** The verifier reviews findings, not VERIFIED controls; those rely on the mechanical quote check (FC-0021).
+- **Known-vulnerable dependencies** need imported scanner output.
+- **Must-find recall is about 0.8 by strict matching.** Roughly one in five must-find issues is missed or filed under another domain in a typical run.
 
 This record reflects only the evidence examined. It is not a certification or legal advice.
