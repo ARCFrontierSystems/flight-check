@@ -109,7 +109,8 @@ Every record keeps a `history` list of events, as 1.0 ledger entries do:
 
 - Facts come from the inventory agent (the 1.0 `inventory.json` items). `IDENTIFIED` becomes `observed`; `UNVERIFIED` becomes `inferred` or `unknown`; `NOT_FOUND` with an absence search becomes an observed absence.
 - Aspects use a fixed vocabulary in `references/profile-aspects.json` (application type, languages, frameworks, build tools, package managers, data stores, authentication, deployment, hosting, components, AI integrations, payments, sensitive-data indicators, third-party services, tests, CI/CD, policy documents). Unknown aspects from an agent are kept under `other.*`.
-- `status`: `current`, `historical` (not observed in the latest assessment of its domain), or `superseded` (replaced by a newer fact for the same aspect).
+- `status`: `current`, `historical` (not reported by the latest inventory), or `superseded` (replaced by a newer fact for the same aspect). `presence` is `present`, `absent`, or `unclear`.
+- A correction attaches to an aspect: when a new observation supersedes a fact, its active corrections carry over. A correction that says something is not used or excluded is contradicted when the latest observation finds it present.
 - A fact needs evidence. A mention in a comment alone is not evidence for a capability; the inventory agent's instructions already require code or configuration.
 
 ### 5.1 Corrections
@@ -137,6 +138,8 @@ Every record keeps a `history` list of events, as 1.0 ledger entries do:
 - Classifications: `applicable`, `not_applicable`, `uncertain` (the 1.0 `yes`, `no`, `unknown`).
 - `not_applicable` needs evidence of absence. 1.0 already requires this when an agent reports a domain or control as not applicable; 1.5 extends it to the inventory's applicability, which 1.0 does not check. Missing evidence gives `uncertain`, never `not_applicable`.
 - **Overrides** (`{"classification", "by", "at", "reason"}`, user only) may resolve `uncertain` either way and may mark an `applicable` domain `not_applicable`. When the latest evidence says `applicable` and an override says `not_applicable`, the domain is still assessed, the contradiction is reported, and the gate treats the domain as applicable. An override can narrow attention; it can never hide evidence.
+- In coverage, an uncertain domain that no agent assessed and that the owner declared not applicable is recorded as NOT_APPLICABLE with "declared by the project owner" and `reported_by: ["owner"]`; the ship gate then treats it as not applicable, with that attribution visible in the report.
+- The history log records applicability only when a classification changes from an earlier evaluation, and every override or withdrawal.
 - Legal review items and Attorney Review Packets are created only from specific triggers (section 7.4), never from applicability alone.
 
 ## 7. Registers

@@ -7,7 +7,7 @@ import os
 import re
 import sys
 
-from . import VERSION, catalog, constants, finalize, gate, ledger, lockfile, minischema, packet, render_md, state, validate
+from . import VERSION, catalog, constants, finalize, gate, ledger, lockfile, minischema, packet, profile, render_md, state, validate
 from .jsonio import InputError, dump_json, load_json, write_bytes, write_text
 
 
@@ -503,6 +503,121 @@ def cmd_state_adopt(args):
     return state.adopt(_state_dir(args), args.root, args.reason, _stamp(args), by=args.by)
 
 
+def _user_change(args, command, fn):
+    """Run fn(tx) in a state transaction on behalf of the user; fn returns (record, change, reason, result)."""
+    with state.transaction(_state_dir(args), "user", command, _stamp(args), root=args.root, by=args.by,
+                           initialize=False) as tx:
+        try:
+            record, change, reason, result = fn(tx)
+        except profile.ProfileError as exc:
+            raise state.StateError(str(exc))
+        tx.event(record, change, reason)
+    return result
+
+
+@_state_cmd
+def cmd_profile_show(args):
+    st = state.load(_state_dir(args), root=args.root)
+    if not st.initialized:
+        raise state.StateError("no project state yet; run an audit or `state init` first")
+    facts = st.project["profile"]["facts"]
+    if not args.all:
+        facts = [f for f in facts if f["status"] == "current"]
+    return {"facts": [{k: f.get(k) for k in ("id", "aspect", "value", "origin", "source", "presence", "status",
+                                             "last_observed", "contradiction")}
+                      | {"evidence": [r.get("path") or ("searched: " + r.get("searched", "")) for r in f["evidence"]],
+                         "active_corrections": [c for c in f.get("corrections") or [] if c["active"]]}
+                      for f in facts]}
+
+
+@_state_cmd
+def cmd_profile_correct(args):
+    def fn(tx):
+        if args.withdraw:
+            fact = profile.withdraw_corrections(tx.project, args.id, args.reason, tx.now_iso, args.by)
+            return fact["id"], {"correction": ["active", "withdrawn"]}, args.reason, {"fact": fact["id"]}
+        fact = profile.correct(tx.project, args.id, args.assertion, args.reason, tx.now_iso, args.value, args.by)
+        return fact["id"], {"correction": [None, args.assertion]}, args.reason, {
+            "fact": fact["id"], "contradiction": fact["contradiction"]}
+    if not args.withdraw and not args.assertion:
+        raise state.StateError("give --assertion (not_used, excluded, replace, scope) or --withdraw")
+    return _user_change(args, "profile correct", fn)
+
+
+@_state_cmd
+def cmd_profile_declare(args):
+    def fn(tx):
+        fact = profile.declare(tx.project, args.aspect, args.value, args.reason, tx.now_iso, args.by)
+        return fact["id"], {"declared": [None, fact["aspect"]]}, args.reason, {"fact": fact["id"], "aspect": fact["aspect"]}
+    return _user_change(args, "profile declare", fn)
+
+
+@_state_cmd
+def cmd_applicability_show(args):
+    st = state.load(_state_dir(args), root=args.root)
+    if not st.initialized:
+        raise state.StateError("no project state yet; run an audit or `state init` first")
+    return {"domains": [{"domain": a["domain"], "classification": a["classification"], "effective": profile.effective(a),
+                         "override": a.get("override"), "contradiction": a.get("contradiction", False),
+                         "reasoning": a["reasoning"], "evaluated_at": a["evaluated_at"]}
+                        for a in st.project["applicability"]]}
+
+
+@_state_cmd
+def cmd_applicability_override(args):
+    if args.domain not in catalog.domain_ids():
+        raise state.StateError("unknown domain %r" % args.domain)
+
+    def fn(tx):
+        new = None if args.clear else args.classification
+        entry, old = profile.override(tx.project, args.domain, new, args.reason, tx.now_iso, args.by)
+        return "domain:" + args.domain, {"override": [old, new]}, args.reason, {
+            "domain": args.domain, "effective": profile.effective(entry), "contradiction": entry["contradiction"]}
+    if not args.clear and not args.classification:
+        raise state.StateError("give --classification applicable|not_applicable, or --clear")
+    return _user_change(args, "applicability override", fn)
+
+
+def _add_profile_parsers(sub):
+    def common(s, func):
+        s.add_argument("--root")
+        s.add_argument("--state-dir")
+        s.add_argument("--now")
+        s.add_argument("--by", help="who made this change")
+        s.set_defaults(func=func)
+
+    pp = sub.add_parser("profile", help="show the project profile, or record your corrections and declarations")
+    psub = pp.add_subparsers(dest="profile_command")
+    psub.required = True
+    s = psub.add_parser("show")
+    common(s, cmd_profile_show)
+    s.add_argument("--all", action="store_true", help="include superseded and historical facts")
+    s = psub.add_parser("correct", help="correct an observed fact (never deletes it)")
+    common(s, cmd_profile_correct)
+    s.add_argument("--id", required=True)
+    s.add_argument("--assertion", choices=["not_used", "excluded", "replace", "scope"])
+    s.add_argument("--value")
+    s.add_argument("--reason", required=True)
+    s.add_argument("--withdraw", action="store_true", help="withdraw the fact's active corrections")
+    s = psub.add_parser("declare", help="state a fact about the project yourself")
+    common(s, cmd_profile_declare)
+    s.add_argument("--aspect", required=True)
+    s.add_argument("--value", required=True)
+    s.add_argument("--reason", required=True)
+
+    ap = sub.add_parser("applicability", help="show which audit domains apply, or record your override")
+    asub = ap.add_subparsers(dest="applicability_command")
+    asub.required = True
+    s = asub.add_parser("show")
+    common(s, cmd_applicability_show)
+    s = asub.add_parser("override", help="declare a domain applicable or not applicable (evidence still wins)")
+    common(s, cmd_applicability_override)
+    s.add_argument("--domain", required=True)
+    s.add_argument("--classification", choices=["applicable", "not_applicable"])
+    s.add_argument("--clear", action="store_true")
+    s.add_argument("--reason", required=True)
+
+
 def _add_state_parsers(sub):
     sp = sub.add_parser("state", help="inspect, check, back up, and recover Flight Check project state")
     ssub = sp.add_subparsers(dest="state_command")
@@ -610,6 +725,7 @@ def build_parser():
     s.set_defaults(func=cmd_schema_check)
 
     _add_state_parsers(sub)
+    _add_profile_parsers(sub)
 
     lp = sub.add_parser("ledger", help="inspect or update the finding ledger")
     lsub = lp.add_subparsers(dest="ledger_command")

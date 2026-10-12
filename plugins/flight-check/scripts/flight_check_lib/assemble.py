@@ -128,7 +128,7 @@ def _merge_control(existing, incoming, agent):
     existing["related_findings"] = sorted(set((existing.get("related_findings") or []) + (incoming.get("related_findings") or [])))
 
 
-def assemble(run_dir):
+def assemble(run_dir, overrides=None):
     """Return (audit_dict, warnings). Assumes validate.validate_run_dir passed."""
     warnings = []
     run = load_json(os.path.join(run_dir, "run.json"))
@@ -198,16 +198,34 @@ def assemble(run_dir):
         if d in coverage:
             continue
         app = applicability.get(d)
-        if app and app["applicable"] == "no":
+        override = (overrides or {}).get(d)
+        # "Not applicable" needs evidence of what was searched; without it the domain counts as uncertain.
+        inventory_no = bool(app and app["applicable"] == "no"
+                            and any(ev.get("kind") == "absence" for ev in app.get("evidence") or []))
+        uncertain = not app or app["applicable"] == "unknown" or (app["applicable"] == "no" and not inventory_no)
+        if inventory_no and not (override and override["classification"] == "applicable"):
             coverage[d] = {
                 "domain": d, "status": "NOT_APPLICABLE",
                 "rationale": "Inventory: %s" % app["rationale"],
                 "evidence": app.get("evidence") or [], "searches": [], "reported_by": ["inventory"],
             }
-        else:
+        elif uncertain and override and override["classification"] == "not_applicable":
             coverage[d] = {
-                "domain": d, "status": "NOT_ASSESSED",
-                "rationale": "No agent reported on this domain in this run.",
+                "domain": d, "status": "NOT_APPLICABLE",
+                "rationale": "Declared not applicable by the project owner%s on %s: %s" % (
+                    (" (%s)" % override["by"]) if override.get("by") else "", override["at"][:10], override["reason"]),
+                "evidence": [], "searches": [], "reported_by": ["owner"],
+            }
+        else:
+            rationale = "No agent reported on this domain in this run."
+            if override and override["classification"] == "applicable":
+                rationale = "Declared applicable by the project owner, but no agent assessed it in this run."
+            elif override:
+                rationale += " The owner declared it not applicable, but the inventory found it applies."
+            elif app and app["applicable"] == "no":
+                rationale += " The inventory marked it not applicable without saying what it searched."
+            coverage[d] = {
+                "domain": d, "status": "NOT_ASSESSED", "rationale": rationale,
                 "searches": [], "reported_by": [],
             }
 
