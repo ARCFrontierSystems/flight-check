@@ -3,7 +3,7 @@
 import datetime
 import os
 
-from . import VERSION, assemble, catalog, constants, evidence, gate, ledger, minischema, profile, state, validate
+from . import VERSION, assemble, catalog, constants, evidence, gate, ledger, minischema, profile, registers, state, validate
 from .jsonio import dump_json, load_json
 
 
@@ -127,6 +127,8 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
                      "Audit run %s finalized. Findings: %s. Profile: %s." % (
                          run_id, ", ".join("%s %d" % kv for kv in sorted(counts.items())) or "no lifecycle changes",
                          ", ".join("%s %d" % kv for kv in sorted(kinds.items())) or "unchanged"))
+            for record, change, note in registers.apply_assessment(tx.registers, audit, registers.entries_by_id(tx.ledger), now, run_id):
+                tx.event(record, change, note)
             for change in profile_changes:
                 if change[0] == "applicability":
                     tx.event("domain:" + change[1], {"applicability": change[2]}, "Evaluated by the inventory in run %s." % run_id)

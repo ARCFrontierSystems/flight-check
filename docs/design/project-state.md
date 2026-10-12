@@ -150,7 +150,9 @@ Status changes marked **user** below are accepted only with `--source user`, whi
 
 ### 7.1 Requirements (`REQ-`)
 
-Fields: `description`, `category` (security, privacy, compliance-readiness, accessibility, reliability, data-lifecycle, authentication, authorization, infrastructure, deployment, legal-business, product-behavior, release), `criticality` (`release-critical`, `high`, `normal`), `applicability` (domain or component), `components`, `verification` (`{"state": "current|stale|unverified", "at", "run_id", "evidence"}`), `last_review`.
+Fields: `description`, `category` (security, privacy, compliance-readiness, accessibility, reliability, data-lifecycle, authentication, authorization, infrastructure, deployment, legal-business, product-behavior, release), `criticality` (`release-critical`, `high`, `normal`), `applicability` (domain or component), `components`, `controls` (Flight Check control IDs that verify it), `verification` (`{"state": "current|stale|unverified", "at", "run_id"}`), `last_review`.
+
+A finalized audit sets `VERIFIED` when every linked control is VERIFIED with a passing evidence check and no linked finding is open, and moves a `VERIFIED` requirement back to `IMPLEMENTED` when that stops being true. A requirement without linked controls can only be verified once a later phase adds another evidence route; until then it stays at the status you set.
 
 | Status | Set by |
 |---|---|
@@ -185,6 +187,7 @@ Fields: `description`, `domain`, `severity`, `confidence`, `impact`, `likelihood
 | `ACCEPTED` | user, with a complete acceptance record |
 | `MITIGATED`, `RESOLVED` | evidence: linked findings verified fixed; or user with resolution evidence |
 
+- A finalized audit sets `MITIGATED` when every linked finding is VERIFIED or CLOSED (an accepted risk is left as accepted), and `REOPENED` when a linked finding of a mitigated or resolved risk regresses.
 - A finding is evidence of a problem; a risk is the ongoing concern with an owner and a treatment. A risk may link several findings, and a finding may support several risks.
 - Acceptance never lowers severity. An accepted CRITICAL risk still blocks the gate, as in 1.0.
 - Acknowledged (`UNDER_REVIEW`), accepted, mitigated, and resolved are separate statuses.

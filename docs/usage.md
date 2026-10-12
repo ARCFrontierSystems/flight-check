@@ -101,6 +101,26 @@ Each finalized audit turns the inventory into **profile facts** (what the projec
 
 An override decides only what evidence leaves open. Declaring an uncertain domain not applicable lets the audit record it as not applicable ("declared by the project owner") when no agent assessed it. Declaring a domain not applicable when the evidence shows it applies is recorded as a contradiction, and the domain is still assessed. Declaring a domain applicable always keeps it in scope.
 
+### Requirements, decisions, and risks
+
+Three registers in `registers.json`. Records you add start as accepted (requirements, decisions) or open (risks); suggestions that Flight Check adds start as proposed and say so. Only you accept, decide, accept a risk, or close a record.
+
+| Command | What it does |
+|---|---|
+| `req add --title T --description D --category C --criticality release-critical\|high\|normal [--link control:PRIV-DELETION] [--link FC-0003]` | Record a requirement |
+| `req update --id REQ-0001 --status ...`, `req list`, `req show --id` | Change or inspect requirements |
+| `decision add --title T --context C --decision D [--rationale R] [--assertion "statement the code should satisfy"]` | Record a decision |
+| `decision update --id DEC-0001 --status SUPERSEDED --superseded-by DEC-0002`, `decision list`, `decision assertions` | Change decisions; list the assertions of accepted decisions |
+| `risk add --title T --description D --domain payments --severity HIGH` or `risk add --from-finding FC-0007` | Record a risk |
+| `risk accept --id RISK-0001 --reason R --owner O --date YYYY-MM-DD --scope S --compensating-controls C` | Accept a risk; severity does not change |
+| `risk update --id RISK-0001 --status MITIGATION_PLANNED`, `risk list`, `risk show --id` | Change or inspect risks |
+
+Links (`--link`) must point at records that exist: `FC-`, `REQ-`, `DEC-`, `RISK-`, `LR-`, `PF-` IDs, or `control:<control id>`.
+
+What only evidence can do:
+- A requirement becomes **VERIFIED** only when a finalized audit verifies all of its linked controls with checked evidence and none of its linked findings is still open. "Implemented" never means verified. If a later audit can no longer verify it, it goes back to IMPLEMENTED.
+- A risk becomes **MITIGATED** automatically when all of its linked findings are verified fixed or closed, and **REOPENED** when one of them regresses. You can also mark a risk mitigated or resolved yourself, with a note on what changed.
+
 Commit `project.json`, `registers.json`, `history.jsonl`, and `ledger.json` if your team shares the history. Flight Check writes `.flight-check/.gitignore` so run output, backups, and lock files stay local.
 
 ## Continuous integration

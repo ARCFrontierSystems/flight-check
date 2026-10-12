@@ -649,6 +649,7 @@
         "criticality": {"type": "string", "enum": ["release-critical", "high", "normal"]},
         "applicability": {"type": "string", "maxLength": 300},
         "components": {"type": "array", "maxItems": 50, "items": {"$ref": "#/$defs/stateRelPath"}},
+        "controls": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/controlId"}},
         "status": {"type": "string", "enum": ["PROPOSED", "ACCEPTED", "IMPLEMENTED", "VERIFIED", "BLOCKED", "SUPERSEDED", "REJECTED"]},
         "origin": {"$ref": "#/$defs/origin"},
         "source": {"$ref": "#/$defs/source"},
