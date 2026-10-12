@@ -2,6 +2,10 @@
 
 All notable changes are recorded here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased] — 1.5.0 (in development)
+
+- **Design for Project State** (`docs/design/project-state.md`): storage layout, identity, profile, applicability, requirements, decisions, risks, legal review items, history log, freshness, finding lifecycle, readiness, recovery, and migration from 1.0. The schema definitions for the new state files are added and tested; nothing uses them yet.
+
 ## [1.0.0-rc.1] — 2026-10-12 (pre-release)
 
 Release candidate for 1.0; not yet published as a release. Development versions (0.1.0) were never published as releases. Blind-tested in Phase 5 (`docs/audits/2026-10-06-phase-5-blind-test.md`), on a held-out application in Phase 7 (`docs/audits/2026-10-12-phase-7-final-report.md`), and on a second held-out application for this release candidate (`docs/audits/2026-10-12-v1-release-evaluation.md`).

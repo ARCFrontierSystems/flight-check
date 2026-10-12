@@ -1,0 +1,310 @@
+# Design: Project State (Flight Check 1.5)
+
+Status: **design, approved phase by phase.** Nothing here is implemented until the phase that builds it says so. This document is the contract for Phases 3 to 8 of the 1.5 plan; when implementation shows that a detail must change, this document changes in the same pull request.
+
+## 1. Purpose and principles
+
+Flight Check 1.0 audits a project at one point in time and keeps a finding ledger. 1.5 adds persistent project understanding: what the project is, which audit domains apply, what has been required and decided, which risks and legal questions are open, and what changed since the last assessment.
+
+Principles, in order of priority:
+
+1. **Remembering is not verifying.** Every stored fact says where it came from and when it was last checked against the files. A stored conclusion whose evidence changed is shown as stale, never as current.
+2. **Flight Check proposes; people decide.** Flight Check may create observations and proposals. Only an explicit user action accepts a requirement or decision, accepts a risk, resolves a legal question, or overrides an observation.
+3. **Agents reason; the script decides.** Agents read the project and report. The bundled script (standard-library Python, no network, no subprocess) validates, stores, compares, and computes every status and gate.
+4. **Local-first.** State lives in the project's `.flight-check/` directory. No hosted service, daemon, telemetry, or paid dependency.
+5. **Compatible with 1.0.** Existing ledgers keep working, finding IDs and history are preserved, and 1.0 commands keep their behavior.
+6. **Agent-neutral.** Nothing in the data model depends on Claude Code; a future adapter for another agent or a CI system reads and writes the same files.
+
+## 2. Storage layout
+
+All paths are relative to the audit root. One audit root is one project (section 4).
+
+| File | Contents | Written by | In git |
+|---|---|---|---|
+| `.flight-check/project.json` | Identity, profile, applicability, corrections, state revision | script | yes |
+| `.flight-check/ledger.json` | Finding lifecycle (1.0 file, schema 2.0 after migration) | script | yes |
+| `.flight-check/registers.json` | Requirements, decisions, risks, legal review items | script | yes |
+| `.flight-check/history.jsonl` | Append-only, hash-chained event log of every state change | script | yes |
+| `.flight-check/manifest.json` | Content hashes of the project's files at the last assessment | script | no |
+| `.flight-check/runs/` | Run directories (1.0, unchanged) | script and audit skill | no |
+| `.flight-check/packets/` | Attorney Review Packets (1.0, unchanged) | script | no |
+| `.flight-check/backups/` | Copies of the state files made before migrations, restores, and imports | script | no |
+| `.flight-check/state.lock` | Held while a command changes state | script | no |
+
+- The four committed files hold references, hashes, titles, and decisions, never source code or quotes. Quotes stay in run directories, as in 1.0.
+- `manifest.json` changes on every assessment, so it is local only. Without it (for example in a fresh clone), change detection falls back to the hashes stored with each record and treats unlisted files as changed, which widens reassessment instead of narrowing it.
+- Files are written with sorted keys and two-space indentation so that git diffs and merges stay readable.
+- Only the script writes these files. Skills and agents never edit them directly.
+- Flight Check writes `.flight-check/.gitignore` listing the local-only entries, so projects do not need to configure git themselves.
+- The schema definitions for these files are in `plugins/flight-check/schemas/flight-check.schema.json` (`projectState`, `registers`, `logEvent`, and the definitions they use), and `tests/unit/test_state_schema.py` pins them with valid and invalid examples.
+
+## 3. Common building blocks
+
+### 3.1 Origin and source
+
+Every stored fact and record carries both:
+
+- **`origin`**, what kind of knowledge it is: `observed` (read directly from project evidence by Flight Check), `declared` (stated by the user), `inferred` (suggested by evidence but not confirmed), `unknown` (insufficient information), or `historical` (observed before, not currently).
+- **`source`**, who wrote it: `user` or `flight-check`, as in the 1.0 ledger.
+
+`declared` requires `source: user`. `observed` and `inferred` require `source: flight-check`. The script rejects any other combination, so a generated conclusion can never be stored as a user declaration.
+
+### 3.2 Evidence references
+
+```json
+{"path": "src/routes/orders.py", "start_line": 40, "end_line": 58, "sha256": "<file hash when observed>",
+ "anchor_hash": "<16 hex>", "observed_at": "2026-10-12T22:20:35Z", "run_id": "20261012T222035Z"}
+```
+
+- Paths are relative to the audit root and must resolve inside it (the 1.0 `resolve_within` rules, including symlinks).
+- `sha256` is the hash of the whole file at the time the conclusion was drawn. It is what makes freshness checkable (section 9).
+- An absence or user-provided item uses the 1.0 evidence kinds (`absence`, `user-provided`) and has no file hash.
+- No quoted text is stored in state.
+
+### 3.3 Identifiers
+
+| Prefix | Record | Counter stored in |
+|---|---|---|
+| `FC-` | Finding (1.0) | `ledger.json` `next_id` |
+| `PF-` | Profile fact | `project.json` |
+| `REQ-` | Requirement | `registers.json` |
+| `DEC-` | Decision | `registers.json` |
+| `RISK-` | Risk | `registers.json` |
+| `LR-` | Legal review item | `registers.json` |
+
+IDs are never reused, even after a record is superseded or rejected.
+
+### 3.4 Record history
+
+Every record keeps a `history` list of events, as 1.0 ledger entries do:
+`{"at", "status", "source", "note", "run_id", "by"}`, where `by` is an optional person or role given by the user. The global log (section 8) holds the same changes for the whole project, hash-chained.
+
+## 4. Project identity and isolation
+
+`project.json.identity`:
+
+```json
+{"project_id": "<32 hex, random, created once>", "created_at": "...", "name": "<display name>",
+ "root": ".", "vcs": "git", "repository": "github.com/owner/repo"}
+```
+
+- `project_id` is created when state is first initialized and never changes. The display name is only a label.
+- `root` is the audit root's path relative to the repository root (`.` for the whole repository, `apps/api` for one application in a monorepo). Each audit root has its own `.flight-check/` and its own identity, so two applications in one monorepo never share findings or decisions.
+- `repository` is read from `.git/config` as a plain file (no subprocess), with any user name, password, or token removed. It is informational.
+- **Clones and working copies** share the committed `project.json`, so they are the same project. A moved directory keeps its identity because nothing stores an absolute path.
+- **Isolation checks:** every run records `project_id` in `run.json`. `finalize` refuses to merge a run whose `project_id` differs from the state it is merging into, and refuses state whose recorded `root` does not match the audit root's position in the repository. In both cases it reports the mismatch and asks for confirmation (`state adopt`) instead of merging histories.
+- **Projects without git** work the same way; `vcs` is `none` and `repository` is omitted.
+- **Branches** are not separate projects. The branch name (read from `.git/HEAD`) is recorded with each run, so the history shows which branch an assessment saw.
+
+## 5. Project profile
+
+`project.json.profile.facts` is a list of profile facts:
+
+```json
+{"id": "PF-0004", "aspect": "payments.provider", "value": "card payments through a hosted checkout",
+ "origin": "observed", "source": "flight-check", "confidence": "CONFIRMED", "status": "current",
+ "evidence": [<evidence references>], "first_observed": "...", "last_observed": "...", "run_id": "...",
+ "corrections": [<corrections>], "history": [...]}
+```
+
+- Facts come from the inventory agent (the 1.0 `inventory.json` items). `IDENTIFIED` becomes `observed`; `UNVERIFIED` becomes `inferred` or `unknown`; `NOT_FOUND` with an absence search becomes an observed absence.
+- Aspects use a fixed vocabulary in `references/profile-aspects.json` (application type, languages, frameworks, build tools, package managers, data stores, authentication, deployment, hosting, components, AI integrations, payments, sensitive-data indicators, third-party services, tests, CI/CD, policy documents). Unknown aspects from an agent are kept under `other.*`.
+- `status`: `current`, `historical` (not observed in the latest assessment of its domain), or `superseded` (replaced by a newer fact for the same aspect).
+- A fact needs evidence. A mention in a comment alone is not evidence for a capability; the inventory agent's instructions already require code or configuration.
+
+### 5.1 Corrections
+
+```json
+{"at": "...", "by": "<person or role>", "source": "user", "assertion": "not_used",
+ "value": "<optional replacement>", "reason": "...", "active": true}
+```
+
+- Assertions: `not_used`, `excluded` (intentionally out of scope), `replace` (the right value is `value`), `scope` (applies only to a named environment or component).
+- A correction never deletes the observed fact or its evidence. Both stay visible.
+- If a later assessment observes evidence that contradicts an active correction, the fact gets `"contradiction": true` and appears under "needs attention" in the status view. Neither side wins silently.
+- Corrections are reversible: deactivating one adds an event; nothing is removed.
+
+## 6. Applicability
+
+`project.json.applicability` has one entry per domain:
+
+```json
+{"domain": "payments", "classification": "applicable", "confidence": "LIKELY",
+ "reasoning": "...", "evidence": [<evidence references>], "components": ["src/billing/"],
+ "evaluated_at": "...", "run_id": "...", "override": null, "contradiction": false}
+```
+
+- Classifications: `applicable`, `not_applicable`, `uncertain` (the 1.0 `yes`, `no`, `unknown`).
+- `not_applicable` needs evidence of absence. 1.0 already requires this when an agent reports a domain or control as not applicable; 1.5 extends it to the inventory's applicability, which 1.0 does not check. Missing evidence gives `uncertain`, never `not_applicable`.
+- **Overrides** (`{"classification", "by", "at", "reason"}`, user only) may resolve `uncertain` either way and may mark an `applicable` domain `not_applicable`. When the latest evidence says `applicable` and an override says `not_applicable`, the domain is still assessed, the contradiction is reported, and the gate treats the domain as applicable. An override can narrow attention; it can never hide evidence.
+- Legal review items and Attorney Review Packets are created only from specific triggers (section 7.4), never from applicability alone.
+
+## 7. Registers
+
+`registers.json` holds four lists. Every record has `id`, `title`, `status`, `origin`, `source`, `created_at`, `updated_at`, `links` (`findings`, `requirements`, `decisions`, `risks`, `legal`), `evidence`, and `history`.
+
+Status changes marked **user** below are accepted only with `--source user`, which the skills pass only when the user explicitly asks for that change. Changes marked **evidence** are made by the script from a finalized assessment.
+
+### 7.1 Requirements (`REQ-`)
+
+Fields: `description`, `category` (security, privacy, compliance-readiness, accessibility, reliability, data-lifecycle, authentication, authorization, infrastructure, deployment, legal-business, product-behavior, release), `criticality` (`release-critical`, `high`, `normal`), `applicability` (domain or component), `components`, `verification` (`{"state": "current|stale|unverified", "at", "run_id", "evidence"}`), `last_review`.
+
+| Status | Set by |
+|---|---|
+| `PROPOSED` | Flight Check (a suggestion, labelled as such) or user |
+| `ACCEPTED` | user |
+| `IMPLEMENTED` | user, or Flight Check when an assessment observes the implementation |
+| `VERIFIED` | evidence only: a finalized assessment verified it with current evidence |
+| `BLOCKED`, `SUPERSEDED`, `REJECTED` | user |
+
+`IMPLEMENTED` never implies `VERIFIED`. When a `VERIFIED` requirement's evidence becomes stale, its status stays and `verification.state` becomes `stale`, which the status view and gate both show.
+
+### 7.2 Decisions (`DEC-`)
+
+Fields: `context`, `decision`, `rationale`, `alternatives`, `owner`, `date`, `review_triggers` (paths, domains, or dependency names whose change should prompt review), `assertions` (short statements the implementation should satisfy, used for consistency checks), `superseded_by`.
+
+| Status | Set by |
+|---|---|
+| `PROPOSED` | Flight Check (a recommendation) or user |
+| `ACCEPTED`, `SUPERSEDED`, `REVERSED` | user |
+| `NEEDS_REVIEW` | Flight Check, when a review trigger changes or an assessment reports a contradiction; or user |
+
+**Consistency checks:** the `assertions` of `ACCEPTED` decisions are passed to the domain agents as statements to check. A contradiction is reported as an ordinary evidence-backed finding (rule `<domain>.decision-contradiction`) linked to the decision, which moves to `NEEDS_REVIEW`. Flight Check never concludes a violation without evidence, and never changes a decision itself.
+
+### 7.3 Risks (`RISK-`)
+
+Fields: `description`, `domain`, `severity`, `confidence`, `impact`, `likelihood` (only when supportable), `owner`, `mitigation_plan`, `acceptance` (the 1.0 acceptance fields plus `conditions` and `review_trigger`), `first_observed`, `last_reviewed`, `next_review`, `resolution_evidence`.
+
+| Status | Set by |
+|---|---|
+| `OPEN`, `REOPENED` | Flight Check (from findings) or user |
+| `UNDER_REVIEW`, `MITIGATION_PLANNED` | user |
+| `ACCEPTED` | user, with a complete acceptance record |
+| `MITIGATED`, `RESOLVED` | evidence: linked findings verified fixed; or user with resolution evidence |
+
+- A finding is evidence of a problem; a risk is the ongoing concern with an owner and a treatment. A risk may link several findings, and a finding may support several risks.
+- Acceptance never lowers severity. An accepted CRITICAL risk still blocks the gate, as in 1.0.
+- Acknowledged (`UNDER_REVIEW`), accepted, mitigated, and resolved are separate statuses.
+
+### 7.4 Legal review items (`LR-`)
+
+Fields: `category`, `description`, `trigger` (the finding, profile fact, or document that raised it), `jurisdiction` (or `jurisdiction_unknown: true`), `questions` (for counsel), `classification` (the 1.0 six classifications), `owner`, `review_date`, `resolution_notes`, `references`.
+
+| Status | Set by |
+|---|---|
+| `NEEDS_REVIEW` | Flight Check or user |
+| `AWAITING_BUSINESS_DECISION`, `AWAITING_COUNSEL`, `ACTION_REQUIRED` | user (Flight Check may propose) |
+| `REVIEWED`, `RESOLVED`, `NOT_APPLICABLE` | user only, with a note |
+
+- Items are created from specific triggers: a finding with a legal classification other than INFORMATIONAL (as in 1.0), or a user request. A domain being applicable is not a trigger by itself.
+- Attorney Review Packets can be built from selected or unresolved items. When there are none, the packet command says "Based on the project evidence currently available, no specific legal-review issue has been identified." and adds that this is not a guarantee that no legal issues exist. It never produces an empty packet.
+
+## 8. History log
+
+`history.jsonl` has one JSON object per line:
+
+```json
+{"seq": 42, "at": "...", "actor": "user|flight-check", "by": "<optional person or role>", "command": "decision accept",
+ "record": "DEC-0003", "change": {"status": ["PROPOSED", "ACCEPTED"]}, "reason": "...", "run_id": null,
+ "revision": 42, "prev": "<hash of event 41>", "hash": "<sha256 of this event without hash>"}
+```
+
+- Every change to any state file appends one event. Nothing is ever removed or rewritten.
+- The hash chain makes silent edits detectable (`state check`); it does not prevent them. This is tamper evidence, not tamper proofing.
+- `project.json.revision` equals the `revision` of the latest event. Readiness decisions are stamped with this revision.
+
+## 9. Freshness and change detection
+
+- **Manifest:** at each finalized assessment, the script hashes the files under the audit root (skipping `.git/`, `.flight-check/`, and dependency and build directories, and never following symlinks out of the root) into `manifest.json`.
+- **Evidence state** for any stored conclusion, from its evidence references:
+
+| State | Meaning |
+|---|---|
+| `current` | every cited file still has the hash recorded with the conclusion |
+| `stale` | a cited file changed since the conclusion was drawn |
+| `missing` | a cited file no longer exists |
+| `superseded` | a newer assessment replaced the conclusion |
+| `unverified` | the conclusion never had checkable evidence |
+
+- No time-based expiry. Staleness comes from change, and from runs that were interrupted.
+- A changed timestamp alone is not a change; only content hashes count.
+- **Impact:** `changes` compares the current files with the manifest, then maps each changed file to (a) every finding, control, positive control, profile fact, and record that cites it, and (b) domains, through rules in `references/impact-rules.json` (for example dependency manifests to supply-chain, templates and stylesheets to accessibility, migrations to data protection, privacy, authorization, and reliability, policy documents to legal-business and documentation). A change that no rule covers widens reassessment to every applicable domain. Skipped domains are labelled "carried forward, not reassessed", never "verified".
+
+## 10. Finding lifecycle (ledger schema 2.0)
+
+1.0 status names are kept, because CI scripts and reports already use them. Four statuses are added.
+
+| Lifecycle step in the 1.5 plan | Ledger status |
+|---|---|
+| New | `OPEN`, with `first_seen_run` equal to the latest run (derived, not stored) |
+| Open | `OPEN` |
+| Under review | `UNDER_REVIEW` (new; user) |
+| Remediation planned | `REMEDIATION_PLANNED` (new; user) |
+| Potentially fixed | `REMEDIATED` (user claim; awaits verification) |
+| Verified fixed | `VERIFIED` (evidence only) |
+| Accepted | `ACCEPTED_RISK` (user) |
+| Reopened | `REGRESSION` |
+| False positive | `FALSE_POSITIVE` (new; user, with a reason) |
+| Superseded | `SUPERSEDED` (new; replaced by another finding) |
+| Not seen this run | `NOT_REPRODUCED` (1.0; not seen is not fixed) |
+| Closed | `CLOSED` (user) |
+
+- **Regressions** keep a `regression` record: original finding, original resolution, reappearance run, changed files, and `match` (`exact` for fingerprint or same rule and file; `possible` for the weaker matching passes). A `possible` regression is shown as such, never as confirmed.
+- A finding marked `FALSE_POSITIVE` that is observed again keeps its status but is flagged for review in the status view.
+- Partial scans never mark findings in unassessed domains `NOT_REPRODUCED` (1.0 behavior, kept).
+- Positive controls gain persistent records in the same ledger file (`PC-` keys under `positive_controls`), with evidence references, so a positive control whose code changed becomes stale instead of staying verified. They get stable four-digit IDs (`PC-0001`), matched across runs like findings; 1.0 numbers them per run (`PC-001`), so report numbering changes.
+
+## 11. Readiness
+
+The 1.0 gate keeps its five decisions and rules. 1.5 adds inputs:
+
+- release-critical controls whose evidence is `stale` or `missing` count as UNVERIFIED;
+- open legal review items in `ACTION_REQUIRED`, and accepted requirements with criticality `release-critical` that are not `VERIFIED` with current evidence, are release-blocking;
+- a run that was interrupted never produces a readiness decision.
+
+Every decision is stamped `{"decision", "at", "run_id", "revision", "commit"}`. The status view shows the latest decision with its stamp and, when files changed since, says that the decision is historical and which areas need reassessment. A person still makes the release decision.
+
+## 12. Writing, safety, and recovery
+
+- **One lock** (`state.lock`, replacing the 1.0 `ledger.json.lock`) is held by any command that changes state, from first read to last write.
+- **Write order:** back up when required, write each changed state file atomically (temporary file and rename, mode 0600, as in 1.0), then append the history event last. A command interrupted before its event leaves a file whose `revision` is ahead of the log; `state check` reports it and `state restore` returns to the last backup. Nothing is reset silently.
+- **Validation on load:** every file is checked against its schema; size limits apply; unknown fields are rejected; paths must stay inside the root. An invalid file stops write commands with a clear error and leaves the file untouched. Read-only commands report the problem.
+- **Backups:** written to `.flight-check/backups/<time>-<reason>/` (mode 0700) before migrations, restores, and imports. Flight Check never deletes backups.
+- **Export and import:** `state export` writes one JSON bundle of the four committed files with their hashes. `state import` validates the bundle, refuses a different `project_id` unless the user confirms with `state adopt`, and backs up first.
+- **No secrets:** text fields pass through the 1.0 secret masking before they are stored; repository URLs lose any credentials; state stores no quotes.
+
+## 13. Migration from 1.0
+
+- A 1.0 project has `ledger.json` (schema 1.0) and no `project.json`.
+- Read-only commands work on 1.0 state by upgrading it in memory, without writing.
+- The first command that changes state backs up `ledger.json`, creates `project.json` with a new identity, migrates the ledger to schema 2.0 (statuses unchanged; legal fields on findings become `LR-` items linked from the finding, keeping their history; 1.0 legal statuses map as in the table below), creates `registers.json` and `history.jsonl` (first event: the migration), and only then reports success.
+- A failure at any step leaves the original files as they were and reports the backup location.
+- State written by a newer Flight Check is never rewritten by an older one: an unknown `schema_version` makes write commands refuse.
+
+| 1.0 legal status | 1.5 legal item status |
+|---|---|
+| `OPEN` | `NEEDS_REVIEW` |
+| `LEGAL_REVIEW_REQUESTED` | `AWAITING_COUNSEL` |
+| `COUNSEL_REVIEWED`, `DECISION_RECEIVED` | `REVIEWED` |
+| `IMPLEMENTATION_REQUIRED`, `IMPLEMENTED` | `ACTION_REQUIRED` |
+| `VERIFIED`, `CLOSED` | `RESOLVED` |
+
+The 1.0 command `ledger legal` keeps working and updates the linked item.
+
+## 14. Ownership summary
+
+| Class | Examples | Who may change it |
+|---|---|---|
+| Developer-maintained | declarations, corrections, overrides, accepted requirements and decisions, acceptances, legal outcomes | user only |
+| Flight Check observations | profile facts, applicability, findings, positive controls | script, from finalized assessments |
+| Verified evidence | evidence references with hashes, verification records | script, from finalized assessments |
+| Historical records | superseded facts, closed records, the history log | nobody; append only |
+| Derived conclusions | gate decisions, freshness states, status summaries | computed on demand; only readiness stamps are stored |
+
+## 15. Interfaces planned
+
+Script subcommands (each with Markdown and JSON output): `state init|show|check|export|import|adopt|restore`, `profile show|correct`, `applicability override`, `req add|update|list`, `decision add|update|list`, `risk add|update|accept|list`, `legal add|update|list` (the 1.0 `ledger legal` stays), `changes`, `status`. Skills: a read-only `status` skill for natural-language questions, `track` extended for recording, and `audit --changed`. Pre-approval follows the 1.0 rule: read-only subcommands may be pre-approved; every command that records a decision always asks.
+
+## 16. Out of scope for 1.5
+
+Background services or automatic triggers, hosted storage, team permissions, organization policies, and agent-specific adapters (planned for 2.0 and later). The data model leaves room for them: identities are global, records are agent-neutral, and the history log is a plain event stream.
