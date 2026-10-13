@@ -360,6 +360,8 @@ def render(final, summary):
         elif num == "29":
             lc = final["lifecycle"]
             rows = [("Regressions (previously resolved, observed again)", lc.get("regressions")),
+                    ("Possible regressions (matched by file and wording or by the verifier's judgment; confirm)",
+                     lc.get("possible_regressions")),
                     ("Not reproduced (previously open, not observed; confirm resolution)", lc.get("not_reproduced")),
                     ("Remediated, pending verification", lc.get("remediated_pending")),
                     ("Verified fixed in this run", lc.get("verified_this_run")),

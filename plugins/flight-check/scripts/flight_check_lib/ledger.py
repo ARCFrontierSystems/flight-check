@@ -381,7 +381,10 @@ def merge_positive_controls(led, positives, run_id, now_iso, evidence_files, ass
     for p in positives:
         path = (p.get("evidence") or [{}])[0].get("path", "")
         key = "%s|%s|%s" % (p["domain"], path, " ".join(sorted(_title_words(p["title"]))))
-        match = key if key in pcs and key not in seen else None
+        if key in seen:
+            p["id"] = pcs[key]["id"]  # the same positive control reported twice in this run (another pass or agent)
+            continue
+        match = key if key in pcs else None
         if match is None:
             for k, pc in pcs.items():
                 if k not in seen and pc["domain"] == p["domain"] and pc.get("path", "") == path and \

@@ -19,7 +19,7 @@ def _history_from_v1(events):
     out = []
     for h in events or []:
         ev = {"at": h["at"], "status": constants.V1_LEGAL_TO_ITEM.get(h["status"], "NEEDS_REVIEW"), "source": h["source"],
-              "note": ("1.0 status %s" % h["status"]) + ((": " + h["note"]) if h.get("note") else "")}
+              "note": (("1.0 status %s" % h["status"]) + ((": " + h["note"]) if h.get("note") else ""))[:4000]}
         if h.get("run_id"):
             ev["run_id"] = h["run_id"]
         out.append(ev)
@@ -53,6 +53,10 @@ def migrate_ledger(led, regs, project, now_iso):
     for entry in sorted(led["entries"].values(), key=lambda e: e["id"]):
         legal = entry.get("legal")
         if not legal or "status" not in legal:
+            continue
+        if legal.get("classification") == "INFORMATIONAL" and legal["status"] == "OPEN":
+            # 1.0 gave every legal block a status; an untouched INFORMATIONAL one is context, not a question to queue.
+            entry["legal"] = {"classification": "INFORMATIONAL"}
             continue
         status = constants.V1_LEGAL_TO_ITEM[legal["status"]]
         item = _new_item_from_entry(regs, project, led, entry, now_iso, status, history=_history_from_v1(legal.get("history")))

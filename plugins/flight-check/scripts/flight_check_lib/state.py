@@ -129,7 +129,7 @@ def _load_json_file(path, definition):
 # --- identity -------------------------------------------------------------------------------------------------
 
 def _find_repo_root(root):
-    current = os.path.abspath(root)
+    current = os.path.realpath(root)
     while True:
         if os.path.lexists(os.path.join(current, ".git")):
             return current
@@ -207,8 +207,9 @@ def _read_repository(repo_root):
 
 
 def locate(root):
-    """Where the audit root sits: (relative root, vcs, repository) without running git."""
-    root = os.path.abspath(root)
+    """Where the audit root sits: (relative root, vcs, repository) without running git. Uses the real path, so the
+    same directory reached through a symbolic link is the same project."""
+    root = os.path.realpath(root)
     repo_root = _find_repo_root(root)
     if repo_root is None:
         return ".", "none", None

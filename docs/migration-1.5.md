@@ -4,18 +4,18 @@ Flight Check 1.5 keeps everything 1.0 does: the same audit, the same five ship d
 
 ## What happens on the first 1.5 command that changes state
 
-The first audit you finalize with 1.5 (or `state init`, or any `ledger` command that records something) does this once, in this order:
+The first audit you finalize with 1.5 (or `state init`, or any command that records something, such as `ledger accept` or `legal update`) does this once, in this order:
 
 1. **Backs up** your `.flight-check/ledger.json` to `.flight-check/backups/<time>-migrate-from-1-0/`, with the hash of each file.
 2. **Creates** `project.json` (a new project identity, the profile, applicability, controls, and readiness), an empty `registers.json`, and `history.jsonl`, whose first event records the migration.
-3. **Moves legal statuses** out of ledger entries into legal review items (`LR-0001`, ...), keeping their history, and sets the ledger to schema 2.0, after another backup (`<time>-migrate-ledger-2-0`). The 1.0 statuses map like this:
+3. **Moves legal statuses** out of ledger entries into legal review items (`LR-0001`, ...), keeping their history, and sets the ledger to schema 2.0. The backup from step 1 covers this step too; a separate `<time>-migrate-ledger-2-0` backup is made only when 1.5 state already existed. An INFORMATIONAL classification that was never worked on stays a classification and opens no item. The 1.0 statuses map like this:
 
 | 1.0 legal status | 1.5 legal item status |
 |---|---|
 | `OPEN` | `NEEDS_REVIEW` |
 | `LEGAL_REVIEW_REQUESTED` | `AWAITING_COUNSEL` |
-| `COUNSEL_REVIEWED`, `DECISION_RECEIVED` | `REVIEWED` |
-| `IMPLEMENTATION_REQUIRED`, `IMPLEMENTED` | `ACTION_REQUIRED` |
+| `COUNSEL_REVIEWED`, `DECISION_RECEIVED`, `IMPLEMENTED` | `REVIEWED` |
+| `IMPLEMENTATION_REQUIRED` | `ACTION_REQUIRED` |
 | `VERIFIED`, `CLOSED` | `RESOLVED` |
 
 4. **Writes** `.flight-check/.gitignore`, so run output, backups, reports, the lock, and the local file list stay on your machine.

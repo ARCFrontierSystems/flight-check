@@ -418,6 +418,11 @@ def cmd_ledger_revoke(args):
                          "ledger revoke", args.ref, reason=args.note)
 
 
+def _has_item(tx, finding_id):
+    entry = registers.entries_by_id(tx.ledger).get(finding_id)
+    return bool(entry and (entry.get("legal") or {}).get("item"))
+
+
 def cmd_ledger_legal(args):
     """1.0 command: maps the 1.0 legal statuses onto the finding's legal review item."""
     status = constants.V1_LEGAL_TO_ITEM[args.status]
@@ -426,6 +431,13 @@ def cmd_ledger_legal(args):
         with state.transaction(os.path.dirname(os.path.abspath(args.ledger)), args.source, "ledger legal",
                                _now(args).strftime("%Y-%m-%dT%H:%M:%SZ"), ledger_name=os.path.basename(args.ledger),
                                require_ledger=True) as tx:
+            current = legal.item_for_finding(tx.registers, tx.project, tx.ledger, args.id, tx.now_iso, create=False)["status"] \
+                if _has_item(tx, args.id) else "NEEDS_REVIEW"
+            flow = constants.LEGAL_ITEM_FLOW
+            backward = current in flow and status in flow and flow.index(status) < flow.index(current)
+            early_close = status == "RESOLVED" and current not in ("ACTION_REQUIRED", "REVIEWED", "RESOLVED")
+            if (backward or early_close) and not args.reason:
+                raise legal.LegalError("moving %s from %s to %s needs --reason (as in 1.0)" % (args.id, current, status))
             rec, old = legal.set_status(tx.registers, tx.project, tx.ledger, args.id, status, args.source, tx.now_iso, note)
             tx.event(rec["id"], {"status": [old, rec["status"]]}, note)
     except (InputError, ledger.LedgerError, state.StateError, legal.LegalError) as exc:
@@ -478,6 +490,7 @@ def _packet(args, tx):
         return _fail(str(exc))
     led = tx.ledger if tx else None
     now = _now(args)
+    final = dict(final, findings=_with_carried(final, args.run_dir))  # carried-forward findings can go to counsel too
     try:
         data, md_text, meta = packet.build(final, request, led, now, args.page_size, regs=tx.registers if tx else None)
     except packet.PacketError as exc:
@@ -527,6 +540,34 @@ def cmd_runs(args):
     return 0
 
 
+def _with_carried(final, run_dir, summaries=False):
+    """This run's findings plus those it carried forward, each taken from the run that last observed it (a sibling
+    run directory), so skills that read a run see every finding its ship decision counted."""
+    findings = list(final["findings"])
+    base = os.path.dirname(os.path.abspath(run_dir))
+    cache = {}
+    for cf in final.get("carried_forward_findings") or []:
+        src = cache.get(cf["last_seen_run"])
+        if src is None:
+            path = os.path.join(base, cf["last_seen_run"])
+            try:
+                src = cache[cf["last_seen_run"]] = finalize.load_final(path) \
+                    if re.fullmatch(r"[0-9]{8}T[0-9]{6}Z(-[a-z0-9]{1,12})?", cf["last_seen_run"]) else {}
+            except InputError:
+                src = cache[cf["last_seen_run"]] = {}
+        match = next((f for f in src.get("findings") or [] if f["id"] == cf["id"]), None)
+        if match is not None:
+            findings.append(dict(match, status=cf["status"], carried_forward_from=cf["last_seen_run"]))
+        elif summaries:
+            # The run that observed it is not next to this one: list what this run recorded about it.
+            findings.append({"id": cf["id"], "title": cf["title"], "domain": cf["domain"], "rule": cf.get("rule", ""),
+                             "severity": cf["severity"], "effective_confidence": cf["effective_confidence"],
+                             "status": cf["status"], "release_blocking_effective": cf["release_blocking_effective"],
+                             "evidence": [], "affected_components": [], "remediation": "", "explanation": "", "impact": "",
+                             "carried_forward_from": cf["last_seen_run"]})
+    return findings
+
+
 def cmd_findings(args):
     try:
         final = finalize.load_final(args.run_dir)
@@ -534,7 +575,7 @@ def cmd_findings(args):
         return _fail(str(exc))
     wanted = set(args.ids.split(",")) if args.ids else None
     out = []
-    for f in final["findings"]:
+    for f in _with_carried(final, args.run_dir, summaries=True):
         if wanted is not None and f["id"] not in wanted:
             continue
         if args.legal and not f.get("legal"):
@@ -544,6 +585,8 @@ def cmd_findings(args):
                 "evidence": [{"path": ev.get("path"), "lines": "%s-%s" % (ev.get("start_line"), ev.get("end_line")) if ev.get("start_line") else None,
                               "kind": ev.get("kind"), "check": ev.get("check")} for ev in f["evidence"]],
                 "affected_components": f["affected_components"], "remediation": f["remediation"]}
+        if f.get("carried_forward_from"):
+            item["carried_forward_from"] = f["carried_forward_from"]
         if args.detail:
             item.update({"explanation": f["explanation"], "impact": f["impact"], "rule": f["rule"],
                          "quotes": [ev.get("quote") for ev in f["evidence"] if ev.get("quote")]})
@@ -791,8 +834,10 @@ def _register_fields(kind, args):
 
 def _register_change(args, command, fn):
     actor = getattr(args, "source", None) or "user"
+    # A 1.0 project (a ledger but no 1.5 state yet) is migrated by its first recording command, as by finalize.
+    has_ledger = os.path.isfile(os.path.join(_state_dir(args), state.LEDGER))
     with state.transaction(_state_dir(args), actor, command, _stamp(args), root=args.root, by=args.by,
-                           initialize=False) as tx:
+                           initialize=has_ledger) as tx:
         try:
             record, change, reason, result = fn(tx)
         except (registers.RegisterError, legal.LegalError) as exc:

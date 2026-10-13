@@ -132,3 +132,69 @@ class FirstAuditTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CompatibilityTests(unittest.TestCase):
+    """V1 compatibility and identity defects found by the V1.5 review (Phase 10)."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp(prefix="flight-check-compat-")
+        self.addCleanup(shutil.rmtree, self.tmp, True)
+
+    def v1_ledger(self, legal_blocks):
+        from flight_check_lib import catalog, ledger
+        led = ledger.new_ledger("shop")
+        a = {"run": {"run_id": "r1"}, "findings": [helpers.sql_finding(), helpers.deletion_finding()],
+             "coverage": [{"domain": d, "status": "ASSESSED"} for d in catalog.domain_ids()]}
+        ledger.merge(led, a, T1, None)
+        led["schema_version"] = "1.0"
+        for e, block in zip(sorted(led["entries"].values(), key=lambda e: e["id"]), legal_blocks):
+            if block:
+                e["legal"] = block
+        return led
+
+    def test_v1_migration_maps_implemented_skips_untouched_informational_and_truncates_notes(self):
+        from flight_check_lib import constants, ledger
+        self.assertEqual(constants.V1_LEGAL_TO_ITEM["IMPLEMENTED"], "REVIEWED")
+        long_note = "x" * 3990
+        led = self.v1_ledger([{"classification": "INFORMATIONAL", "status": "OPEN", "history": []},
+                              {"classification": "LEGAL REVIEW REQUIRED", "status": "IMPLEMENTED",
+                               "history": [{"at": T1, "status": "IMPLEMENTED", "source": "user", "note": long_note}]}])
+        sd = os.path.join(self.tmp, "s")
+        os.makedirs(sd)
+        ledger.save(os.path.join(sd, "ledger.json"), led)
+        code, out = run_cli("ledger", "mark", "--state-dir", sd, "--id", "FC-0001", "--status", "UNDER_REVIEW",
+                            "--reason", "looking into it", "--now", T2)
+        self.assertEqual(code, 0, out)  # a 1.5 recording command works on a 1.0 project and migrates it
+        st = state.load(sd)
+        self.assertEqual([i["status"] for i in st.registers["legal"]], ["REVIEWED"])
+
+    def test_ledger_legal_needs_a_reason_to_move_back_or_close_early(self):
+        sd = os.path.join(self.tmp, "state")
+        led = os.path.join(sd, "ledger.json")
+        run_dir = helpers.write_run(parts=[helpers.all_controls_resolved(helpers.base_part())], base=self.tmp)
+        self.assertEqual(run_cli("finalize", run_dir, "--root", helpers.FIXTURE_ROOT, "--ledger", led, "--now", T1)[0], 0)
+        fid = next(e["id"] for e in state.load(sd).ledger["entries"].values() if e.get("legal"))
+        code, out = run_cli("ledger", "legal", "--ledger", led, "--id", fid, "--status", "VERIFIED", "--source", "user",
+                            "--note", "done", "--now", T2)
+        self.assertEqual(code, 1)
+        self.assertIn("--reason", out["error"])
+
+    def test_same_project_through_a_symlinked_path(self):
+        real = os.path.join(self.tmp, "real")
+        os.makedirs(real)
+        link = os.path.join(self.tmp, "link")
+        os.symlink(real, link)
+        self.assertEqual(state.locate(real), state.locate(link))
+
+    def test_duplicate_positive_controls_keep_one_id(self):
+        from flight_check_lib import ledger
+        led = ledger.new_ledger("t")
+        pc = {"domain": "application-security", "title": "Queries are parameterized",
+              "evidence": [{"kind": "code", "path": "src/store.py"}]}
+        first, second = dict(pc), dict(pc)
+        ledger.merge_positive_controls(led, [first, second], "r1", T1, lambda p: {})
+        self.assertEqual((first["id"], second["id"], len(led["positive_controls"])), ("PC-0001", "PC-0001", 1))
+        again = dict(pc)
+        ledger.merge_positive_controls(led, [again], "r2", T2, lambda p: {})
+        self.assertEqual(again["id"], "PC-0001")

@@ -220,6 +220,8 @@ class IncrementalTests(ProjectTestCase):
         self.assertIn("CARRIED FORWARD (not reassessed in this run)", report)
         self.assertIn("VERIFIED (carried forward)", report)
         self.assertEqual(run_cli("state", "check", "--state-dir", self.sd)[0], 0)
+        listed = {f["id"]: f for f in run_cli("findings", out["run_dir"])[1]["findings"]}
+        self.assertEqual(listed[carried[0]["id"]]["carried_forward_from"], "20261013T100000Z")
         # Nothing changed since: the carried-forward chain holds, so there is nothing to reassess.
         self.assertTrue(self.init_changed("2026-10-13T13:00:00Z")["nothing_to_reassess"])
 

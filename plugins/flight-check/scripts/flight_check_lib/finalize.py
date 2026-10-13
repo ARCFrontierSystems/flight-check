@@ -289,6 +289,7 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         "unverified_areas": audit["unverified_areas"],
         "remediation_checks": audit["remediation_checks"],
         "regressions": lifecycle.get("regressions", []),
+        "possible_regressions": lifecycle.get("possible_regressions", []),
         "not_reproduced": lifecycle.get("not_reproduced", []),
         "remediated_pending": lifecycle.get("remediated_pending", []),
         "carried_forward_findings": audit.get("carried_forward_findings", []),
