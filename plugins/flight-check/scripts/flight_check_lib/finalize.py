@@ -64,24 +64,37 @@ def _scope(run_dir):
     return doc
 
 
+_STILL_OPEN = ("OPEN", "REGRESSION", "REMEDIATED", "UNDER_REVIEW", "REMEDIATION_PLANNED", "ACCEPTED_RISK")
+
+
 def _carried_findings(audit, entries, files):
-    """Findings in carried-forward domains that counted at those domains' last assessment, as gate inputs."""
-    origins = {c["domain"]: c["carried_forward"] for c in audit["coverage"] if c["status"] == constants.CARRIED_FORWARD}
+    """Gate inputs this run did not observe but must not drop: findings in carried-forward domains that counted at
+    those domains' last assessment, and open findings in a domain this run reports not applicable (an owner override
+    or an inventory answer narrows attention; it never hides recorded evidence)."""
+    coverage = {c["domain"]: c for c in audit["coverage"]}
     seen = {f["id"] for f in audit["findings"]}
     out = []
     for fid, e in sorted(entries.items()):
-        origin = origins.get(e["domain"])
-        # Seen at the domain's last assessment or later (an agent of another domain may have re-reported it in a run
-        # that carried this domain). Run IDs start with their UTC time, so they sort in time order.
-        if not origin or fid in seen or e["last_seen_run"] < origin["run_id"]:
+        cov = coverage.get(e["domain"])
+        if not cov or fid in seen:
             continue
-        if e["status"] in constants.RESOLVED_STATUSES or e["status"] == "NOT_REPRODUCED":
+        if cov["status"] == constants.CARRIED_FORWARD:
+            # Seen at the domain's last assessment or later (an agent of another domain may have re-reported it in a
+            # run that carried this domain). Run IDs start with their UTC time, so they sort in time order.
+            if e["last_seen_run"] < cov["carried_forward"]["run_id"]:
+                continue
+            if e["status"] in constants.RESOLVED_STATUSES or e["status"] == "NOT_REPRODUCED":
+                continue
+            basis = "carried_forward"
+        elif cov["status"] == "NOT_APPLICABLE" and e["status"] in _STILL_OPEN:
+            basis = "not_applicable"
+        else:
             continue
         ev = freshness.evidence_state(e.get("evidence_files") or {}, files)
         item = {"id": fid, "domain": e["domain"], "rule": e["rule"], "title": e["title"], "severity": e["severity"],
                 "status": e["status"], "confidence": e.get("confidence", "UNVERIFIED"),
                 "release_blocking": e.get("release_blocking", e["severity"] != "INFORMATIONAL"),
-                "last_seen_run": e["last_seen_run"], "evidence_state": ev}
+                "last_seen_run": e["last_seen_run"], "evidence_state": ev, "basis": basis}
         if ev in (freshness.STALE, freshness.MISSING):
             item["evidence_check"] = "FAILED"
         if e.get("accepted_risk"):

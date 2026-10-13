@@ -1,5 +1,6 @@
 """Change detection, evidence freshness, lifecycle additions, and new gate inputs (Phase 7a)."""
 
+import datetime
 import json
 import os
 import shutil
@@ -414,6 +415,80 @@ class RecordedIdentityFinalizeTests(ProjectTestCase):
         self.assertEqual(res["lifecycle"]["new"], [])
 
 
+class GateReviewFixTests(unittest.TestCase):
+    """Ship-decision defects found by the V1.5 review (Phase 10)."""
+
+    def setUp(self):
+        self.led = ledger.new_ledger("t")
+        self.cov = [{"domain": d, "status": "ASSESSED"} for d in catalog.domain_ids()]
+        ledger.merge(self.led, {"run": {"run_id": "r1"}, "findings": [helpers.sql_finding()], "coverage": self.cov}, T1, None)
+        self.proj, self.regs = state.new_project(state.new_identity(None, "t", T1)), state.new_registers()
+
+    def test_open_findings_in_a_domain_reported_not_applicable_still_count(self):
+        from flight_check_lib import finalize
+        entry = ledger.find_entry(self.led, "FC-0001")[1]
+        entry.update(confidence="CONFIRMED", release_blocking=True)
+        audit = {"findings": [], "coverage": [{"domain": "application-security", "status": "NOT_APPLICABLE"}]}
+        carried = finalize._carried_findings(audit, {"FC-0001": entry}, {})
+        self.assertEqual([(f["id"], f["basis"]) for f in carried], [("FC-0001", "not_applicable")])
+        d = gate.decide(dict(clean_audit(), carried_forward_findings=carried), self.led, None)
+        self.assertEqual(d["decision"], constants.GATE_NOT_READY)
+
+    def test_a_judged_match_does_not_inherit_an_acceptance_for_something_milder(self):
+        ledger.accept(self.led, "FC-0001", {"risk": "r", "reason": "internal only", "owner": "o", "date": "2026-10-13",
+                                            "scope": "s", "compensating_controls": "none"}, T1, datetime.date(2026, 10, 13))
+        entry = ledger.find_entry(self.led, "FC-0001")[1]
+        entry["severity"] = "LOW"
+        other = helpers.sql_finding(rule="data-protection.something-else", domain="data-protection",
+                                    title="A different and worse problem", recorded_id="FC-0001", severity="HIGH")
+        other["evidence"][0]["quote"] = other["evidence"][0]["quote"].replace("SELECT", "select")
+        changes = ledger.merge(self.led, {"run": {"run_id": "r2"}, "findings": [other], "coverage": self.cov}, T2, None)
+        self.assertEqual((entry["status"], changes["reopened"]), ("OPEN", ["FC-0001"]))
+
+    def test_flight_check_never_reverts_user_decisions(self):
+        req = registers.add("requirement", self.proj, self.regs, self.led, {"title": "No secrets", "description": "None in code.",
+                                                                            "category": "security", "criticality": "release-critical"}, "user", T1)
+        with self.assertRaises(registers.RegisterError):
+            registers.update(self.proj, self.regs, self.led, req["id"], "flight-check", T2, status="PROPOSED")
+        registers.update(self.proj, self.regs, self.led, req["id"], "flight-check", T2, status="IMPLEMENTED")
+        item = registers.add("legal", self.proj, self.regs, self.led, {"title": "Terms", "category": "Terms",
+                                                                       "description": "Terms are missing.", "trigger": "owner"}, "user", T1)
+        registers.update(self.proj, self.regs, self.led, item["id"], "user", T2, status="ACTION_REQUIRED")
+        with self.assertRaises(registers.RegisterError):
+            registers.update(self.proj, self.regs, self.led, item["id"], "flight-check", T3, status="NEEDS_REVIEW")
+
+    def test_register_acceptance_timing_and_dates(self):
+        import datetime
+        risk = registers.add("risk", self.proj, self.regs, self.led, {"title": "Bulk job", "description": "A risky job.",
+                                                                      "domain": "reliability", "severity": "HIGH"}, "user", T1)
+        acc = {"reason": "reviewed", "owner": "o", "date": "2026-10-13", "scope": "s", "compensating_controls": "none"}
+        with self.assertRaises(registers.RegisterError):
+            registers.accept_risk(self.regs, risk["id"], dict(acc, date="2027-01-01"), T2)
+        registers.accept_risk(self.regs, risk["id"], acc, T2)
+        audit = dict(clean_audit(), run={"run_id": "20261013T103000Z", "started_at": "2026-10-13T10:30:00Z"})
+        d = gate.decide(audit, None, datetime.date(2026, 10, 13), registers=self.regs)
+        self.assertEqual(d["decision"], constants.GATE_NOT_READY)  # recorded at 11:00, after the run started
+        self.assertIn("counts from the next run", " ".join(d["acceptances_not_counted"]))
+
+    def test_dismissal_during_a_run_does_not_change_that_run(self):
+        ledger.mark(self.led, "FC-0001", "FALSE_POSITIVE", "constant input in this deployment", "2026-10-13T12:05:00Z", by="owner")
+        f = dict(helpers.sql_finding(), id="FC-0001", status="FALSE_POSITIVE", effective_confidence="CONFIRMED", release_blocking=True)
+        audit = dict(clean_audit([f]), run={"run_id": "20261013T120000Z", "started_at": "2026-10-13T12:00:00Z"})
+        d = gate.decide(audit, self.led, None)
+        self.assertEqual(d["decision"], constants.GATE_NOT_READY)
+
+    def test_requirement_not_verified_while_a_linked_finding_is_triaged_and_remediation_allowed(self):
+        req = registers.add("requirement", self.proj, self.regs, self.led, {"title": "Safe SQL", "description": "Bound parameters.",
+                                                                            "category": "security", "criticality": "high"}, "user", T1,
+                            links=["control:APPSEC-SECRETS", "FC-0001"])
+        ledger.mark(self.led, "FC-0001", "REMEDIATION_PLANNED", "fix scheduled this sprint", T2, by="owner")
+        final = {"controls": [{"id": "APPSEC-SECRETS", "state": "VERIFIED", "evidence_check": "PASSED"}]}
+        registers.apply_assessment(self.regs, final, registers.entries_by_id(self.led), T3, "r3")
+        self.assertNotEqual(req["status"], "VERIFIED")
+        ledger.record_remediation(self.led, "FC-0001", "parameterized the query", ["src/store.py"], T3)
+        self.assertEqual(ledger.find_entry(self.led, "FC-0001")[1]["status"], "REMEDIATED")
+
+
 def clean_audit(findings=()):
     controls = [{"id": c["id"], "state": "VERIFIED", "release_critical": c["release_critical"]} for c in catalog.controls()]
     return {"run": {"run_id": "20261013T120000Z", "started_at": T3}, "findings": list(findings), "controls": controls,
@@ -445,8 +520,13 @@ class GateInputTests(unittest.TestCase):
         self.assertIn("never lifts the block", " ".join(d["reasons"]))
         risk["severity"] = "MEDIUM"
         self.assertEqual(gate.decide(clean_audit(), None, None, registers=regs)["decision"], constants.GATE_READY_ACCEPTED)
-        risk["links"] = {"findings": ["FC-0001"]}  # represented by its findings instead
-        self.assertEqual(gate.decide(clean_audit(), None, None, registers=regs)["decision"], constants.GATE_READY)
+        risk["links"] = {"findings": ["FC-0001"]}
+        # A linked finding that is not in this run's decision does not stand in for the risk.
+        self.assertEqual(gate.decide(clean_audit(), None, None, registers=regs)["decision"], constants.GATE_READY_ACCEPTED)
+        f = {"id": "FC-0001", "severity": "MEDIUM", "confidence": "CONFIRMED", "release_blocking": False, "status": "OPEN"}
+        self.assertEqual(gate.decide(clean_audit([f]), None, None, registers=regs)["decision"], constants.GATE_READY)
+        risk.update(severity="CRITICAL", status="OPEN")  # a milder linked finding never hides a more severe risk
+        self.assertEqual(gate.decide(clean_audit([f]), None, None, registers=regs)["decision"], constants.GATE_CRITICAL)
 
     def test_false_positive_is_visible_and_critical_still_blocks(self):
         f = dict(helpers.sql_finding(), id="FC-0001", status="FALSE_POSITIVE", severity="MEDIUM",

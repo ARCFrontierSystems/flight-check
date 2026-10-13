@@ -30,6 +30,9 @@ TRANSITIONS = {
               "AWAITING_COUNSEL": {"user"}, "ACTION_REQUIRED": {"user"}, "REVIEWED": {"user"}, "RESOLVED": {"user"},
               "NOT_APPLICABLE": {"user"}},
 }
+# Moving a record back to these statuses would undo a user's decision (and can lift a gate input), so Flight Check
+# never does it from a status only the user sets. Reopening on evidence (a regression) happens elsewhere, on findings.
+REVERTS = {"requirement": {"PROPOSED"}, "decision": {"PROPOSED"}, "risk": set(), "legal": {"NEEDS_REVIEW"}}
 INITIAL = {"requirement": {"user": "ACCEPTED", "flight-check": "PROPOSED"},
            "decision": {"user": "ACCEPTED", "flight-check": "PROPOSED"},
            "risk": {"user": "OPEN", "flight-check": "OPEN"},
@@ -173,6 +176,9 @@ def update(project, registers, led, record_id, source, now_iso, status=None, fie
     kind, rec = find(registers, record_id)
     old_status = rec["status"]
     if status and status != old_status:
+        if source != "user" and status in REVERTS[kind] and source not in TRANSITIONS[kind].get(old_status, set()):
+            raise RegisterError("%s is %s, which only the user sets; Flight Check never moves it back to %s"
+                                % (record_id, old_status, status))
         allowed = TRANSITIONS[kind].get(status)
         if allowed is None:
             raise RegisterError("%s is not a %s status" % (status, kind))
@@ -215,8 +221,13 @@ def accept_risk(registers, record_id, acceptance, now_iso, by=None):
             raise RegisterError("a risk acceptance needs %s" % name.replace("_", " "))
     if not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", acceptance["date"]):
         raise RegisterError("acceptance date must be YYYY-MM-DD")
+    if acceptance["date"] > now_iso[:10]:
+        raise RegisterError("the acceptance date %s is in the future" % acceptance["date"])
+    review = acceptance.get("review_date")
+    if review and (not re.fullmatch(r"[0-9]{4}-[0-9]{2}-[0-9]{2}", review) or review < now_iso[:10]):
+        raise RegisterError("the review date must be YYYY-MM-DD and not in the past")
     old = rec["status"]
-    rec["acceptance"] = {k: _clean(v, 2000) for k, v in acceptance.items() if v}
+    rec["acceptance"] = dict({k: _clean(v, 2000) for k, v in acceptance.items() if v}, recorded_at=now_iso)
     rec["status"] = "ACCEPTED"
     rec["updated_at"] = now_iso
     rec["history"].append(_event(now_iso, "ACCEPTED", "user", "accepted by %s: %s" % (acceptance["owner"], acceptance["reason"]), by))
@@ -290,7 +301,7 @@ def apply_assessment(registers, final, ledger_entries, now_iso, run_id):
         states = [controls.get(c, {}).get("state") for c in linked]
         checks = [controls.get(c, {}).get("evidence_check") for c in linked]
         open_findings = [f for f in (rec.get("links") or {}).get("findings") or []
-                         if ledger_entries.get(f, {}).get("status") in ("OPEN", "REGRESSION", "REMEDIATED", "NOT_REPRODUCED")]
+                         if ledger_entries.get(f, {}).get("status") in constants.OPEN_STATUSES + ("ACCEPTED_RISK",)]
         verified = (all(s == "VERIFIED" for s in states) and all(c in ("PASSED", None) for c in checks)
                     and not open_findings)
         if verified and any(controls.get(c, {}).get("carried_forward") for c in linked):
