@@ -7,7 +7,7 @@ import os
 import re
 import sys
 
-from . import VERSION, catalog, constants, finalize, gate, ledger, lockfile, minischema, packet, profile, render_md, state, validate
+from . import VERSION, catalog, constants, finalize, gate, ledger, lockfile, minischema, packet, profile, registers, render_md, state, validate
 from .jsonio import InputError, dump_json, load_json, write_bytes, write_text
 
 
@@ -257,7 +257,7 @@ def _record_of(ref):
 
 
 def _status_of(led, ref):
-    entry = led["entries"].get(ref)
+    entry = registers.entries_by_id(led).get(ref)
     if entry is not None:
         return {"status": entry["status"], "legal": (entry.get("legal") or {}).get("status")}
     acc = led["control_acceptances"].get(ref)
@@ -618,6 +618,166 @@ def _add_profile_parsers(sub):
     s.add_argument("--reason", required=True)
 
 
+REGISTER_FIELDS = {
+    "requirement": [("title", None), ("description", None), ("category", None), ("criticality", None),
+                    ("applicability", None), ("components", "component")],
+    "decision": [("title", None), ("context", None), ("decision", None), ("rationale", None), ("alternatives", None),
+                 ("owner", None), ("date", None), ("review_triggers", "review-trigger"), ("assertions", "assertion")],
+    "risk": [("title", None), ("description", None), ("domain", None), ("severity", None), ("confidence", None),
+             ("impact", None), ("likelihood", None), ("owner", None), ("mitigation_plan", None), ("next_review", None)],
+}
+
+
+def _register_fields(kind, args):
+    return {name: getattr(args, name, None) for name, _ in REGISTER_FIELDS[kind]}
+
+
+def _register_change(args, command, fn):
+    actor = getattr(args, "source", None) or "user"
+    with state.transaction(_state_dir(args), actor, command, _stamp(args), root=args.root, by=args.by,
+                           initialize=False) as tx:
+        try:
+            record, change, reason, result = fn(tx)
+        except registers.RegisterError as exc:
+            raise state.StateError(str(exc))
+        tx.event(record, change, reason)
+    return result
+
+
+def _make_register_commands(kind):
+    @_state_cmd
+    def add(args):
+        def fn(tx):
+            fields = _register_fields(kind, args)
+            links = list(args.link or [])
+            if kind == "risk" and args.from_finding:
+                entry = registers.entries_by_id(tx.ledger).get(args.from_finding)
+                if entry is None:
+                    raise registers.RegisterError("no finding %s in the ledger" % args.from_finding)
+                fields["title"] = fields["title"] or entry["title"]
+                fields["description"] = fields["description"] or "Tracked from finding %s: %s" % (entry["id"], entry["title"])
+                fields["domain"] = fields["domain"] or entry["domain"]
+                fields["severity"] = fields["severity"] or entry["severity"]
+                links.append(args.from_finding)
+            rec = registers.add(kind, tx.project, tx.registers, tx.ledger, fields, args.source, tx.now_iso, links,
+                                args.by, args.note)
+            return rec["id"], {"status": [None, rec["status"]]}, args.note, {"id": rec["id"], "status": rec["status"]}
+        return _register_change(args, "%s add" % kind, fn)
+
+    @_state_cmd
+    def update(args):
+        def fn(tx):
+            _, rec, old = registers.update(tx.project, tx.registers, tx.ledger, args.id, args.source, tx.now_iso,
+                                           status=args.status, fields=_register_fields(kind, args), links=args.link,
+                                           note=args.note, by=args.by, superseded_by=getattr(args, "superseded_by", None))
+            change = {"status": [old, rec["status"]]} if old != rec["status"] else {}
+            return rec["id"], change, args.note, {"id": rec["id"], "status": rec["status"]}
+        return _register_change(args, "%s update" % kind, fn)
+
+    @_state_cmd
+    def show(args):
+        st = state.load(_state_dir(args), root=args.root)
+        if not st.initialized:
+            raise state.StateError("no project state yet; run an audit or `state init` first")
+        key = registers.KINDS[kind]["key"]
+        if getattr(args, "id", None):
+            _, rec = registers.find(st.registers, args.id)
+            return {"record": rec, "linked_from": registers.reverse_links(st.registers, args.id)}
+        rows = [registers.summary_row(kind, r) for r in st.registers[key]
+                if not args.status or r["status"] == args.status]
+        return {key: rows}
+    return add, update, show
+
+
+@_state_cmd
+def cmd_risk_accept(args):
+    def fn(tx):
+        acceptance = {"reason": args.reason, "owner": args.owner, "date": args.date, "scope": args.scope,
+                      "compensating_controls": args.compensating_controls, "conditions": args.conditions,
+                      "review_date": args.review_date, "review_trigger": args.review_trigger}
+        rec, old = registers.accept_risk(tx.registers, args.id, acceptance, tx.now_iso, args.by)
+        return rec["id"], {"status": [old, "ACCEPTED"]}, args.reason, {
+            "id": rec["id"], "status": "ACCEPTED", "severity": rec["severity"],
+            "note": "Acceptance does not lower severity; a CRITICAL risk still blocks release."}
+    args.source = "user"
+    return _register_change(args, "risk accept", fn)
+
+
+@_state_cmd
+def cmd_decision_assertions(args):
+    st = state.load(_state_dir(args), root=args.root)
+    if not st.initialized:
+        return {"assertions": []}
+    return {"assertions": registers.active_assertions(st.registers)}
+
+
+def _add_register_parsers(sub):
+    choices = {"category": ["security", "privacy", "compliance-readiness", "accessibility", "reliability", "data-lifecycle",
+                            "authentication", "authorization", "infrastructure", "deployment", "legal-business",
+                            "product-behavior", "release"],
+               "criticality": ["release-critical", "high", "normal"], "severity": list(constants.SEVERITIES),
+               "confidence": list(constants.CONFIDENCES), "domain": catalog.domain_ids()}
+    names = {"requirement": "req", "decision": "decision", "risk": "risk"}
+    for kind, command in names.items():
+        add, update, show = _make_register_commands(kind)
+        parser = sub.add_parser(command, help="the %s register" % kind)
+        rsub = parser.add_subparsers(dest="%s_command" % command)
+        rsub.required = True
+
+        def common(s, func, source=True):
+            s.add_argument("--root")
+            s.add_argument("--state-dir")
+            s.add_argument("--now")
+            s.add_argument("--by", help="who made this change")
+            if source:
+                s.add_argument("--source", choices=["user", "flight-check"], default="user",
+                               help="flight-check only for Flight Check's own suggestions")
+            s.set_defaults(func=func)
+
+        def fields(s):
+            for name, flag in REGISTER_FIELDS[kind]:
+                opt = "--" + (flag or name.replace("_", "-"))
+                if flag:
+                    s.add_argument(opt, dest=name, action="append")
+                elif choices.get(name):
+                    s.add_argument(opt, dest=name, choices=choices[name])
+                else:
+                    s.add_argument(opt, dest=name)
+            s.add_argument("--link", action="append", help="FC-, REQ-, DEC-, RISK-, LR-, PF- ids or control:<id>")
+            s.add_argument("--note")
+
+        s = rsub.add_parser("add")
+        common(s, add)
+        fields(s)
+        if kind == "risk":
+            s.add_argument("--from-finding", help="start from a ledger finding (FC-xxxx)")
+        s = rsub.add_parser("update")
+        common(s, update)
+        fields(s)
+        s.add_argument("--id", required=True)
+        s.add_argument("--status", choices=sorted(registers.TRANSITIONS[kind]))
+        if kind == "decision":
+            s.add_argument("--superseded-by")
+        s = rsub.add_parser("list")
+        common(s, show, source=False)
+        s.add_argument("--status")
+        s = rsub.add_parser("show")
+        common(s, show, source=False)
+        s.add_argument("--id", required=True)
+        s.add_argument("--status")
+        if kind == "risk":
+            s = rsub.add_parser("accept", help="record your acceptance of a risk (severity is unchanged)")
+            common(s, cmd_risk_accept, source=False)
+            s.add_argument("--id", required=True)
+            for name in ("reason", "owner", "date", "scope", "compensating-controls"):
+                s.add_argument("--" + name, required=True)
+            for name in ("conditions", "review-date", "review-trigger"):
+                s.add_argument("--" + name)
+        if kind == "decision":
+            s = rsub.add_parser("assertions", help="statements from accepted decisions, for agents to check")
+            common(s, cmd_decision_assertions, source=False)
+
+
 def _add_state_parsers(sub):
     sp = sub.add_parser("state", help="inspect, check, back up, and recover Flight Check project state")
     ssub = sp.add_subparsers(dest="state_command")
@@ -726,6 +886,7 @@ def build_parser():
 
     _add_state_parsers(sub)
     _add_profile_parsers(sub)
+    _add_register_parsers(sub)
 
     lp = sub.add_parser("ledger", help="inspect or update the finding ledger")
     lsub = lp.add_subparsers(dest="ledger_command")
