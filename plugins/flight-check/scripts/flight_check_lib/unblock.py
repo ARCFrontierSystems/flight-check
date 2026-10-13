@@ -148,7 +148,8 @@ def _register_item(kind, rid, effect, rec):
     if kind == "legal":
         return {"kind": kind, "id": rid, "effect": effect, "who": "you",
                 "problem": "Your legal question \"%s\" (%s) is marked as needing action before release." % (title, rid),
-                "action": "Complete it, with your lawyer if needed, and record the outcome with /flight-check:track."}
+                "action": "Complete it, with your lawyer if needed; I can make the technical changes it calls for (say "
+                          "\"fix it\"). Then record the outcome with /flight-check:track."}
     if effect == "refresh":
         return {"kind": kind, "id": rid, "effect": effect, "who": "you",
                 "problem": "Your acceptance of the risk \"%s\" (%s) no longer counts: it is incomplete or past its review date." % (title, rid),

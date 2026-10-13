@@ -27,9 +27,9 @@ sys.path.insert(0, os.path.join(PLUGIN, "scripts"))
 
 from flight_check_lib import VERSION, catalog, constants, render_md  # noqa: E402
 
-# Skills Claude may start on its own: status only reads, and fix asks the user once before changing anything and starts
-# no paid audit. Audits, remediation with re-audit, packets, watch, and the user's decisions stay manual.
-MODEL_INVOCABLE_SKILLS = {"status", "fix"}
+# Skills Claude may start on its own: status only reads; fix asks the user once before changing anything and starts
+# no paid audit; legal-packet builds a document and records only what the user answers, each record confirmed. Audits, remediation with re-audit, packets, watch, and the user's decisions stay manual.
+MODEL_INVOCABLE_SKILLS = {"status", "fix", "legal-packet"}
 SKILL_KEYS = {"name", "description", "when_to_use", "argument-hint", "arguments", "disable-model-invocation",
               "user-invocable", "allowed-tools", "disallowed-tools", "model", "effort", "license", "metadata", "compatibility"}
 AGENT_KEYS = {"name", "description", "tools", "disallowedTools", "model", "effort", "maxTurns", "omitClaudeMd", "skills", "color"}
@@ -65,9 +65,9 @@ def walk(base, skip_dirs=(".git",)):
 # Subcommands a skill may pre-approve. Commands that record the user's own decisions
 # (ledger accept, revoke, legal, close) are deliberately absent: they must always prompt.
 PREAPPROVABLE_SUBCOMMANDS = {"version", "init-run", "validate", "save-reply", "finalize", "render", "gate", "release-check", "sarif", "later", "watch", "settings", "runs", "findings",
-                             "packet", "schema-check", "ledger show", "ledger remediate", "status", "report",
+                             "packet", "schema-check", "ledger show", "ledger remediate", "legal list", "status", "report",
                              "changes"}
-PREAPPROVAL = re.compile(r"Bash\(python3 \$\{CLAUDE_PLUGIN_ROOT\}/scripts/flight_check\.py ((?:ledger )?[a-z-]+) \*\)")
+PREAPPROVAL = re.compile(r"Bash\(python3 \$\{CLAUDE_PLUGIN_ROOT\}/scripts/flight_check\.py ((?:ledger |legal )?[a-z-]+) \*\)")
 
 
 def parse_frontmatter(path):
