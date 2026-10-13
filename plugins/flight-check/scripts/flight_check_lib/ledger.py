@@ -151,11 +151,13 @@ def merge(led, audit, now_iso, today):
     findings = sorted(audit["findings"], key=lambda f: (f["domain"], f["rule"], fingerprint.primary_path(f), f["local_id"]))
     fps = fingerprint.assign(findings)
     matched = set()
-    changes = {"new": [], "regressions": [], "reopened": [], "expired_acceptances": []}
+    changes = {"new": [], "regressions": [], "possible_regressions": [], "reopened": [], "expired_acceptances": [],
+               "false_positive_reobserved": [], "superseded_reobserved": []}
 
     # Pass 1: exact fingerprints, including ones recorded earlier as alternates. These go first so that
     # a looser match below can never take an entry that another finding matches exactly.
     assigned = [None] * len(findings)
+    match_kind = ["exact"] * len(findings)
     for i, fp in enumerate(fps):
         entry_fp = fp if fp in entries else alt_index.get(fp)
         if entry_fp is not None and entry_fp not in matched:
@@ -178,6 +180,7 @@ def merge(led, audit, now_iso, today):
                           and (_word_similarity(_rule_words(entries[c]["rule"]), _rule_words(f["rule"])) >= 0.34
                                or _word_similarity(_title_words(entries[c]["title"]), _title_words(f["title"])) >= 0.5)]
             if len(candidates) != 1:
+                match_kind[i] = "possible"  # only the title and file agree: identity is uncertain
                 candidates = [c for c in same_file
                               if _word_similarity(_title_words(entries[c]["title"]), _title_words(f["title"])) >= 0.6]
         if len(candidates) == 1:
@@ -217,8 +220,17 @@ def merge(led, audit, now_iso, today):
             new = prev
             note = None
             if prev in constants.RESOLVED_STATUSES:
-                new, note = "REGRESSION", "previously %s; observed again" % prev
-                changes["regressions"].append(e["id"])
+                kind = match_kind[i]
+                new = "REGRESSION"
+                note = "previously %s; observed again%s" % (prev, "" if kind == "exact" else
+                                                            " (possible regression: matched by file and wording, not by fingerprint)")
+                e["regression"] = {"original_resolution": prev, "reappeared_run": run_id, "reappeared_at": now_iso,
+                                   "match": kind}
+                changes["regressions" if kind == "exact" else "possible_regressions"].append(e["id"])
+            elif prev == "FALSE_POSITIVE":
+                changes["false_positive_reobserved"].append(e["id"])
+            elif prev == "SUPERSEDED":
+                changes["superseded_reobserved"].append(e["id"])
             elif prev == "REMEDIATED":
                 new, note = "OPEN", "still observed after the recorded remediation"
                 changes["reopened"].append(e["id"])
@@ -265,7 +277,7 @@ def merge(led, audit, now_iso, today):
             continue
         check = checks.get(e["id"])
         status = e["status"]
-        if status in ("OPEN", "REGRESSION", "REMEDIATED", "NOT_REPRODUCED"):
+        if status in constants.OPEN_STATUSES:
             # An explicit remediation check is applied even when the finding's domain was not assessed
             # in this run: the verifier read the current code for exactly this finding.
             if status == "REMEDIATED" and check and check["result"] == "FIXED_VERIFIED":
@@ -283,7 +295,7 @@ def merge(led, audit, now_iso, today):
                 continue
             if status == "REMEDIATED":
                 lifecycle["remediated_pending"].append(e["id"])
-            elif status in ("OPEN", "REGRESSION"):
+            elif status in ("OPEN", "REGRESSION", "UNDER_REVIEW", "REMEDIATION_PLANNED"):
                 e["status"] = "NOT_REPRODUCED"
                 e["history"].append(_event(now_iso, "NOT_REPRODUCED", "flight-check", "not observed in an assessed domain; confirm resolution", run_id))
                 lifecycle["not_reproduced"].append(e["id"])
@@ -300,6 +312,58 @@ def merge(led, audit, now_iso, today):
     changes["ledger_entries"] = {e["id"]: {"status": e["status"], "title": e["title"], "domain": e["domain"],
                                            "severity": e["severity"]} for e in entries.values()}
     return changes
+
+
+def mark(led, finding_id, status, reason, now_iso, superseded_by=None, by=None):
+    """The user's own triage of a finding: under review, remediation planned, false positive, superseded, or open again.
+    Only the user sets these; nothing here deletes a finding or its history."""
+    if status not in constants.USER_MARK_STATUSES:
+        raise LedgerError("%s cannot be set this way (use one of %s)" % (status, ", ".join(constants.USER_MARK_STATUSES)))
+    if not (reason or "").strip() or len(reason.strip()) < 5:
+        raise LedgerError("say why (--reason)")
+    _, entry = find_entry(led, finding_id)
+    if entry["status"] in constants.RESOLVED_STATUSES and status != "OPEN":
+        raise LedgerError("%s is %s; reopen it first if it needs attention again" % (finding_id, entry["status"]))
+    if status == "SUPERSEDED":
+        if not superseded_by:
+            raise LedgerError("give --superseded-by FC-xxxx")
+        if superseded_by == finding_id:
+            raise LedgerError("a finding cannot supersede itself")
+        find_entry(led, superseded_by)
+        entry["superseded_by"] = superseded_by
+    old = entry["status"]
+    entry["status"] = status
+    entry["history"].append(_event(now_iso, status, "user", ("%s: " % by if by else "") + reason.strip()))
+    return old
+
+
+def merge_positive_controls(led, positives, run_id, now_iso, evidence_files):
+    """Stable PC- ids for positive controls across runs: same domain and file, and a similar title."""
+    pcs = led.setdefault("positive_controls", {})
+    led.setdefault("next_pc_id", 1)
+    seen = set()
+    for p in positives:
+        path = (p.get("evidence") or [{}])[0].get("path", "")
+        key = "%s|%s|%s" % (p["domain"], path, " ".join(sorted(_title_words(p["title"]))))
+        match = key if key in pcs and key not in seen else None
+        if match is None:
+            for k, pc in pcs.items():
+                if k not in seen and pc["domain"] == p["domain"] and pc.get("path", "") == path and \
+                        _word_similarity(_title_words(pc["title"]), _title_words(p["title"])) >= 0.5:
+                    match = k
+                    break
+        if match is None:
+            match = key
+            pcs[key] = {"id": "PC-%04d" % led["next_pc_id"], "domain": p["domain"], "title": p["title"][:300],
+                        "path": path, "first_seen_run": run_id, "last_seen_run": run_id, "status": "observed"}
+            led["next_pc_id"] += 1
+        pc = pcs[match]
+        pc.update(last_seen_run=run_id, status="observed", evidence_files=evidence_files(p))
+        seen.add(match)
+        p["id"] = pc["id"]
+    for k, pc in pcs.items():
+        if k not in seen and pc["status"] == "observed":
+            pc["status"] = "not_observed"
 
 
 def record_run(led, run_id, now_iso, gate, mode):

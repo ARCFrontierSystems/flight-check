@@ -47,5 +47,9 @@ def control_by_id():
     return {c["id"]: c for c in controls()}
 
 
+def impact_rules():
+    return _load("impact_rules", "references", "impact-rules.json")
+
+
 def profile_aspects():
     return _load("profile_aspects", "references", "profile-aspects.json")["aspects"]

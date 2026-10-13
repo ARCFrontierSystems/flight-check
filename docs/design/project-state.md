@@ -256,7 +256,9 @@ Fields: `category`, `description`, `trigger` (the finding, profile fact, or docu
 | Not seen this run | `NOT_REPRODUCED` (1.0; not seen is not fixed) |
 | Closed | `CLOSED` (user) |
 
-- **Regressions** keep a `regression` record: original finding, original resolution, reappearance run, changed files, and `match` (`exact` for fingerprint or same rule and file; `possible` for the weaker matching passes). A `possible` regression is shown as such, never as confirmed.
+- **Regressions** keep a `regression` record: original resolution, reappearance run and time, and `match`: `exact` when the finding matched by fingerprint, by the same rule and file, or by the same quoted anchor line; `possible` when only the file and a similar title matched. A `possible` regression is reported as such (`possible_regressions`), never as confirmed.
+- Each ledger entry keeps `evidence_files` (path to hash of every file the finding cited when last observed); `project.json` keeps the latest state of each control with the same hashes. These are what `changes` traces.
+- A finding the user marked `FALSE_POSITIVE` or `SUPERSEDED` that an audit still reports counts like an accepted risk in the ship decision (at best READY WITH ACCEPTED RISKS), and a CRITICAL one still blocks.
 - A finding marked `FALSE_POSITIVE` that is observed again keeps its status but is flagged for review in the status view.
 - Partial scans never mark findings in unassessed domains `NOT_REPRODUCED` (1.0 behavior, kept).
 - Positive controls gain persistent records in the same ledger file (`PC-` keys under `positive_controls`), with evidence references, so a positive control whose code changed becomes stale instead of staying verified. They get stable four-digit IDs (`PC-0001`), matched across runs like findings; 1.0 numbers them per run (`PC-001`), so report numbering changes.
@@ -265,8 +267,9 @@ Fields: `category`, `description`, `trigger` (the finding, profile fact, or docu
 
 The 1.0 gate keeps its five decisions and rules. 1.5 adds inputs:
 
-- release-critical controls whose evidence is `stale` or `missing` count as UNVERIFIED;
-- open legal review items in `ACTION_REQUIRED`, and accepted requirements with criticality `release-critical` that are not `VERIFIED` with current evidence, are release-blocking;
+- release-critical controls carried forward from an earlier run (Phase 7b) count as UNVERIFIED when their evidence is `stale` or `missing`;
+- open legal review items in `ACTION_REQUIRED` are release-blocking; accepted requirements with criticality `release-critical` that are not `VERIFIED` with current evidence make the evidence insufficient;
+- risks in the register that no finding represents: an open CRITICAL risk blocks as a critical risk, an open HIGH risk is release-blocking, an accepted CRITICAL risk still blocks, and other accepted risks lead at best to READY WITH ACCEPTED RISKS;
 - a run that was interrupted never produces a readiness decision.
 
 Every decision is stamped `{"decision", "at", "run_id", "revision", "commit"}`. The status view shows the latest decision with its stamp and, when files changed since, says that the decision is historical and which areas need reassessment. A person still makes the release decision.

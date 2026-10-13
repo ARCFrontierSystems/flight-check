@@ -7,7 +7,7 @@ import os
 import re
 import sys
 
-from . import VERSION, catalog, constants, finalize, gate, ledger, legal, lockfile, minischema, packet, profile, registers, render_md, state, validate
+from . import VERSION, catalog, constants, finalize, freshness, gate, ledger, legal, lockfile, minischema, packet, profile, registers, render_md, state, validate
 from .jsonio import InputError, dump_json, load_json, write_bytes, write_text
 
 
@@ -812,6 +812,25 @@ def _add_register_parsers(sub):
             common(s, cmd_decision_assertions, source=False)
 
 
+@_state_cmd
+def cmd_changes(args):
+    root = args.root or (os.path.dirname(_state_dir(args)) if os.path.basename(_state_dir(args)) == state.STATE_DIR_NAME else None)
+    if not root:
+        raise state.StateError("give --root (the audit root) so the current files can be compared")
+    st = state.load(_state_dir(args), root=root)
+    if not st.initialized:
+        raise state.StateError("no project state yet; run an audit first")
+    return freshness.changes(root, st)
+
+
+@_state_cmd
+def cmd_ledger_mark(args):
+    def fn(tx):
+        old = ledger.mark(tx.ledger, args.id, args.status, args.reason, tx.now_iso, args.superseded_by, args.by)
+        return args.id, {"status": [old, args.status]}, args.reason, {"id": args.id, "status": args.status}
+    return _register_change(args, "ledger mark", fn)
+
+
 def _add_state_parsers(sub):
     sp = sub.add_parser("state", help="inspect, check, back up, and recover Flight Check project state")
     ssub = sp.add_subparsers(dest="state_command")
@@ -922,6 +941,12 @@ def build_parser():
     _add_profile_parsers(sub)
     _add_register_parsers(sub)
 
+    s = sub.add_parser("changes", help="what changed since the last finalized audit, what it affects, and what to reassess")
+    s.add_argument("--root")
+    s.add_argument("--state-dir")
+    s.add_argument("--now")
+    s.set_defaults(func=cmd_changes)
+
     lp = sub.add_parser("ledger", help="inspect or update the finding ledger")
     lsub = lp.add_subparsers(dest="ledger_command")
     lsub.required = True
@@ -964,6 +989,17 @@ def build_parser():
     s.add_argument("--file", action="append")
     s.add_argument("--now")
     s.set_defaults(func=cmd_ledger_remediate)
+
+    s = lsub.add_parser("mark", help="record your triage of a finding: under review, remediation planned, false positive, superseded, or open")
+    s.add_argument("--root")
+    s.add_argument("--state-dir")
+    s.add_argument("--id", required=True)
+    s.add_argument("--status", required=True, choices=list(constants.USER_MARK_STATUSES))
+    s.add_argument("--reason", required=True)
+    s.add_argument("--superseded-by")
+    s.add_argument("--by")
+    s.add_argument("--now")
+    s.set_defaults(func=cmd_ledger_mark, source="user")
 
     s = lsub.add_parser("close", help="close a VERIFIED or NOT_REPRODUCED finding on the user's confirmation")
     s.add_argument("--ledger", required=True)

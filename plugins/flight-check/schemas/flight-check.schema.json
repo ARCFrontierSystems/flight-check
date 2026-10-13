@@ -388,10 +388,24 @@
         "domain": {"$ref": "#/$defs/domainId"},
         "title": {"type": "string"},
         "severity": {"$ref": "#/$defs/severity"},
-        "status": {"type": "string", "enum": ["OPEN", "REGRESSION", "REMEDIATED", "VERIFIED", "NOT_REPRODUCED", "ACCEPTED_RISK", "CLOSED"]},
+        "status": {"type": "string", "enum": ["OPEN", "REGRESSION", "REMEDIATED", "VERIFIED", "NOT_REPRODUCED", "ACCEPTED_RISK", "CLOSED", "UNDER_REVIEW", "REMEDIATION_PLANNED", "FALSE_POSITIVE", "SUPERSEDED"]},
         "first_seen_run": {"type": "string"},
         "last_seen_run": {"type": "string"},
         "history": {"type": "array", "items": {"$ref": "#/$defs/historyEvent"}},
+        "evidence_files": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^([0-9a-f]{64}|size:[0-9]+)$"}},
+        "superseded_by": {"type": "string", "pattern": "^FC-[0-9]{4,}$"},
+        "regression": {
+          "type": "object",
+          "required": ["original_resolution", "reappeared_run", "reappeared_at", "match"],
+          "additionalProperties": false,
+          "properties": {
+            "original_resolution": {"type": "string"},
+            "reappeared_run": {"type": "string"},
+            "reappeared_at": {"type": "string"},
+            "match": {"type": "string", "enum": ["exact", "possible"]},
+            "changed_files": {"type": "array", "maxItems": 50, "items": {"type": "string"}}
+          }
+        },
         "legal": {
           "type": "object",
           "required": ["classification"],
@@ -430,6 +444,25 @@
         "next_id": {"type": "integer", "minimum": 1},
         "entries": {"type": "object", "additionalProperties": {"$ref": "#/$defs/ledgerEntry"}},
         "control_acceptances": {"type": "object", "additionalProperties": {"$ref": "#/$defs/acceptedRisk"}},
+        "next_pc_id": {"type": "integer", "minimum": 1},
+        "positive_controls": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["id", "domain", "title", "first_seen_run", "last_seen_run", "status"],
+            "additionalProperties": false,
+            "properties": {
+              "id": {"type": "string", "pattern": "^PC-[0-9]{4,}$"},
+              "domain": {"type": "string"},
+              "title": {"type": "string"},
+              "path": {"type": "string"},
+              "first_seen_run": {"type": "string"},
+              "last_seen_run": {"type": "string"},
+              "status": {"type": "string", "enum": ["observed", "not_observed"]},
+              "evidence_files": {"type": "object", "additionalProperties": {"type": "string"}}
+            }
+          }
+        },
         "runs": {
           "type": "array",
           "items": {
@@ -621,6 +654,21 @@
           }
         },
         "applicability": {"type": "array", "maxItems": 19, "items": {"$ref": "#/$defs/applicabilityEntry"}},
+        "controls": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["state", "run_id", "at"],
+            "additionalProperties": false,
+            "properties": {
+              "state": {"type": "string", "enum": ["VERIFIED", "NOT_MET", "UNVERIFIED", "NOT_APPLICABLE"]},
+              "run_id": {"type": "string", "maxLength": 80},
+              "at": {"$ref": "#/$defs/stateTime"},
+              "carried_forward": {"type": "boolean"},
+              "evidence_files": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^([0-9a-f]{64}|size:[0-9]+)$"}}
+            }
+          }
+        },
         "readiness": {"type": "array", "maxItems": 200, "items": {"$ref": "#/$defs/readinessStamp"}}
       }
     },

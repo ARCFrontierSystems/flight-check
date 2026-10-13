@@ -87,7 +87,11 @@ class LedgerTests(unittest.TestCase):
         a2 = audit_with([back], "20261003T000000Z")
         changes = ledger.merge(led, a2, helpers.NOW, TODAY)
         self.assertEqual(a2["findings"][0]["id"], "FC-0001")
-        self.assertEqual(changes["regressions"], ["FC-0001"])
+        # Rule and quoted line both changed: only file and wording agree, so this is a possible regression.
+        self.assertEqual((changes["regressions"], changes["possible_regressions"]), ([], ["FC-0001"]))
+        entry = ledger.find_entry(led, "FC-0001")[1]
+        self.assertEqual((entry["status"], entry["regression"]["match"], entry["regression"]["original_resolution"]),
+                         ("REGRESSION", "possible", "CLOSED"))
 
     def test_different_issue_on_the_same_line_gets_a_new_id(self):
         led = ledger.new_ledger("t")
