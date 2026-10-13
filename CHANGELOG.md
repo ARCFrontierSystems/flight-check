@@ -2,13 +2,13 @@
 
 All notable changes are recorded here. Versions follow [Semantic Versioning](https://semver.org/).
 
-## [1.0.0] — Unreleased
+## [1.0.0] — 2026-10-13
 
 First release. 1.0.0 keeps everything in the release candidate below (1.0.0-rc.1) and adds project state, so Flight Check remembers the project between audits: its profile, requirements, decisions, risks, legal review queue, finding history, and what changed. Upgrading from the release candidate changes some files in `.flight-check/` on the first command that records something; see `docs/upgrading-from-rc.md`, including how to go back. During development this version was called 1.5; records from that time (`docs/audits/2026-10-13-v1.5-*.md`, `docs/design/project-state.md`) use that name.
 
 Blind-evaluated as a baseline audit and two audits of changes on a held-out application, with recorded owner decisions (`docs/audits/2026-10-13-v1.5-sequence-evaluation.md`).
 
-- **Added after the self-audit, which does not cover them:**
+- **Added after the self-audit, which does not cover them** (watch mode was also checked by the owner in a live Claude Code session: the check after an edit, the note at the end of a reply, and the session-start note all worked):
   - **Legal questions, at the right moment.** After an audit and in status, Flight Check says in plain English how many questions are worth asking a lawyer about and offers once to prepare the packet; legal questions do not block a release unless an answer says something must change. `/flight-check:legal-packet` (which Claude may now start when the user agrees) first lets the user sort each new question: ask a lawyer, their own decision, not relevant, or later. Each record is confirmed by the user. It builds one packet per release with every question for the lawyer. Watch mode reminds the user of questions waiting to be sorted or waiting for the lawyer's answer.
   - **Lighter on usage.**
     - After the first audit, `/flight-check:audit` re-checks only what changed (`--full` checks everything). It reuses the last inventory when no file was added or deleted and no dependency, build, or deployment file changed.
