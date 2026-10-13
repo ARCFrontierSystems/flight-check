@@ -48,6 +48,14 @@ Before any agent starts, the audit tells you a rough usage estimate, scaled by p
 
 Builds **FLIGHT CHECK — ATTORNEY REVIEW PACKET** (PDF, plus a Markdown copy) from the latest audit's findings that warrant legal or business review. Several findings are combined into one packet. Each finding section includes the evidence, why review is recommended, specific questions for counsel, relevant decisions, and space for counsel's notes and decisions. The packet carries a disclaimer and is not legal advice.
 
+**When it comes up.** After an audit, and in `/flight-check:status`, Flight Check says in plain English how many questions are worth asking a lawyer about, with an example, and offers once to prepare the packet; when there are none, it says nothing about lawyers. Legal questions do not block a release by themselves; only a lawyer's answer, or your own decision, that something must change does.
+
+**Sorting the questions first.** Before building the packet, Flight Check asks how to handle each new question: ask a lawyer (it goes into the packet), your own business decision (you say what you decided), not relevant to you (you say why), or later (a reminder). Each answer is recorded only with your confirmation.
+
+**One packet per release.** The packet holds every question you chose to ask a lawyer about, plus earlier ones still waiting for an answer, so a lawyer reviews them together rather than in several billed sessions.
+
+**After you send it.** With watch mode on, Flight Check reminds you at the start of each session that questions are with your lawyer. When the answers arrive, tell Claude and record them with `/flight-check:track <ID> lawyer said: ...`. If something must change, Claude offers to make the technical changes, and the next audit checks them.
+
 ## `/flight-check:track`
 
 ```

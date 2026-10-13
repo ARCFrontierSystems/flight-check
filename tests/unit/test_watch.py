@@ -95,6 +95,7 @@ class WatchProjectTests(ProjectTestCase):
         ctx = hook("session-start", {"cwd": self.root, "source": "startup"})["hookSpecificOutput"]["additionalContext"]
         self.assertIn("Not ready yet", ctx)
         self.assertIn("FC-0001: after the demo", ctx)
+        self.assertIn("waiting for the user to sort", ctx)  # the fixture's legal question
         self.assertNotIn("FC-0002", ctx.split("Reminders")[1])  # not due yet
         self.assertEqual([r["id"] for r in run_cli("later", "--root", self.root, "--done", "FC-0001")[1]["reminders"]], ["FC-0002"])
         self.assertIn("watch.json", state.GITIGNORE)

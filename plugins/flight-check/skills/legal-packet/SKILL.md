@@ -1,9 +1,8 @@
 ---
 name: legal-packet
-description: Legal Review Assistant: builds the Attorney Review Packet PDF of findings and questions for counsel. Not legal advice.
+description: Legal Review Assistant. Helps the user sort Flight Check's legal and business questions (ask a lawyer, their own decision, not relevant, or later) and builds one Attorney Review Packet for a lawyer. Use when the user agrees to prepare questions for a lawyer or asks to sort the legal questions. Not legal advice.
 argument-hint: "[FC-0001,FC-0002 | all] [--run RUN_DIR] [--project NAME] [--for NAME] [--a4] [--out DIR]"
-disable-model-invocation: true
-allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py runs *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py findings *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py packet *)
+allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py runs *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py findings *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py packet *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py legal list *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py later *)
 disallowed-tools: WebFetch, WebSearch, Edit, NotebookEdit, Skill
 ---
 
@@ -18,7 +17,19 @@ This helps the user prepare for a conversation with qualified legal counsel. It 
 3. **Never invent counsel's conclusions or decisions.** Decisions are recorded only from what the user reports, through `/flight-check:track`.
 4. **Do not modify the project.** Write only inside the Flight Check run directory.
 
-Run Flight Check's script only as a single plain command that starts exactly with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py`, as in the examples below. Never use shell variables, `cd`, `&&`, pipes, or redirection around it; only that exact form is pre-approved. Run no other shell commands.
+Run Flight Check's script only as a single plain command that starts exactly with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py`, as in the examples below. Never use shell variables, `cd`, `&&`, pipes, or redirection around it; only that exact form is pre-approved. Run no other shell commands. Recording what the user decides (`legal update`) is never pre-approved: the user confirms each one.
+
+Speak plain English: say what each question is about in everyday words, with IDs in parentheses. Make clear that a legal question does not block a release by itself; only a lawyer's answer, or the user's own decision, that something must change does.
+
+## 0. Sort the open questions
+
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py legal list --root <root>`, where `<root>` is the current directory. For each open item still `NEEDS_REVIEW`, ask the user how to handle it, in plain English, with these four choices (AskUserQuestion takes up to four questions at a time):
+- **Ask a lawyer:** it goes into this packet. After the packet is built, record it: `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py legal update --root <root> --id <LR-ID> --status AWAITING_COUNSEL --note "User chose to ask counsel; included in the packet of <date>"`.
+- **My own decision:** ask what they decided, in their own words. Record `--status RESOLVED --note "User's business decision: <their words>"`, or `--status ACTION_REQUIRED` when their decision means something must change; then offer once to make the technical changes (`/flight-check:fix`). Never suggest what the decision should be.
+- **Not relevant to us:** ask why, in a line. Record `--status NOT_APPLICABLE --note "User reports: <their words>"`.
+- **Later:** `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py later --root <root> --id <LR-ID> --note "legal question to sort"`.
+
+Skip this step when the user named the findings to include, or when no item is `NEEDS_REVIEW`. If nothing is left for a lawyer (no item chosen for a lawyer, and none already `AWAITING_COUNSEL` without an answer), say what was recorded and stop: no packet is needed.
 
 ## Steps
 
@@ -36,6 +47,7 @@ Run Flight Check's script only as a single plain command that starts exactly wit
    - Legal questions the user recorded without a finding are legal review items. If the user asked for unresolved legal items, or for everything, run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py legal list --root <root>` and include each open item that has no finding (its `trigger` does not start with `finding`) in `item_ids`.
    - If nothing qualifies, tell the user: "Based on the project evidence currently available, no specific legal-review issue has been identified." Add that this is not a guarantee that no legal issues exist, and stop. Never build an empty packet.
    - When several findings qualify, combine them into one packet.
+   - **One packet per release.** Include everything the user chose to ask a lawyer about in step 0 and every item already `AWAITING_COUNSEL` that has no answer yet, and leave out items the user sorted otherwise. Lawyers bill by time, so one combined packet costs the user less than several.
 
 3. **Write `<run_dir>/packet-request.json`:**
 
@@ -74,7 +86,7 @@ Run Flight Check's script only as a single plain command that starts exactly wit
    - **Paths:** the PDF path, and the Markdown copy next to it (`.md`, which keeps any characters the PDF fonts cannot show).
    - **Contents:** the number of pages and the findings included.
    - **The disclaimer:** this is a document to organize questions for qualified counsel; it is not legal advice and establishes nothing about compliance.
-   - **Next steps:**
-     - When the user shares the packet with counsel: `/flight-check:track <ID> legal review requested`, for each finding ID in this packet.
-     - When counsel responds, the user reports the decision in their own words: `/flight-check:track <ID> decision received: <what counsel said>`. Flight Check then tracks the implementation work and verifies it in the next audit.
-     - Show the packet's actual finding IDs in these commands, never example IDs.
+   - **Next steps,** in plain English:
+     - Send the packet to the lawyer. The questions in it are already marked as waiting for the lawyer (step 0); with watch mode on, Flight Check reminds the user at the start of each session until their answers are recorded.
+     - When the lawyer answers, the user tells Claude what they said and records it: `/flight-check:track <ID> lawyer said: <what counsel said>`. If the answer means something must change, Claude offers to make the technical changes (`/flight-check:fix`), and the next audit checks them.
+     - Show the packet's actual IDs in these commands, never example IDs.

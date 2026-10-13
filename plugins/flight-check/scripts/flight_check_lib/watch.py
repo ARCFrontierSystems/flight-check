@@ -19,7 +19,7 @@ import json
 import os
 import re
 
-from . import catalog, estimate, freshness, plain, settings, state, textsafety, unblock
+from . import catalog, estimate, freshness, legal, plain, settings, state, textsafety, unblock
 from .jsonio import InputError, dump_json, load_json
 
 WATCH = "watch.json"
@@ -326,6 +326,18 @@ def session_start(payload, now):
             lines.append("Open items: %d Claude can fix after asking once (/flight-check:fix), %d need the user. "
                          "Details: /flight-check:status." % (len(mine), len(theirs)))
             lines += ["- %s" % i["problem"] for i in items[:5]]
+    if st is not None:
+        open_legal = legal.open_items(st.registers or {"legal": []})
+        to_sort = [i for i in open_legal if i["status"] == "NEEDS_REVIEW"]
+        with_lawyer = [i for i in open_legal if i["status"] == "AWAITING_COUNSEL"]
+        if to_sort:
+            lines.append("%d legal or business question(s) are waiting for the user to sort (ask a lawyer, their own "
+                         "decision, not relevant, or later); offer /flight-check:legal-packet once. They do not block a "
+                         "release unless an answer says something must change." % len(to_sort))
+        if with_lawyer:
+            lines.append("%d question(s) are with the user's lawyer (%s): remind the user to tell Claude the answers when "
+                         "they arrive, and to record them with /flight-check:track." % (
+                             len(with_lawyer), ", ".join(i["id"] for i in with_lawyer[:5])))
     reminders = due(root, now.date())
     if reminders:
         lines.append("Reminders the user asked for that are due now:")
