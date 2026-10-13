@@ -283,6 +283,7 @@ class RecordedIdentityTests(unittest.TestCase):
         self.assertEqual((changes["new"], changes["not_reproduced"], changes["recorded_matches"]), ([], [], ["FC-0001"]))
         entry = ledger.find_entry(self.led, "FC-0001")[1]
         self.assertEqual((entry["domain"], entry["rule"], entry["last_seen_run"]), ("data-protection", "data-protection.query-exposure", "r2"))
+        self.assertIn("identified by the verifier", entry["history"][-1]["note"])
 
     def test_identity_judgment_is_only_a_possible_regression_and_never_beats_a_fingerprint(self):
         ledger.mark(self.led, "FC-0001", "FALSE_POSITIVE", "constant input in this deployment", T2, by="owner")

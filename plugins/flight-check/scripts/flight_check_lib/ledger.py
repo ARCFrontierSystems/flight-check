@@ -264,6 +264,9 @@ def merge(led, audit, now_iso, today):
             if new != prev:
                 e["status"] = new
                 e["history"].append(_event(now_iso, new, "flight-check", note, run_id))
+            elif f.get("recorded_id") == e["id"] and (e["rule"] != f["rule"] or e["title"] != f["title"]):
+                e["history"].append(_event(now_iso, new, "flight-check", "identified by the verifier as the same problem, "
+                                           "reported this run as %s: %s" % (f["rule"], f["title"][:300]), run_id))
             e["last_seen_run"] = run_id
             e["domain"] = f["domain"]
             e["title"] = f["title"]
