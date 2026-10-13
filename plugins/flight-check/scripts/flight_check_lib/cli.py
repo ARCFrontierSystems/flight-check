@@ -592,7 +592,8 @@ def cmd_state_backups(args):
 
 @_state_cmd
 def cmd_state_restore(args):
-    return state.restore(_state_dir(args), args.source, root=args.root, now_iso=_stamp(args), by=args.by)
+    return state.restore(_state_dir(args), args.source, root=args.root, now_iso=_stamp(args), by=args.by,
+                         adopt_other=args.adopt)
 
 
 @_state_cmd
@@ -991,6 +992,8 @@ def _add_state_parsers(sub):
     s = add("restore", cmd_state_restore, "restore project, registers, and ledger from a backup (keeps the history log)")
     s.add_argument("--from", dest="source", required=True, help="a directory under .flight-check/backups/")
     s.add_argument("--by", help="who asked for the restore")
+    s.add_argument("--adopt", action="store_true", help="restore a backup that belongs to another project (for example "
+                                                       "the one taken before importing another project's export)")
     s = add("export", cmd_state_export, "write the committed state files to one JSON bundle")
     s.add_argument("--out", required=True)
     s = add("import", cmd_state_import, "replace the state with an exported bundle (backs up first)")
