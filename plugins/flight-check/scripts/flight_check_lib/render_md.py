@@ -172,7 +172,8 @@ def _finding_block(f):
 
 def _domain_section(final, domain):
     cov = next(c for c in final["coverage"] if c["domain"] == domain)
-    out = ["**Coverage:** %s — %s" % (cov["status"], md(cov["rationale"])), ""]
+    label = "CARRIED FORWARD (not reassessed in this run)" if cov["status"] == constants.CARRIED_FORWARD else cov["status"]
+    out = ["**Coverage:** %s — %s" % (label, md(cov["rationale"])), ""]
     if cov.get("conflicts"):
         out.append("Coverage notes: " + md("; ".join(cov["conflicts"])))
         out.append("")
@@ -195,14 +196,20 @@ def _domain_section(final, domain):
                 basis = "See " + ", ".join(c["related_findings"])
             if c["state"] == "VERIFIED" and not basis:
                 basis = "Evidence " + ", ".join(ev.get("ref", "") for ev in c.get("evidence") or [])
-            out.append("| %s: %s | %s | %s | %s |" % (c["id"], md(c["title"]), "Yes" if c["release_critical"] else "No", c["state"], md(basis or "")))
+            state_label = c["state"] + (" (carried forward)" if c.get("carried_forward") else "")
+            out.append("| %s: %s | %s | %s | %s |" % (c["id"], md(c["title"]), "Yes" if c["release_critical"] else "No", state_label, md(basis or "")))
         out.append("")
     fs = [f for f in final["findings"] if f["domain"] == domain]
+    carried = [f for f in final.get("carried_forward_findings") or [] if f["domain"] == domain]
     if fs:
         out.append("Findings in this domain:")
         for f in fs:
             out.append("- %s [%s / %s / %s] %s" % (f["id"], f["severity"], f["effective_confidence"], f["status"], md(f["title"])))
-    else:
+    if carried:
+        out.append("Findings carried forward from run %s (not reassessed in this run):" % carried[0]["last_seen_run"])
+        for f in carried:
+            out.append("- %s [%s / %s / %s] %s" % (f["id"], f["severity"], f["effective_confidence"], f["status"], md(f["title"])))
+    if not fs and not carried:
         out.append("No findings were reported in this domain for the assessed scope." if cov["status"] == "ASSESSED" else "No findings: this domain was %s." % cov["status"].replace("_", " ").lower())
     pcs = [p for p in final["positive_controls"] if p["domain"] == domain]
     if pcs:
@@ -212,6 +219,15 @@ def _domain_section(final, domain):
             out.append("- %s (evidence %s)" % (md(p["title"]), ", ".join(ev.get("ref", "") for ev in p["evidence"])))
     out.append("")
     return out
+
+
+def _incremental_label(final):
+    inc = final.get("incremental")
+    if not inc:
+        return "full"
+    return "changes only, since run %s: %d file(s) changed; reassessed %s; carried forward, not reassessed: %s" % (
+        inc.get("baseline_run_id") or "unknown", inc["changed_files"], ", ".join(inc["reassessed_domains"]) or "none",
+        ", ".join(inc["carried_forward_domains"]) or "none")
 
 
 def render(final, summary):
@@ -226,7 +242,8 @@ def render(final, summary):
     for k, v in (("Flight Check version", final["tool"]["version"]), ("Run", run["run_id"]), ("Started", run["started_at"]),
                  ("Mode", run["mode"]), ("Trust tier", run["trust_tier"]), ("Revision", run["target"].get("commit", "not recorded")),
                  ("Scope", ", ".join(run["target"].get("scope") or ["entire project"])),
-                 ("Agent passes", run.get("passes", 1)), ("Ship decision", g["decision"])):
+                 ("Agent passes", run.get("passes", 1)),
+                 ("Assessment", _incremental_label(final)), ("Ship decision", g["decision"])):
         out.append("| %s | %s |" % (k, md(str(v))))
     out.append("")
     out.append("> " + md(constants.REPORT_DISCLAIMER))
@@ -247,10 +264,17 @@ def render(final, summary):
         elif num in ("3", "4", "5", "6", "7"):
             sev = constants.SEVERITIES[int(num) - 3]
             group = sev_groups[sev]
-            if not group:
+            carried = [f for f in final.get("carried_forward_findings") or [] if f["severity"] == sev]
+            if not group and not carried:
                 out.append("No %s findings in the assessed scope." % sev.lower())
             for f in group:
                 out.extend(_finding_block(f))
+            if carried:
+                out.append("Carried forward from earlier runs (their domains were not reassessed; they still count):")
+                for f in carried:
+                    out.append("- **%s** %s [%s / %s, %s] — last observed in run %s; cited files %s" % (
+                        f["id"], md(f["title"]), f["effective_confidence"], f["status"], catalog.domain_title(f["domain"]),
+                        f["last_seen_run"], f["evidence_state"]))
         elif domain:
             if domain == "legal-business":
                 legal = [f for f in final["findings"] if f.get("legal")]
@@ -337,6 +361,7 @@ def render(final, summary):
                     ("Verified fixed in this run", lc.get("verified_this_run")),
                     ("Reopened (remediation ineffective or finding returned)", lc.get("reopened")),
                     ("Open in ledger but domain not assessed this run", lc.get("not_assessed_open")),
+                    ("Open in ledger, carried forward (domain not reassessed)", lc.get("carried_forward_open")),
                     ("Accepted risks that expired and reopened", lc.get("expired_acceptances"))]
             for label, ids in rows:
                 out.append("- %s: %s" % (label, ", ".join(ids) if ids else "none"))

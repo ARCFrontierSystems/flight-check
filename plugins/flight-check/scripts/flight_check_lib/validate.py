@@ -274,7 +274,7 @@ def validate_summary(summary, final):
         errors.append("summary.json: %s" % e)
     if errors:
         return errors, warnings
-    ids = {f["id"] for f in final["findings"]}
+    ids = {f["id"] for f in final["findings"] + (final.get("carried_forward_findings") or [])}
     controls = {c["id"] for c in final["controls"]}
     for i, item in enumerate(summary["remediation_priority"]):
         if item["finding_id"] not in ids:

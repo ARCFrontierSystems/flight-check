@@ -9,6 +9,8 @@ CONFIDENCES = ("CONFIRMED", "LIKELY", "POTENTIAL", "UNVERIFIED")
 
 CONTROL_STATES = ("VERIFIED", "NOT_MET", "UNVERIFIED", "NOT_APPLICABLE")
 COVERAGE_STATES = ("ASSESSED", "NOT_APPLICABLE", "NOT_ASSESSED")
+# Set only by finalize, never by an agent: a domain that an incremental run did not reassess because no change affects it.
+CARRIED_FORWARD = "CARRIED_FORWARD"
 INVENTORY_STATES = ("IDENTIFIED", "NOT_FOUND", "UNVERIFIED")
 APPLICABILITY = ("yes", "no", "unknown")
 

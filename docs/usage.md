@@ -5,7 +5,7 @@ All Flight Check commands are run explicitly. Claude never starts an audit on it
 ## `/flight-check:audit`
 
 ```
-/flight-check:audit [path] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2] [--untrusted --out DIR]
+/flight-check:audit [path] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2] [--changed] [--untrusted --out DIR]
 ```
 
 - `path`: the project to audit. Defaults to the current directory.
@@ -27,6 +27,7 @@ All Flight Check commands are run explicitly. Claude never starts an audit on it
   - Accessibility test reports, and penetration test summaries.
 - `--domains a,b`: limit the audit to some domains. The others are reported as not assessed, so the ship decision fails safe.
 - `--passes 2` (or 3): run each domain agent two or three times independently and combine the results. Language-model audits vary from run to run; combining passes finds more issues and gives a steadier ship decision. A control counts as verified when any pass verified it with evidence, a gap reported by any pass stands, and the verifier merges repeated findings. Domain-audit usage grows about in proportion. Recommended before a release decision.
+- `--changed`: reassess only what changed since the last finalized audit. See "Audits of changes only" below.
 - `--untrusted --out DIR`: for code you do not own or trust. See [hardened-mode.md](hardened-mode.md).
 
 A typical first audit ends in **BLOCKED — INSUFFICIENT EVIDENCE**, because some release-critical controls, such as dependency vulnerability status and tested restores, cannot be established from source code alone. That is intended. The report lists exactly which evidence would change the decision. You can then import that evidence, or explicitly accept the risk with `/flight-check:track`.
@@ -143,6 +144,16 @@ Each finalized audit records the hashes of the files every conclusion cites, and
 - accepted decisions whose review triggers match the changes;
 - the domains to reassess and the domains whose results can be carried forward. A changed file that no rule or stored conclusion explains, an incomplete file list, or a missing manifest (for example in a fresh clone) widens reassessment to every applicable domain;
 - whether the latest readiness decision is now historical.
+
+### Audits of changes only
+
+`/flight-check:audit --changed` runs `changes` first, then launches only the domain agents for the domains a change can affect. The inventory always runs again. Every other applicable domain is **carried forward**:
+- its coverage is reported as `CARRIED_FORWARD`, labelled "carried forward, not reassessed", with the run that last assessed it;
+- its controls keep their last recorded state only while the files they cited are unchanged; a control whose cited file changed or disappeared becomes UNVERIFIED, so a release-critical one blocks as insufficient evidence;
+- its open, accepted, or dismissed findings from that assessment still count in the ship decision exactly as before, listed as carried forward;
+- a carried-forward control never verifies a requirement for the first time; an earlier verification stands only while its evidence is unchanged.
+
+A domain is carried forward only when the run that wrote the last file list assessed it (or carried it forward itself). A domain that run skipped, for example with `--domains`, is reassessed. If files change while the audit runs, finalize re-checks and stops carrying forward the affected domains; they then count as not assessed. The file list recorded for the next comparison is the one taken when the run started, so such changes are reported again next time. When nothing changed and every applicable domain was assessed, no run is started.
 
 Your triage of a finding: `ledger mark --id FC-0003 --status UNDER_REVIEW|REMEDIATION_PLANNED|FALSE_POSITIVE|SUPERSEDED|OPEN --reason TEXT [--superseded-by FC-0007]`. A finding you mark false positive or superseded that the next audit still reports is shown as such, and the ship decision is at best READY WITH ACCEPTED RISKS; a CRITICAL one still blocks.
 

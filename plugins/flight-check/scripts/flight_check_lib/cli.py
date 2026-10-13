@@ -69,6 +69,25 @@ def cmd_version(args):
     return 0
 
 
+def _incremental_scope(state_dir, root, scanned):
+    """init-run --changed: which domains to reassess and which to carry forward, or a full scope with the reason."""
+    full = {"mode": "full", "reassess_domains": catalog.domain_ids(), "carried_forward_domains": [],
+            "agents": sorted({d["agent"] for d in catalog.domains()})}
+    try:
+        st = state.load(state_dir, root=root, strict=False)
+    except (state.StateError, InputError) as exc:
+        return dict(full, reasons=["the project state could not be read (%s), so every domain is assessed" % exc])
+    if not st.initialized or st.problems:
+        return dict(full, reasons=["there is no usable project state from an earlier audit, so every domain is assessed"])
+    ch = freshness.changes(root, st, scanned=scanned)
+    return {"mode": "changed", "baseline_run_id": ch["baseline"]["run_id"], "changed_files": ch["changed_files"],
+            "files": ch["files"][:50], "widened": ch["widened"], "reasons": ch["reasons"],
+            "reassess_domains": ch["reassess_domains"], "carried_forward_domains": ch["carried_forward_domains"],
+            "carried_forward_from": ch["carried_forward_from"],
+            "agents": sorted({d["agent"] for d in catalog.domains() if d["id"] in ch["reassess_domains"]}),
+            "decisions_to_review": ch["decisions_to_review"], "latest_readiness": ch["latest_readiness"]}
+
+
 def cmd_init_run(args):
     now = _now(args)
     run_id = now.strftime("%Y%m%dT%H%M%SZ")
@@ -80,6 +99,16 @@ def cmd_init_run(args):
     run_dir = os.path.join(base, run_id)
     if os.path.exists(run_dir):
         return _fail("run directory already exists: %s" % run_dir)
+    root = os.path.abspath(args.root) if args.root else None
+    if args.changed and not root:
+        return _fail("--changed needs --root")
+    scanned = freshness.scan(root) if root else None
+    scope = _incremental_scope(os.path.dirname(base), root, scanned) if args.changed else None
+    if scope and scope["mode"] == "changed" and not scope["changed_files"] and not scope["reassess_domains"]:
+        _print({"ok": True, "nothing_to_reassess": True, "scope": scope,
+                "message": "No file changed since run %s and every applicable domain was assessed then, so its "
+                           "ship decision still describes these files. No run was started." % scope["baseline_run_id"]})
+        return 0
     new_base = not os.path.isdir(base)
     # Run directories hold raw agent replies that quote the project, so only the owner may read them.
     os.makedirs(run_dir, mode=0o700)
@@ -99,12 +128,16 @@ def cmd_init_run(args):
     if ref:
         # Lets finalize refuse to merge this run into another project's state.
         dump_json(os.path.join(run_dir, "run-ref.json"), dict(ref, run_id=run_id))
+    if scanned is not None:
+        freshness.write_snapshot(run_dir, scanned, now.strftime("%Y-%m-%dT%H:%M:%SZ"))
+    if scope:
+        dump_json(os.path.join(run_dir, "scope.json"), dict(scope, schema_version="1.0", run_id=run_id))
     marker = os.path.join(base, ".gitignore")
     if not os.path.exists(marker):
         write_text(marker, "# Flight Check run output can quote project files; do not commit it.\n*\n")
     _print({"ok": True, "run_id": run_id, "run_dir": run_dir, "started_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "commit": _read_git_commit(os.path.abspath(args.root)) if args.root else None,
-            "flight_check_version": VERSION})
+            "flight_check_version": VERSION, **({"scope": scope} if scope else {})})
     return 0
 
 
@@ -879,6 +912,8 @@ def build_parser():
     s.add_argument("--root", help="audit root, used to read the current git commit from .git files")
     s.add_argument("--suffix")
     s.add_argument("--inventory-from", help="copy inventory.json from this earlier run directory (targeted re-audits)")
+    s.add_argument("--changed", action="store_true",
+                   help="reassess only the domains that changes since the last finalized run can affect; carry the rest forward")
     s.add_argument("--now")
     s.set_defaults(func=cmd_init_run)
 
