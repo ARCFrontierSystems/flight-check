@@ -227,7 +227,7 @@ def changes(root, st, max_files=MAX_FILES, scanned=None):
                 domains.add(domain)
         domains.update(rule_domains)
         if is_source_code(path):
-            domains.add("application-security")
+            domains.update(_rules()["source_code_domains"])
         if not cited and not rule_domains:
             unexplained.append(path)
     if unexplained:

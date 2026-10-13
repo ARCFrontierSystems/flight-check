@@ -6,6 +6,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import helpers  # noqa: E402
@@ -74,6 +75,17 @@ class ChangeDetectionTests(ProjectTestCase):
         self.assertFalse(out["widened"])
         self.assertTrue(out["readiness_is_historical"])
         self.assertTrue(set(out["carried_forward_domains"]).isdisjoint(out["reassess_domains"]))
+
+    def test_source_change_reassesses_access_control_and_data_domains(self):
+        self.edit("src/store.py")
+        with mock.patch.object(freshness, "_applicable_domains", lambda st: set(catalog.domain_ids())):
+            out = self.changes_direct()
+        for d in ("application-security", "authentication", "authorization", "data-protection", "privacy"):
+            self.assertIn(d, out["reassess_domains"])
+        self.assertIn("accessibility", out["carried_forward_domains"])
+
+    def changes_direct(self):
+        return freshness.changes(self.root, state.load(self.sd, root=self.root))
 
     def test_unexplained_file_and_missing_manifest_widen(self):
         with open(os.path.join(self.root, "blob.xyz"), "w") as fh:
