@@ -4,7 +4,7 @@
     "REQ": 1,
     "DEC": 1,
     "RISK": 1,
-    "LR": 14
+    "LR": 15
   },
   "requirements": [],
   "decisions": [],
@@ -379,7 +379,7 @@
       "origin": "observed",
       "source": "flight-check",
       "created_at": "2026-10-13T05:07:08Z",
-      "updated_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:19:29Z",
       "links": {
         "findings": [
           "FC-0019"
@@ -405,6 +405,13 @@
           "status": "RESOLVED",
           "source": "flight-check",
           "note": "moved from the 1.0 ledger into the legal review queue"
+        },
+        {
+          "at": "2026-10-13T05:19:29Z",
+          "status": "RESOLVED",
+          "source": "flight-check",
+          "note": "classification changed from POTENTIAL LEGAL RISK to LEGAL REVIEW REQUIRED; 2 new question(s) from the audit",
+          "run_id": "20261013T051206Z"
         }
       ],
       "jurisdiction_unknown": true,
@@ -412,7 +419,11 @@
       "category": "Legal / Business Risk",
       "description": "Raised by finding FC-0019: Repository records that the name overlaps a registered mark; closure rests on the owner's own report, with no evidence of counsel review",
       "trigger": "finding FC-0019",
-      "classification": "POTENTIAL LEGAL RISK"
+      "classification": "LEGAL REVIEW REQUIRED",
+      "questions": [
+        "Given the print-preflight product and the AI-agent readiness product that already use the name \"FlightCheck\", what risks should counsel evaluate for a free open-source plugin named \"Flight Check\" distributed through a public repository and plugin marketplace?",
+        "What documentation of the 2026-10-12 name check should the project keep, so the decision to keep the name can be explained if a third party raises an objection?"
+      ]
     },
     {
       "id": "LR-0011",
@@ -420,7 +431,7 @@
       "origin": "observed",
       "source": "flight-check",
       "created_at": "2026-10-13T05:07:08Z",
-      "updated_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:19:29Z",
       "links": {
         "findings": [
           "FC-0023"
@@ -446,6 +457,13 @@
           "status": "RESOLVED",
           "source": "flight-check",
           "note": "moved from the 1.0 ledger into the legal review queue"
+        },
+        {
+          "at": "2026-10-13T05:19:29Z",
+          "status": "RESOLVED",
+          "source": "flight-check",
+          "note": "classification changed from BUSINESS DECISION REQUIRED to INFORMATIONAL; 2 new question(s) from the audit",
+          "run_id": "20261013T051206Z"
         }
       ],
       "jurisdiction_unknown": true,
@@ -453,7 +471,11 @@
       "category": "Legal / Business Risk",
       "description": "Raised by finding FC-0023: No terms of use or governing-law decision beyond Apache-2.0 for a publicly distributed audit tool whose output users may rely on",
       "trigger": "finding FC-0023",
-      "classification": "BUSINESS DECISION REQUIRED"
+      "classification": "INFORMATIONAL",
+      "questions": [
+        "Does the README disclaimer ('not legal advice and does not establish compliance') together with the Apache-2.0 warranty disclaimer and limitation of liability adequately address a user relying on the Attorney Review Packet output in a release decision?",
+        "Should the project name a governing law or venue, given that the plugin is distributed publicly through a Git-hosted marketplace to users in any country?"
+      ]
     },
     {
       "id": "LR-0012",
@@ -563,6 +585,66 @@
       "classification": "BUSINESS DECISION REQUIRED",
       "questions": [
         "Should the supported-versions statement in SECURITY.md name the version a vulnerability fix will ship in, given the README describes features from the unreleased 1.5.0 line?"
+      ]
+    },
+    {
+      "id": "LR-0014",
+      "status": "NEEDS_REVIEW",
+      "origin": "observed",
+      "source": "flight-check",
+      "created_at": "2026-10-13T05:19:29Z",
+      "updated_at": "2026-10-13T05:19:29Z",
+      "links": {
+        "findings": [
+          "FC-0022"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "documentation",
+          "observed_at": "2026-10-13T05:19:29Z",
+          "run_id": "20261013T051206Z",
+          "path": "docs/maintainers/github-settings.md",
+          "start_line": 12,
+          "end_line": 12,
+          "sha256": "4479b3e4ef596bf4cdc014a406ba9e237a7a83378554169132f1c465b24b8146"
+        },
+        {
+          "kind": "documentation",
+          "observed_at": "2026-10-13T05:19:29Z",
+          "run_id": "20261013T051206Z",
+          "path": "docs/maintainers/github-settings.md",
+          "start_line": 74,
+          "end_line": 74,
+          "sha256": "4479b3e4ef596bf4cdc014a406ba9e237a7a83378554169132f1c465b24b8146"
+        },
+        {
+          "kind": "documentation",
+          "observed_at": "2026-10-13T05:19:29Z",
+          "run_id": "20261013T051206Z",
+          "path": "README.md",
+          "start_line": 35,
+          "end_line": 35,
+          "sha256": "ede7ca107bc20146544fc92ab434b953d1afc525333493b863913b74522e8ce0"
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-10-13T05:19:29Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "opened for finding FC-0022",
+          "run_id": "20261013T051206Z"
+        }
+      ],
+      "jurisdiction_unknown": true,
+      "title": "Public GitHub repository description reportedly says the project will \"enforce secure development practices\"; the correction is still unchecked",
+      "category": "Documentation Consistency",
+      "description": "Raised by finding FC-0022: Public GitHub repository description reportedly says the project will \"enforce secure development practices\"; the correction is still unchecked",
+      "trigger": "finding FC-0022",
+      "classification": "BUSINESS DECISION REQUIRED",
+      "questions": [
+        "Should the public repository description avoid the words \"enforce\" and \"protect\", given that the README states the tool never certifies compliance or security?"
       ]
     }
   ]

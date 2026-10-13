@@ -753,15 +753,15 @@
     "75a36ef5a6dcc17f": {
       "id": "FC-0019",
       "fingerprint": "75a36ef5a6dcc17f",
-      "match_key": "legal-business.trademark-overlap-recorded-without-counsel-evidence|CLAUDE.md",
-      "anchor_hash": "68c3d24d644e2df7",
-      "rule": "legal-business.trademark-overlap-recorded-without-counsel-evidence",
+      "match_key": "legal-business.name-clearance-outcome-not-recorded|CLAUDE.md",
+      "anchor_hash": "e56f4fe65a2a98de",
+      "rule": "legal-business.name-clearance-outcome-not-recorded",
       "domain": "legal-business",
-      "title": "Repository records that the name overlaps a registered mark; closure rests on the owner's own report, with no evidence of counsel review",
-      "severity": "LOW",
-      "status": "NOT_REPRODUCED",
+      "title": "Name overlap with existing \"FlightCheck\" products: completion is recorded, the outcome is not",
+      "severity": "INFORMATIONAL",
+      "status": "OPEN",
       "first_seen_run": "20261012T202214Z",
-      "last_seen_run": "20261012T202214Z",
+      "last_seen_run": "20261013T051206Z",
       "history": [
         {
           "at": "2026-10-12T20:32:33Z",
@@ -776,12 +776,28 @@
           "source": "flight-check",
           "note": "not observed in an assessed domain; confirm resolution",
           "run_id": "20261012T220354Z"
+        },
+        {
+          "at": "2026-10-13T05:19:29Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "observed again after not being reproduced",
+          "run_id": "20261013T051206Z"
         }
       ],
       "legal": {
-        "classification": "POTENTIAL LEGAL RISK",
+        "classification": "LEGAL REVIEW REQUIRED",
         "item": "LR-0010"
-      }
+      },
+      "alt_fingerprints": [
+        "c8b684638e61e7bc"
+      ],
+      "evidence_files": {
+        "CLAUDE.md": "c68b9a251a20837c7ccbfa73678e8b58094bf18a9de176338415427890170f91",
+        "docs/audits/2026-10-12-phase-7-final-report.md": "5e401dfadaa5db1f356267109a3e5472f8f6d3232011c55ac59fcb3f89bb4b23"
+      },
+      "confidence": "POTENTIAL",
+      "release_blocking": false
     },
     "41063de38b26753d": {
       "id": "FC-0020",
@@ -858,15 +874,15 @@
     "96f5e8a95c42bedf": {
       "id": "FC-0022",
       "fingerprint": "96f5e8a95c42bedf",
-      "match_key": "documentation.repository-description-overclaims|docs/maintainers/github-settings.md",
-      "anchor_hash": "06e0a84431323d37",
-      "rule": "documentation.repository-description-overclaims",
+      "match_key": "documentation.public-repo-description-overclaims|docs/maintainers/github-settings.md",
+      "anchor_hash": "47e53edc829d2a04",
+      "rule": "documentation.public-repo-description-overclaims",
       "domain": "documentation",
-      "title": "GitHub repository description reportedly claims the project will 'enforce secure development practices'; the correction is still unchecked in the maintainer checklist",
+      "title": "Public GitHub repository description reportedly says the project will \"enforce secure development practices\"; the correction is still unchecked",
       "severity": "LOW",
-      "status": "NOT_REPRODUCED",
+      "status": "OPEN",
       "first_seen_run": "20261012T220354Z",
-      "last_seen_run": "20261012T220354Z",
+      "last_seen_run": "20261013T051206Z",
       "history": [
         {
           "at": "2026-10-12T22:14:45Z",
@@ -881,21 +897,41 @@
           "source": "flight-check",
           "note": "not observed in an assessed domain; confirm resolution",
           "run_id": "20261012T222035Z"
+        },
+        {
+          "at": "2026-10-13T05:19:29Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "observed again after not being reproduced",
+          "run_id": "20261013T051206Z"
         }
-      ]
+      ],
+      "alt_fingerprints": [
+        "932ae1e2ad61a33b"
+      ],
+      "legal": {
+        "classification": "BUSINESS DECISION REQUIRED",
+        "item": "LR-0014"
+      },
+      "evidence_files": {
+        "docs/maintainers/github-settings.md": "4479b3e4ef596bf4cdc014a406ba9e237a7a83378554169132f1c465b24b8146",
+        "README.md": "ede7ca107bc20146544fc92ab434b953d1afc525333493b863913b74522e8ce0"
+      },
+      "confidence": "LIKELY",
+      "release_blocking": false
     },
     "542c65caa70a34bc": {
       "id": "FC-0023",
       "fingerprint": "542c65caa70a34bc",
-      "match_key": "legal-business.no-terms-or-governing-law-decision|README.md",
+      "match_key": "legal-business.no-governing-law-or-separate-terms-for-legal-feature|README.md",
       "anchor_hash": "75ffc6728f5a45ef",
-      "rule": "legal-business.no-terms-or-governing-law-decision",
+      "rule": "legal-business.no-governing-law-or-separate-terms-for-legal-feature",
       "domain": "legal-business",
-      "title": "No terms of use or governing-law decision beyond Apache-2.0 for a publicly distributed audit tool whose output users may rely on",
+      "title": "No governing-law clause or separate terms, while the product produces legal-review packets for users",
       "severity": "INFORMATIONAL",
-      "status": "NOT_REPRODUCED",
+      "status": "OPEN",
       "first_seen_run": "20261012T220354Z",
-      "last_seen_run": "20261012T220354Z",
+      "last_seen_run": "20261013T051206Z",
       "history": [
         {
           "at": "2026-10-12T22:14:45Z",
@@ -910,12 +946,28 @@
           "source": "flight-check",
           "note": "not observed in an assessed domain; confirm resolution",
           "run_id": "20261012T222035Z"
+        },
+        {
+          "at": "2026-10-13T05:19:29Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "observed again after not being reproduced",
+          "run_id": "20261013T051206Z"
         }
       ],
       "legal": {
-        "classification": "BUSINESS DECISION REQUIRED",
+        "classification": "INFORMATIONAL",
         "item": "LR-0011"
-      }
+      },
+      "alt_fingerprints": [
+        "2a9102ace7576a9f"
+      ],
+      "evidence_files": {
+        "README.md": "ede7ca107bc20146544fc92ab434b953d1afc525333493b863913b74522e8ce0",
+        "docs/audits/2026-10-12-phase-7-final-report.md": "5e401dfadaa5db1f356267109a3e5472f8f6d3232011c55ac59fcb3f89bb4b23"
+      },
+      "confidence": "CONFIRMED",
+      "release_blocking": false
     },
     "80b80694ac9fe4b9": {
       "id": "FC-0024",
@@ -1002,7 +1054,7 @@
       "domain": "documentation",
       "title": "README presents version 1.0.0-rc.1 but documents 1.5 features the CHANGELOG lists as unreleased",
       "severity": "LOW",
-      "status": "REMEDIATED",
+      "status": "VERIFIED",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
       "history": [
@@ -1018,6 +1070,13 @@
           "status": "REMEDIATED",
           "source": "flight-check",
           "note": "remediation recorded; pending verification by re-audit: README, CHANGELOG, SECURITY.md, plugin.json, and VERSION now all say 1.5.0-rc.1 (pre-release); the CHANGELOG section is no longer 'Unreleased'."
+        },
+        {
+          "at": "2026-10-13T05:19:29Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: README.md line 11 now says 'pre-release (1.5.0-rc.1, the 1.5 release candidate)'. plugin.json has version 1.5.0-rc.1. CHANGELOG.md has a top section '[1.5.0-rc.1]' dated 2026-10-13, with 1.0.0-rc.1 below it. The 1.5 features listed in the README are therefore no longer described as unreleased against a 1.0.0-rc.1 version. SECURITY.md line 20 also says 1.5.0-rc.1. I found no remaining mismatch. The README contains no other 1.0.0 version claim.",
+          "run_id": "20261013T051206Z"
         }
       ],
       "legal": {
@@ -1081,7 +1140,7 @@
       "domain": "supply-chain",
       "title": "Vulnerability scan notes describe CI installs that no longer match ci.yml",
       "severity": "INFORMATIONAL",
-      "status": "REMEDIATED",
+      "status": "VERIFIED",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
       "history": [
@@ -1097,6 +1156,13 @@
           "status": "REMEDIATED",
           "source": "flight-check",
           "note": "remediation recorded; pending verification by re-audit: Rescanned the CI tools as ci.yml installs them now (hash-pinned tools/ci-requirements.txt and the tools/ci-npm lockfile) and rewrote the scan notes to match."
+        },
+        {
+          "at": "2026-10-13T05:19:29Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: The scan notes now describe exactly what ci.yml installs. Python: hash-pinned pip install with --require-hashes and --only-binary=:all: from tools/ci-requirements.txt. npm: 'npm ci --prefix tools/ci-npm' from a lockfile. The notes also say poppler-utils is installed with apt-get, is unpinned, and was not scanned. I did not re-run the scans or inspect the pip-audit and npm-audit JSON contents.",
+          "run_id": "20261013T051206Z"
         }
       ],
       "evidence_files": {
@@ -1124,7 +1190,7 @@
       "domain": "supply-chain",
       "title": "CI installs poppler-utils from apt without a version pin or vulnerability scan",
       "severity": "INFORMATIONAL",
-      "status": "OPEN",
+      "status": "NOT_REPRODUCED",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
       "history": [
@@ -1134,6 +1200,13 @@
           "source": "flight-check",
           "note": "first observed",
           "run_id": "20261013T050120Z"
+        },
+        {
+          "at": "2026-10-13T05:19:29Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261013T051206Z"
         }
       ],
       "evidence_files": {
@@ -1198,6 +1271,12 @@
       "at": "2026-10-13T05:07:08Z",
       "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
       "mode": "audit"
+    },
+    {
+      "run_id": "20261013T051206Z",
+      "at": "2026-10-13T05:19:29Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
     }
   ],
   "project": {
@@ -1260,7 +1339,7 @@
       "title": "Evidence paths are confined to the audit root, with symlinks resolved first",
       "path": "plugins/flight-check/scripts/flight_check_lib/evidence.py",
       "first_seen_run": "20261013T050120Z",
-      "last_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T051206Z",
       "status": "observed",
       "evidence_files": {
         "plugins/flight-check/scripts/flight_check_lib/evidence.py": "8f6730c0d14f58e7f4691d3a9756890d66b2f4a79b0384f65c28979913347a7c"
@@ -1273,7 +1352,7 @@
       "path": "plugins/flight-check/scripts/flight_check_lib/jsonio.py",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "plugins/flight-check/scripts/flight_check_lib/jsonio.py": "e01637656de49a20662b40d40430f3b947a8568f17a7444d0cbb990d2809de13"
       }
@@ -1285,7 +1364,7 @@
       "path": "plugins/flight-check/agents/appsec.md",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "plugins/flight-check/agents/appsec.md": "efc36d417147715925e8dc3d8bf5bed1abb821268d71f700945e19ee207e1e72"
       }
@@ -1296,7 +1375,7 @@
       "title": "Report output is confined to the state reports folder, and symlinks are refused",
       "path": "plugins/flight-check/scripts/flight_check_lib/cli.py",
       "first_seen_run": "20261013T050120Z",
-      "last_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T051206Z",
       "status": "observed",
       "evidence_files": {
         "plugins/flight-check/scripts/flight_check_lib/cli.py": "445b018ca4a366b6a418284ec82a92fb4cc6b9e00925b17d62ca8eb91f9bf017"
@@ -1309,7 +1388,7 @@
       "path": "plugins/flight-check/scripts/flight_check_lib/evidence.py",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "plugins/flight-check/scripts/flight_check_lib/evidence.py": "8f6730c0d14f58e7f4691d3a9756890d66b2f4a79b0384f65c28979913347a7c"
       }
@@ -1321,7 +1400,7 @@
       "path": "plugins/flight-check/scripts/flight_check_lib/cli.py",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "plugins/flight-check/scripts/flight_check_lib/cli.py": "445b018ca4a366b6a418284ec82a92fb4cc6b9e00925b17d62ca8eb91f9bf017"
       }
@@ -1333,7 +1412,7 @@
       "path": "plugins/flight-check/scripts/flight_check_lib/jsonio.py",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "plugins/flight-check/scripts/flight_check_lib/jsonio.py": "e01637656de49a20662b40d40430f3b947a8568f17a7444d0cbb990d2809de13"
       }
@@ -1345,7 +1424,7 @@
       "path": "tools/blindtest/run_audit.py",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "tools/blindtest/run_audit.py": "7223cd0823db316ef774249397af2219927742da244e17d7787bcdd1634c00df"
       }
@@ -1357,7 +1436,7 @@
       "path": "plugins/flight-check/scripts/flight_check_lib/cli.py",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "plugins/flight-check/scripts/flight_check_lib/cli.py": "445b018ca4a366b6a418284ec82a92fb4cc6b9e00925b17d62ca8eb91f9bf017"
       }
@@ -1369,7 +1448,7 @@
       "path": "README.md",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "README.md": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5"
       }
@@ -1381,7 +1460,7 @@
       "path": "plugins/flight-check/scripts/flight_check_lib/state.py",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "plugins/flight-check/scripts/flight_check_lib/state.py": "2fe2a2f2fac5e98bb376438b88ab8b9abc19588cc109572ab65f1395776d71f3"
       }
@@ -1393,7 +1472,7 @@
       "path": "plugins/flight-check/scripts/flight_check_lib/state.py",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "plugins/flight-check/scripts/flight_check_lib/state.py": "2fe2a2f2fac5e98bb376438b88ab8b9abc19588cc109572ab65f1395776d71f3"
       }
@@ -1405,7 +1484,7 @@
       "path": "README.md",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "README.md": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5"
       }
@@ -1417,7 +1496,7 @@
       "path": "README.md",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "README.md": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5"
       }
@@ -1429,7 +1508,7 @@
       "path": "docs/limitations.md",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "docs/limitations.md": "17c3158c3540dc67fb1435e0152e569d1954ecd6ffa83ccd30a79990a01fd8d5"
       }
@@ -1441,7 +1520,7 @@
       "path": "NOTICE",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "NOTICE": "a4e028345d02d5e28bb08e979c79d3141702fe129956ccf55065e50ce6de6505"
       }
@@ -1453,7 +1532,7 @@
       "path": "README.md",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "README.md": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5"
       }
@@ -1465,7 +1544,7 @@
       "path": "plugins/flight-check/.claude-plugin/plugin.json",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "plugins/flight-check/.claude-plugin/plugin.json": "209c4ef5bb7e39e1cee9506dc4aae1bd58ca7b4beea938958e8384dcae0f2792"
       }
@@ -1573,7 +1652,7 @@
       "path": "tools/ci-requirements.txt",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "tools/ci-requirements.txt": "4191dac2a8ba8bf1099b152750c59ef5b44c2ac1bf0c568e318ff3f61031bc69"
       }
@@ -1584,7 +1663,7 @@
       "title": "SHA-pinned actions, read-only token, no persisted credentials",
       "path": ".github/workflows/ci.yml",
       "first_seen_run": "20261013T050120Z",
-      "last_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T051206Z",
       "status": "observed",
       "evidence_files": {
         ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
@@ -1597,7 +1676,7 @@
       "path": ".github/workflows/ci.yml",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
       }
@@ -1609,7 +1688,7 @@
       "path": "tools/ci-requirements.txt",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         "tools/ci-requirements.txt": "4191dac2a8ba8bf1099b152750c59ef5b44c2ac1bf0c568e318ff3f61031bc69"
       }
@@ -1621,7 +1700,7 @@
       "path": ".github/workflows/ci.yml",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
-      "status": "observed",
+      "status": "not_observed",
       "evidence_files": {
         ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
       }
@@ -1632,7 +1711,7 @@
       "title": "CI runs the full unit suite on Python 3.9 and 3.12 for pushes to main and for pull requests. CI dependencies are installed with pinned hashes.",
       "path": ".github/workflows/ci.yml",
       "first_seen_run": "20261013T050120Z",
-      "last_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T051206Z",
       "status": "observed",
       "evidence_files": {
         ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
@@ -1644,12 +1723,313 @@
       "title": "CI runs the full unit suite on Python 3.9 and 3.12 for pushes to main and for all pull requests, with hash-pinned test dependencies",
       "path": ".github/workflows/ci.yml",
       "first_seen_run": "20261013T050120Z",
-      "last_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T051206Z",
       "status": "observed",
       "evidence_files": {
         ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
       }
+    },
+    "application-security|plugins/flight-check/agents/appsec.md|agent auditor definition glob grep limits only read the tools": {
+      "id": "PC-0038",
+      "domain": "application-security",
+      "title": "Agent definition limits the auditor to read-only tools (Read, Grep, Glob)",
+      "path": "plugins/flight-check/agents/appsec.md",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/agents/appsec.md": "efc36d417147715925e8dc3d8bf5bed1abb821268d71f700945e19ee207e1e72"
+      }
+    },
+    "application-security|plugins/flight-check/agents/appsec.md|agent and audited content forbid project prompts reproducing secrets treat untrusted": {
+      "id": "PC-0039",
+      "domain": "application-security",
+      "title": "Agent prompts treat audited project content as untrusted and forbid reproducing secrets",
+      "path": "plugins/flight-check/agents/appsec.md",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/agents/appsec.md": "efc36d417147715925e8dc3d8bf5bed1abb821268d71f700945e19ee207e1e72"
+      }
+    },
+    "application-security|plugins/flight-check/scripts/flight_check_lib/cli.py|and attorney files new not output packet pdf restricted symlinks through written": {
+      "id": "PC-0040",
+      "domain": "application-security",
+      "title": "Attorney packet output is restricted to new .pdf files and is not written through symlinks",
+      "path": "plugins/flight-check/scripts/flight_check_lib/cli.py",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/cli.py": "445b018ca4a366b6a418284ec82a92fb4cc6b9e00925b17d62ca8eb91f9bf017"
+      }
+    },
+    "application-security|plugins/flight-check/scripts/flight_check_lib/cli.py|and are before created directories ids names only owner paths reply run they used validated": {
+      "id": "PC-0041",
+      "domain": "application-security",
+      "title": "Run directories are created owner-only, and reply names and run IDs are validated before they are used in paths",
+      "path": "plugins/flight-check/scripts/flight_check_lib/cli.py",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/cli.py": "445b018ca4a366b6a418284ec82a92fb4cc6b9e00925b17d62ca8eb91f9bf017"
+      }
+    },
+    "application-security|tools/blindtest/run_audit.py|agent and app blind commands copies denies directory ground harness its ledger limits runs test the truth without writes": {
+      "id": "PC-0042",
+      "domain": "application-security",
+      "title": "The blind-test harness copies the app without its ground truth, limits agent writes to the runs directory, and denies ledger commands",
+      "path": "tools/blindtest/run_audit.py",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "tools/blindtest/run_audit.py": "7223cd0823db316ef774249397af2219927742da244e17d7787bcdd1634c00df"
+      }
+    },
+    "application-security|tools/lint_plugin.py|and bundled calls dynamic execution forbids lint modules network process scripts": {
+      "id": "PC-0043",
+      "domain": "application-security",
+      "title": "Lint forbids network, process and dynamic-execution modules and calls in bundled scripts",
+      "path": "tools/lint_plugin.py",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "tools/lint_plugin.py": "be5e5c8e4824d18f4afb411e14e19bae80ee6723cd507d54874d48fb09f09a58"
+      }
+    },
+    "application-security|tools/lint_plugin.py|agents and are enforces lint omitclaudemd only read set that": {
+      "id": "PC-0044",
+      "domain": "application-security",
+      "title": "Lint enforces that agents are read-only and set omitClaudeMd",
+      "path": "tools/lint_plugin.py",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "tools/lint_plugin.py": "be5e5c8e4824d18f4afb411e14e19bae80ee6723cd507d54874d48fb09f09a58"
+      }
+    },
+    "application-security|tools/lint_plugin.py|argument call fixed list shell subprocess uses with": {
+      "id": "PC-0045",
+      "domain": "application-security",
+      "title": "Subprocess call uses a fixed argument list with no shell",
+      "path": "tools/lint_plugin.py",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "tools/lint_plugin.py": "be5e5c8e4824d18f4afb411e14e19bae80ee6723cd507d54874d48fb09f09a58"
+      }
+    },
+    "application-security|tools/blindtest/run_audit.py|argv calls list shell subprocess use without": {
+      "id": "PC-0046",
+      "domain": "application-security",
+      "title": "Subprocess calls use list argv without a shell",
+      "path": "tools/blindtest/run_audit.py",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "tools/blindtest/run_audit.py": "7223cd0823db316ef774249397af2219927742da244e17d7787bcdd1634c00df"
+      }
+    },
+    "application-security|.gitignore|are environment files git ignored": {
+      "id": "PC-0047",
+      "domain": "application-security",
+      "title": "Environment files are git-ignored",
+      "path": ".gitignore",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        ".gitignore": "1ea5dc3d7d9fdc20b90af40861ab596e177476ef2eee3921b5719092b7831132"
+      }
+    },
+    "application-security|tools/blindtest/run_audit.py|and audit denies grants least ledger privilege runner settings writes": {
+      "id": "PC-0048",
+      "domain": "application-security",
+      "title": "Audit runner grants least-privilege settings and denies ledger writes",
+      "path": "tools/blindtest/run_audit.py",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "tools/blindtest/run_audit.py": "7223cd0823db316ef774249397af2219927742da244e17d7787bcdd1634c00df"
+      }
+    },
+    "data-protection|.gitignore|and are files gitignored only output owner run state": {
+      "id": "PC-0049",
+      "domain": "data-protection",
+      "title": "Run output is gitignored, and state files are owner-only",
+      "path": ".gitignore",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        ".gitignore": "1ea5dc3d7d9fdc20b90af40861ab596e177476ef2eee3921b5719092b7831132"
+      }
+    },
+    "privacy|README.md|data discloses flow model privacy provider section the": {
+      "id": "PC-0050",
+      "domain": "privacy",
+      "title": "Privacy section discloses the model-provider data flow",
+      "path": "README.md",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "README.md": "ede7ca107bc20146544fc92ab434b953d1afc525333493b863913b74522e8ce0"
+      }
+    },
+    "data-protection|plugins/flight-check/scripts/flight_check_lib/cli.py|and automatically gitignored only output owner run": {
+      "id": "PC-0051",
+      "domain": "data-protection",
+      "title": "Run output is owner-only and gitignored automatically",
+      "path": "plugins/flight-check/scripts/flight_check_lib/cli.py",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/cli.py": "445b018ca4a366b6a418284ec82a92fb4cc6b9e00925b17d62ca8eb91f9bf017"
+      }
+    },
+    "privacy|README.md|and data disclosure flow model names network privacy provider states telemetry the": {
+      "id": "PC-0052",
+      "domain": "privacy",
+      "title": "Privacy disclosure states no telemetry and no network, and it names the model-provider data flow",
+      "path": "README.md",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "README.md": "ede7ca107bc20146544fc92ab434b953d1afc525333493b863913b74522e8ce0"
+      }
+    },
+    "documentation|README.md|and are audited candidly content data deleted discloses files goes handling kept model privacy provider raw run section that the until": {
+      "id": "PC-0053",
+      "domain": "documentation",
+      "title": "Privacy and data-handling section candidly discloses that audited content goes to the model provider and that the raw run files are kept until deleted",
+      "path": "README.md",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "README.md": "ede7ca107bc20146544fc92ab434b953d1afc525333493b863913b74522e8ce0"
+      }
+    },
+    "documentation|tools/lint_plugin.py|and backed calls claim forbidden lint modules network run subprocess use": {
+      "id": "PC-0054",
+      "domain": "documentation",
+      "title": "Claim of no network or subprocess use is backed by a CI-run lint of forbidden modules and calls",
+      "path": "tools/lint_plugin.py",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "tools/lint_plugin.py": "be5e5c8e4824d18f4afb411e14e19bae80ee6723cd507d54874d48fb09f09a58"
+      }
+    },
+    "legal-business|docs/limitations.md|across advice and certification consistent disclaimers legal limitations plugin readme": {
+      "id": "PC-0055",
+      "domain": "legal-business",
+      "title": "Consistent no-legal-advice, no-certification disclaimers across README, plugin README and limitations",
+      "path": "docs/limitations.md",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "docs/limitations.md": "17c3158c3540dc67fb1435e0152e569d1954ecd6ffa83ccd30a79990a01fd8d5"
+      }
+    },
+    "documentation|README.md|advice and certify clearly compliance does legal not readme states that the tool": {
+      "id": "PC-0056",
+      "domain": "documentation",
+      "title": "README states clearly that the tool is not legal advice and does not certify compliance",
+      "path": "README.md",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "README.md": "ede7ca107bc20146544fc92ab434b953d1afc525333493b863913b74522e8ce0"
+      }
+    },
+    "legal-business|CONTRIBUTING.md|and are contribution off sign stated terms": {
+      "id": "PC-0057",
+      "domain": "legal-business",
+      "title": "Contribution terms and sign-off are stated",
+      "path": "CONTRIBUTING.md",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "CONTRIBUTING.md": "94cd44556359faa5d3123fd2c93be06d1ad9d5db0ac7a9ed23d097b6b5e34089"
+      }
+    },
+    "legal-business|docs/audits/2026-10-12-phase-7-final-report.md|and are business dates decisions items legal open owner tracked with": {
+      "id": "PC-0058",
+      "domain": "legal-business",
+      "title": "Open legal and business items are tracked with owner decisions and dates",
+      "path": "docs/audits/2026-10-12-phase-7-final-report.md",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "docs/audits/2026-10-12-phase-7-final-report.md": "5e401dfadaa5db1f356267109a3e5472f8f6d3232011c55ac59fcb3f89bb4b23"
+      }
+    },
+    "supply-chain|.github/workflows/ci.yml|actions and dependencies hash minimal permissions pinned sha token with": {
+      "id": "PC-0059",
+      "domain": "supply-chain",
+      "title": "Hash-pinned CI dependencies and SHA-pinned actions with minimal token permissions",
+      "path": ".github/workflows/ci.yml",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab",
+        "tools/ci-requirements.txt": "4191dac2a8ba8bf1099b152750c59ef5b44c2ac1bf0c568e318ff3f61031bc69"
+      }
+    },
+    "supply-chain|.github/workflows/ci.yml|are binary from hash installed only pinned python requirements tools wheels with": {
+      "id": "PC-0060",
+      "domain": "supply-chain",
+      "title": "CI Python tools are installed from hash-pinned requirements with binary-only wheels",
+      "path": ".github/workflows/ci.yml",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+      }
+    },
+    "supply-chain|tools/ci-npm/package.json|and claude cli code exact from installed integrity locked lockfile npm pinned version with": {
+      "id": "PC-0061",
+      "domain": "supply-chain",
+      "title": "Claude Code CLI is pinned to an exact version and installed from an integrity-locked lockfile with npm ci",
+      "path": "tools/ci-npm/package.json",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "tools/ci-npm/package.json": "605e095ddaba93aad722ca6f0613cbdb8fdff82ca6bd6f66b302d76e26c5ffae"
+      }
+    },
+    "testing|tests/unit/test_end_to_end.py|builds credential fake holds its like masking repository runtime secret strings test the": {
+      "id": "PC-0062",
+      "domain": "testing",
+      "title": "Secret-masking test builds its fake credential at runtime so the repository holds no credential-like strings",
+      "path": "tests/unit/test_end_to_end.py",
+      "first_seen_run": "20261013T051206Z",
+      "last_seen_run": "20261013T051206Z",
+      "status": "observed",
+      "evidence_files": {
+        "tests/unit/test_end_to_end.py": "41c6a6d2bee224f8775d9d329198780243cd2e33dc89f9647f050e555861349d"
+      }
     }
   },
-  "next_pc_id": 38
+  "next_pc_id": 63
 }

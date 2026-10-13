@@ -8,7 +8,12 @@ Release candidate for 1.5; not yet published as a release. 1.5 keeps everything 
 
 Blind-evaluated as a baseline audit and two audits of changes on a held-out application, with recorded owner decisions (`docs/audits/2026-10-13-v1.5-sequence-evaluation.md`).
 
-- **Fixes from a review of all 1.5 code** (Phase 10): an adversarial review (seven reviewers by area, each candidate defect checked by three independent skeptics) found 54 candidate defects; 53 were fixed with regression tests and one was rejected. The most serious:
+- **Changes from the release self-audit** (`docs/audits/2026-10-13-v1.5-self-audit.md`):
+  - In a git worktree or submodule, `.git` is a file, and audits of changes treated it as an unexplained change and reassessed every domain. Change detection now skips `.git` and `.hg` files. A stored file-list entry under a path the scan skips is ignored, not reported as deleted.
+  - The high-entropy secret rule no longer masks timestamps such as `20261013T050120Z`, so backup names in messages stay readable.
+  - The README states the 1.5.0-rc.1 version, and the CI scan notes describe the current CI installs, including the unpinned PDF utility.
+
+- **Fixes from a review of all 1.5 code** (Phase 10): an adversarial review by seven reviewers, one per area, found 54 candidate defects. Each candidate was to be checked by three independent skeptics, but a usage limit stopped them after 20 (19 confirmed, 1 rejected). 53 of the 54 were fixed with regression tests. The most serious:
   - `state recover` followed file names from a journal, so a planted `.flight-check/pending/journal.json` could delete or overwrite files outside the state directory; it now accepts only Flight Check's own file names and refuses links.
   - Several paths could make the ship decision better than the evidence supports: an owner's "not applicable" override hid open findings in that domain; linking a risk to any finding hid the risk; a finding matched by judgment inherited an acceptance made for a milder one; register acceptances and false-positive marks recorded during a run changed that run's decision; Flight Check could move a user's record back to PROPOSED or a user-set legal item back to NEEDS_REVIEW. All now count or refuse as documented.
   - Change detection could miss changes: a file cited only by a profile fact counted as explained; carried-forward findings could drop out of the gate after a later sighting; a domain the owner now says applies was carried forward as not applicable; impact rules were case-sensitive; any directory named `build`, `coverage`, or `vendor` was skipped at every depth; `./` paths never matched.
