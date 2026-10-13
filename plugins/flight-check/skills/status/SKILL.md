@@ -33,7 +33,7 @@ Question: `$ARGUMENTS`
 | "Show me the evidence behind FC-0003", "the history of FC-0003" | `report --view findings --id FC-0003 --root <root>`, or `ledger show --ledger <root>/.flight-check/ledger.json --id FC-0003` |
 | "What is this project?", "what is known or unknown?" | `report --view profile --root <root>` |
 | "How has readiness changed?" | `report --view readiness --root <root>` |
-| "Ask me before audits over $3", "use cheaper models", "what are my settings?" | `settings --root <root> [--max-audit-usd N] [--models economy\|balanced\|thorough]` (0 never asks; `balanced` is the measured default, `economy` is cheaper and catches somewhat less, `thorough` costs several times more) |
+| "Ask me before audits over $3", "use cheaper models", "what are my settings?" | `settings --root <root> [--max-audit-usd N] [--models economy\|balanced\|thorough]` (0 never asks; `balanced` is the measured default, `economy` is cheaper, but how much it misses has not been measured yet, `thorough` costs several times more) |
 | "Remind me later", "not now", "come back to this next week" | `later --root <root> --id <ID> [--on YYYY-MM-DD] --note "<what is left>"` for each item meant; `later --root <root>` lists reminders; `later --root <root> --done <ID>` removes one |
 | "Can I release this?", "would the release check pass?" | `release-check --root <root> --mode warn` (add `--allow-accepted-risks` if the user releases with accepted risks) |
 | "Export findings for GitHub", "make a SARIF file" | `sarif --root <root> --out flight-check.sarif` (written to `.flight-check/reports/`; usage.md shows the workflow that uploads it) |

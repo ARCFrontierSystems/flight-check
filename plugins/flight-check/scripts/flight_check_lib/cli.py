@@ -1254,7 +1254,7 @@ def cmd_settings(args):
     except (InputError, state.StateError, OSError) as exc:
         return _fail(str(exc))
     limit = prefs["max_audit_usd"]
-    tier_words = {"economy": "smaller, cheaper models (they catch somewhat less)",
+    tier_words = {"economy": "smaller, cheaper models (how much they miss has not been measured yet)",
                   "balanced": "the models Flight Check's accuracy was measured with (the default)",
                   "thorough": "the most capable models (several times the usage)"}
     _print({"ok": True, "settings": prefs,
