@@ -29,7 +29,7 @@
      "patterns": ["*payment*", "*billing*", "*checkout*", "*subscription*", "*invoice*", "*webhook*", "*stripe*", "*paypal*", "*pricing*", "*refund*"],
      "domains": ["payments", "application-security", "legal-business", "reliability"]},
     {"name": "AI and model integrations",
-     "patterns": ["*llm*", "*openai*", "*anthropic*", "*prompt*", "*embedding*", "*model_client*", "*triage*", "ai/*"],
+     "patterns": ["*llm*", "*openai*", "*anthropic*", "*prompt*", "*embedding*", "*model_client*", "ai/*"],
      "domains": ["ai-llm", "privacy", "data-protection", "third-party"]},
     {"name": "assets",
      "patterns": ["*.svg", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.ttf", "*.otf", "*.woff", "*.woff2", "*.mp3", "*.mp4", "fonts/*", "images/*", "img/*", "assets/*"],

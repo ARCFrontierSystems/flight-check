@@ -71,7 +71,9 @@ def _carried_findings(audit, entries, files):
     out = []
     for fid, e in sorted(entries.items()):
         origin = origins.get(e["domain"])
-        if not origin or fid in seen or e["last_seen_run"] != origin["run_id"]:
+        # Seen at the domain's last assessment or later (an agent of another domain may have re-reported it in a run
+        # that carried this domain). Run IDs start with their UTC time, so they sort in time order.
+        if not origin or fid in seen or e["last_seen_run"] < origin["run_id"]:
             continue
         if e["status"] in constants.RESOLVED_STATUSES or e["status"] == "NOT_REPRODUCED":
             continue

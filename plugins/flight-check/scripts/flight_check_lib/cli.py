@@ -69,7 +69,29 @@ def cmd_version(args):
     return 0
 
 
-def _incremental_scope(state_dir, root, scanned):
+def _decision_inputs_changed(st, today):
+    """What can change the ship decision without any file changing: records changed since the latest decision, and
+    acceptances whose review date has passed."""
+    out = []
+    stamps = st.project.get("readiness") or []
+    if stamps and stamps[-1]["revision"] != st.project["revision"]:
+        out.append("the project's records changed after the latest decision (revision %d, now %d)"
+                   % (stamps[-1]["revision"], st.project["revision"]))
+    led = st.ledger or {}
+    for e in (led.get("entries") or {}).values():
+        if e["status"] == "ACCEPTED_RISK" and ledger.acceptance_problems(e.get("accepted_risk"), today):
+            out.append("the acceptance of %s no longer counts" % e["id"])
+    for cid, acc in (led.get("control_acceptances") or {}).items():
+        if ledger.acceptance_problems(acc, today):
+            out.append("the acceptance of control %s no longer counts" % cid)
+    for risk in (st.registers or {}).get("risks", []):
+        review = (risk.get("acceptance") or {}).get("review_date")
+        if risk["status"] == "ACCEPTED" and review and review < today.isoformat():
+            out.append("the acceptance of %s is past its review date" % risk["id"])
+    return out[:20]
+
+
+def _incremental_scope(state_dir, root, scanned, today):
     """init-run --changed: which domains to reassess and which to carry forward, or a full scope with the reason."""
     full = {"mode": "full", "reassess_domains": catalog.domain_ids(), "carried_forward_domains": [],
             "agents": sorted({d["agent"] for d in catalog.domains()})}
@@ -80,7 +102,12 @@ def _incremental_scope(state_dir, root, scanned):
     if not st.initialized or st.problems:
         return dict(full, reasons=["there is no usable project state from an earlier audit, so every domain is assessed"])
     ch = freshness.changes(root, st, scanned=scanned)
+    inputs = _decision_inputs_changed(st, today)
+    if inputs and not ch["changed_files"]:
+        ch["reasons"].append("no file changed, but inputs to the ship decision did, so a new decision is needed: %s"
+                             % "; ".join(inputs))
     return {"mode": "changed", "baseline_run_id": ch["baseline"]["run_id"], "changed_files": ch["changed_files"],
+            "decision_inputs_changed": inputs,
             "files": ch["files"][:50], "widened": ch["widened"], "reasons": ch["reasons"],
             "reassess_domains": ch["reassess_domains"], "carried_forward_domains": ch["carried_forward_domains"],
             "carried_forward_from": ch["carried_forward_from"],
@@ -121,8 +148,9 @@ def cmd_init_run(args):
     if args.changed and not root:
         return _fail("--changed needs --root")
     scanned = freshness.scan(root) if root else None
-    scope = _incremental_scope(os.path.dirname(base), root, scanned) if args.changed else None
-    if scope and scope["mode"] == "changed" and not scope["changed_files"] and not scope["reassess_domains"]:
+    scope = _incremental_scope(os.path.dirname(base), root, scanned, now.date()) if args.changed else None
+    if scope and scope["mode"] == "changed" and not scope["changed_files"] and not scope["reassess_domains"] \
+            and not scope.get("decision_inputs_changed"):
         _print({"ok": True, "nothing_to_reassess": True, "scope": scope,
                 "message": "No file changed since run %s and every applicable domain was assessed then, so its "
                            "ship decision still describes these files. No run was started." % scope["baseline_run_id"]})

@@ -70,8 +70,12 @@ class WorkflowTests(unittest.TestCase):
         self.assertEqual(run_cli("legal", "update", *sd, "--id", "LR-0002", "--status", "RESOLVED", "--source", "flight-check",
                                  "--note", "automatic", "--now", T[1])[0], 1)
 
-        # Nothing changed yet: an audit of changes has nothing to do.
-        self.assertTrue(self.ok("init-run", "--base", self.base, "--root", self.root, "--changed", "--now", T[2])["nothing_to_reassess"])
+        # No file changed, but the records did, so an audit of changes still makes a new decision (with no agent).
+        start = self.ok("init-run", "--base", self.base, "--root", self.root, "--changed", "--now", T[2])
+        self.assertNotIn("nothing_to_reassess", start)
+        self.assertEqual(start["scope"]["reassess_domains"], [])
+        self.assertIn("records changed", " ".join(start["scope"]["decision_inputs_changed"]))
+        shutil.rmtree(start["run_dir"])
 
         # 10. Change the privacy policy.
         with open(os.path.join(self.root, "docs", "PRIVACY.md"), "w") as fh:

@@ -14,8 +14,12 @@ from . import catalog, constants, registers
 from .jsonio import InputError, dump_json, load_json
 
 MANIFEST = "manifest.json"
-SKIP_DIRS = {".git", ".hg", ".svn", ".flight-check", "node_modules", "vendor", ".venv", "venv", "site-packages", "dist",
-             "build", "target", "__pycache__", ".tox", ".mypy_cache", ".pytest_cache", ".next", ".nuxt", "coverage"}
+# Skipped wherever they appear: version control, Flight Check's own state, installed dependencies, and caches.
+SKIP_DIRS = {".git", ".hg", ".svn", ".flight-check", "node_modules", ".venv", "venv", "site-packages", "__pycache__",
+             ".tox", ".mypy_cache", ".pytest_cache", ".next", ".nuxt"}
+# Skipped only at the top of the project, where they are build output or vendored dependencies; a directory with one
+# of these names deeper in the tree (src/coverage/, tools/build/) is first-party code and is scanned.
+SKIP_TOP_DIRS = {"vendor", "dist", "build", "target", "coverage"}
 MAX_FILES = 200000
 MAX_LIST_BYTES = 100 * 1024 * 1024  # a file list for MAX_FILES long paths
 
@@ -40,7 +44,9 @@ def scan(root, max_files=MAX_FILES):
     root = os.path.realpath(root)
     files, notes = {}, []
     for dirpath, dirnames, filenames in os.walk(root, followlinks=False):
-        dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS and not os.path.islink(os.path.join(dirpath, d)))
+        top = dirpath == root
+        dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS and not (top and d in SKIP_TOP_DIRS)
+                             and not os.path.islink(os.path.join(dirpath, d)))
         for name in sorted(filenames):
             full = os.path.join(dirpath, name)
             try:
@@ -129,12 +135,15 @@ def _rules():
 
 
 def domains_for_path(path):
-    """Domains a change to this path can affect, by rule. Empty when no rule matches."""
+    """Domains a change to this path can affect, by rule. Empty when no rule matches. Case does not matter:
+    CheckoutForm.tsx matches *checkout* like checkout_form.tsx does."""
+    path = path.lower()
     name = path.rsplit("/", 1)[-1]
     out = set()
     for rule in _rules()["rules"]:
         for pattern in rule["patterns"]:
-            if fnmatch.fnmatch(path, pattern) or fnmatch.fnmatch(name, pattern) or \
+            pattern = pattern.lower()
+            if fnmatch.fnmatchcase(path, pattern) or fnmatch.fnmatchcase(name, pattern) or \
                     (pattern.endswith("/*") and ("/" + path).find("/" + pattern[:-1]) >= 0):
                 out.update(rule["domains"])
                 break
@@ -142,7 +151,15 @@ def domains_for_path(path):
 
 
 def is_source_code(path):
-    return any(path.endswith(s) for s in _rules()["source_code_suffixes"])
+    return any(path.lower().endswith(s) for s in _rules()["source_code_suffixes"])
+
+
+def normalize_path(path):
+    """The form scan() uses: forward slashes, no leading './', no '.' segments."""
+    import posixpath
+    path = (path or "").replace("\\", "/").strip()
+    norm = posixpath.normpath(path) if path else path
+    return "" if norm == "." else norm
 
 
 def _conclusions(st):
@@ -175,8 +192,12 @@ CARRY_ELIGIBLE = ("ASSESSED", "NOT_APPLICABLE", "CARRIED_FORWARD")
 def _carry_from(rec, baseline_run):
     """The earlier assessment a domain's results can be carried forward from, or None. Only a domain that the run
     which wrote the baseline file list assessed (or itself carried forward) qualifies, so the chain of unchanged
-    files is never broken by a run that skipped the domain."""
+    files is never broken by a run that skipped the domain. Only applicable domains are asked about, so a domain
+    last recorded as not applicable (the owner has since said it applies, or withdrew a not-applicable override)
+    has nothing to carry and is reassessed."""
     if not rec or not baseline_run or rec.get("status") not in CARRY_ELIGIBLE or rec.get("run_id") != baseline_run:
+        return None
+    if rec.get("status") == "NOT_APPLICABLE":
         return None
     if not rec.get("assessed_run_id"):
         return None
@@ -221,14 +242,18 @@ def changes(root, st, max_files=MAX_FILES, scanned=None):
     for path, how in sorted(changed.items()):
         cited = by_path.get(path, [])
         rule_domains = domains_for_path(path)
+        cited_domains = set()
         for kind, cid, domain, status in cited:
             affected.append({"kind": kind, "id": cid, "status": status, "path": path, "change": how})
             if domain:
-                domains.add(domain)
+                cited_domains.add(domain)
+        domains.update(cited_domains)
         domains.update(rule_domains)
         if is_source_code(path):
             domains.update(_rules()["source_code_domains"])
-        if not cited and not rule_domains:
+        # A citation explains a change only through a domain; a profile fact or a register record without a domain
+        # names no area to reassess, so such a file still widens reassessment.
+        if not cited_domains and not rule_domains and not is_source_code(path):
             unexplained.append(path)
     if unexplained:
         widen = True
@@ -325,7 +350,7 @@ def entry_evidence_files(finding, root, cache=None):
     cache = {} if cache is None else cache
     out = {}
     for ev in finding.get("evidence") or []:
-        path = ev.get("path")
+        path = normalize_path(ev.get("path"))
         if not path or ev.get("kind") not in ("code", "config", "documentation", "dependency"):
             continue
         if path not in cache:

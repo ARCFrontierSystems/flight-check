@@ -183,6 +183,16 @@ def check_part(part, name, errors, warnings):
             _guard_text(ua[field], "%s.%s" % (where, field), errors, warnings)
 
 
+def _carries_everything(run_dir):
+    """An audit of changes may launch no domain agent at all when no change affects an applicable domain."""
+    path = os.path.join(run_dir, "scope.json")
+    try:
+        scope = load_json(path) if os.path.isfile(path) else None
+    except InputError:
+        return False
+    return isinstance(scope, dict) and scope.get("mode") == "changed" and scope.get("reassess_domains") == []
+
+
 def part_files(run_dir):
     return sorted(glob.glob(os.path.join(run_dir, "part-*.json")))
 
@@ -217,7 +227,7 @@ def validate_run_dir(run_dir):
                 for j, ev in enumerate(item.get("evidence") or []):
                     check_evidence(ev, "inventory.json: items[%d].evidence[%d]" % (i, j), errors)
     files = part_files(run_dir)
-    if not files:
+    if not files and not _carries_everything(run_dir):
         errors.append("no part-*.json files found; domain agents' results must be saved before finalizing")
     agents = {}
     namespaced = set()

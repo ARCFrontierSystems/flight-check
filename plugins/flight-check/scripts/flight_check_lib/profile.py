@@ -45,9 +45,13 @@ def evidence_refs(items, root, now_iso, run_id, cache=None):
         if kind == "absence":
             ref["searched"] = textsafety.redact(ev.get("searched") or "")[0][:1000]
         elif ev.get("path"):
-            path = ev["path"]
+            from .freshness import normalize_path
+            path = normalize_path(ev["path"])
             if kind == "user-provided":
-                ref["path"] = path
+                # Imported evidence can live outside the project; only a path inside it is stored.
+                _, problem = evidence_mod.resolve_within(root, path) if root else (None, "NO_ROOT")
+                if not problem and not os.path.isabs(path):
+                    ref["path"] = path
             else:
                 _, problem = evidence_mod.resolve_within(root, path) if root else (None, "NO_ROOT")
                 if problem == "OUT_OF_ROOT":
