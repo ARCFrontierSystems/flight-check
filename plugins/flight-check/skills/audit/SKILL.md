@@ -4,7 +4,7 @@ description: Evidence-first ship-readiness audit: security, privacy, legal/busin
 argument-hint: "[path] [--quick | --full] [--untrusted] [--out DIR] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2] [--recheck ID,...] [--models economy|balanced|thorough]"
 disable-model-invocation: true
 model: sonnet
-allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py save-reply *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py finalize *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py report *)
+allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py save-reply *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py finalize *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py report *), Edit(./.flight-check/runs/**)
 disallowed-tools: WebFetch, WebSearch, Edit, NotebookEdit, Skill
 ---
 
@@ -219,13 +219,14 @@ Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render <run_dir>`. If
 - **Keep it short.** Lead with the few things that matter most; offer the full list on request.
 
 Then run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py report --view unblock --root <root> --format json` for the list of what stands between the project and release, each item with `who` (`claude` or `you`), `problem`, and `action`. Reply in this order:
-1. **The verdict in one sentence:** the finalize output's `gate_plain`, with the official decision in parentheses.
+1. **The verdict in one sentence:** the finalize output's `gate_plain`, with the official decision in parentheses. When this was the project's first audit (init-run reported no earlier audit) and the verdict is not READY, say first that this is normal for a first check, because some proof (for example a dependency scan or a tested backup) cannot come from code alone, and that the next steps below are what it takes.
 2. **What I can fix for you:** the `who: claude` items, one plain line each, then ask once whether to fix them. On yes, use `/flight-check:fix`.
 3. **What needs you:** the `who: you` items, each with its exact steps (scanner commands, `--recheck`, legal items with `/flight-check:legal-packet`, decisions with `/flight-check:track`).
 4. **Anything else worth knowing,** briefly: regressions (problems that came back), findings no longer seen, the finalize output's `contradictions` (a correction or override of the user's that new evidence contradicts; suggest `/flight-check:track` to review it), and, for audits of changes, the areas carried forward (`carried_forward_domains`): say they were not re-checked this time, never that they were verified.
 5. **Questions for a lawyer, if any:** run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py report --view legal --root <root> --format json`. If items are open, say in one plain sentence how many questions are worth asking a lawyer about, with one example, and that they do not block a release unless an answer says something must change. Offer once to sort them and prepare one summary for a lawyer (`/flight-check:legal-packet`). Say nothing about lawyers when no item is open.
 6. **Where the details are:** `report.md` (full report) and that `/flight-check:status` answers questions later.
-7. **The scope reminder,** in one sentence: this reflects only what Flight Check could examine; it is not a certification or legal advice.
+7. **After a first audit only,** one line each: questions can be asked anytime ("what does my project still need?"), and `/flight-check:watch on` has Flight Check check each file Claude edits for common mistakes, free.
+8. **The scope reminder,** in one sentence: this reflects only what Flight Check could examine; it is not a certification or legal advice.
 
 If this audit concerned untrusted code, recommend a fresh session before acting on the findings: the project's content is in this conversation's context, and the tool restrictions of this skill end when the user sends the next message.
 

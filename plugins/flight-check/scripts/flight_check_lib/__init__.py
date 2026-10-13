@@ -5,4 +5,4 @@ executes project code, and only reads files inside the audit target root or
 Flight Check's own run directories.
 """
 
-VERSION = "1.0.0"
+VERSION = "1.0.1"

@@ -8,7 +8,7 @@ Flight Check asks one question:
 
 It examines security, privacy, legal/business risk, compliance readiness, accessibility, reliability, and production readiness. It reports what it found with file-and-line evidence, what it verified as working, and what it could not verify. It never confuses "we did not find a problem" with "there is no problem".
 
-> **Status: 1.0.0.** Flight Check's blind evaluations are published: [Phase 5](docs/audits/2026-10-06-phase-5-blind-test.md), the [Phase 7 final report](docs/audits/2026-10-12-phase-7-final-report.md), the [release-candidate evaluation](docs/audits/2026-10-12-v1-release-evaluation.md), and the [sequence evaluation of audits over time](docs/audits/2026-10-13-v1.5-sequence-evaluation.md) on held-out test applications. Used the 1.0.0-rc.1 release candidate? See [docs/upgrading-from-rc.md](docs/upgrading-from-rc.md). Treat results as an aid to human judgment, not a substitute for it.
+> **Status: 1.0.1.** Flight Check's blind evaluations are published: [Phase 5](docs/audits/2026-10-06-phase-5-blind-test.md), the [Phase 7 final report](docs/audits/2026-10-12-phase-7-final-report.md), the [release-candidate evaluation](docs/audits/2026-10-12-v1-release-evaluation.md), and the [sequence evaluation of audits over time](docs/audits/2026-10-13-v1.5-sequence-evaluation.md) on held-out test applications. Used the 1.0.0-rc.1 release candidate? See [docs/upgrading-from-rc.md](docs/upgrading-from-rc.md). Treat results as an aid to human judgment, not a substitute for it.
 
 ## What Flight Check does
 
@@ -42,6 +42,14 @@ It examines security, privacy, legal/business risk, compliance readiness, access
 - **Not exhaustive.** It reads code and configuration statically. It does not run your application or tests, scan live infrastructure, or query vulnerability databases. Those areas stay UNVERIFIED unless you import evidence.
 - **Not infallible.** Language models can miss issues and can be wrong. Flight Check's checks reduce, but do not eliminate, false positives and false negatives. See [docs/limitations.md](docs/limitations.md).
 
+## Quick start
+
+1. **Install** (in a terminal): `claude plugin marketplace add ARCFrontierSystems/flight-check`, then `claude plugin install flight-check@arc-frontier-systems`.
+2. **Check your project:** open Claude Code in your project and type `/flight-check:audit`. It tells you the cost before it starts, typically $2–5 for a first check, and less after that, because only what changed is re-checked.
+3. **Follow the plain-English next steps.** Say "fix it" and Claude fixes what it can after asking once; Flight Check explains what only you can do. Not sure what to do? Ask "how do I use Flight Check?" anytime.
+
+Optional: `/flight-check:watch on` checks each file Claude edits for common mistakes as you work, free.
+
 ## Requirements
 
 - Claude Code with plugin support. Developed and tested with Claude Code 2.1.289; it relies on agent settings introduced in 2.1.271.
@@ -66,6 +74,7 @@ Or inside a Claude Code session: `/plugin marketplace add ARCFrontierSystems/fli
 | `/flight-check:legal-packet` | Builds the Attorney Review Packet PDF from findings that warrant legal or business review. |
 | `/flight-check:track` | Shows status, and records your decisions: accepted risks, legal review status, counsel decisions you report, closures. |
 | `/flight-check:remediate FC-0001,FC-0002` | Fixes findings you authorize in your own project, then re-audits to verify. |
+| `/flight-check:start` | Explains Flight Check and where your project stands, with the first steps. Claude also uses it when you ask how to use Flight Check. |
 | `/flight-check:fix` | Fixes what Claude can fix from Flight Check's findings, after asking you once. |
 | `/flight-check:watch on\|off` | Turns watch mode on or off for the current project. |
 | `/flight-check:status [question]` | Answers questions about readiness, open risks, changes, requirements, decisions, and legal questions from Flight Check's records, without changing anything. |

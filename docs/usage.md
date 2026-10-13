@@ -87,6 +87,10 @@ For your own projects only. Flight Check:
 
 A fix counts as verified only when the re-audit confirms it. Run a full `/flight-check:audit` before making a release decision.
 
+## `/flight-check:start`
+
+Explains in plain English what Flight Check does, what it costs, where this project stands, and the first steps. Claude also uses it on its own when you ask "how do I use Flight Check?". It changes nothing and never starts an audit.
+
 ## `/flight-check:fix`
 
 ```
@@ -276,7 +280,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ARCFrontierSystems/flight-check
-          ref: v1.0.0 # the Flight Check release you audit with
+          ref: v1.0.1 # the Flight Check release you audit with
           path: .flight-check-tool
           persist-credentials: false
       - run: python3 .flight-check-tool/plugins/flight-check/scripts/flight_check.py release-check --root . --mode require
@@ -311,7 +315,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ARCFrontierSystems/flight-check
-          ref: v1.0.0 # the Flight Check release you audit with
+          ref: v1.0.1 # the Flight Check release you audit with
           path: .flight-check-tool
           persist-credentials: false
       - run: python3 .flight-check-tool/plugins/flight-check/scripts/flight_check.py sarif --root . --out flight-check.sarif

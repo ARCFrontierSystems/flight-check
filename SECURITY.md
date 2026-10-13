@@ -17,7 +17,7 @@ We aim to acknowledge reports within 5 business days. We will coordinate disclos
 
 ## Supported versions
 
-Only the latest released version receives security fixes. Flight Check 1.0.0 is the current release; fixes go into the next release.
+Only the latest released version receives security fixes. Flight Check 1.0.1 is the current release; fixes go into the next release.
 
 ## Design notes
 

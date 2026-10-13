@@ -2,6 +2,15 @@
 
 All notable changes are recorded here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [1.0.1] — 2026-10-13
+
+Easier first steps for new users.
+
+- **Getting started.** New `/flight-check:start` explains what Flight Check does, what it costs, where the project stands, and the first steps. Claude starts it on its own when the user asks how to use Flight Check, because the audit itself stays hidden from Claude so it never spends money unasked.
+- **Fewer prompts during an audit.** The audit may write its own working files (`run.json`, `summary.json`, agent replies) in `.flight-check/runs/` without asking. It still cannot edit project files, and the lint rejects any other pre-approved write.
+- **A first result that does not discourage.** When a first audit is not READY, Flight Check says first that this is normal for a first check, and why, before the next steps. After a first audit, it mentions once that questions can be asked anytime and that watch mode is available.
+- **Quick start** at the top of the README.
+
 ## [1.0.0] — 2026-10-13
 
 First release. 1.0.0 keeps everything in the release candidate below (1.0.0-rc.1) and adds project state, so Flight Check remembers the project between audits: its profile, requirements, decisions, risks, legal review queue, finding history, and what changed. Upgrading from the release candidate changes some files in `.flight-check/` on the first command that records something; see `docs/upgrading-from-rc.md`, including how to go back. During development this version was called 1.5; records from that time (`docs/audits/2026-10-13-v1.5-*.md`, `docs/design/project-state.md`) use that name.
