@@ -73,7 +73,7 @@ A fix counts as verified only when the re-audit confirms it. Run a full `/flight
 
 ## Project state
 
-From version 1.5, Flight Check keeps project state next to the ledger in `.flight-check/`: `project.json` (identity, and later the profile and applicability), `registers.json` (requirements, decisions, risks, and legal review items, added in later 1.5 phases), and `history.jsonl`, an append-only log of every change. The design is in [design/project-state.md](design/project-state.md). The state is created by `state init`, or automatically by the next finalized audit or `ledger` command; an existing 1.0 ledger is kept unchanged and backed up first.
+Flight Check keeps project state next to the ledger in `.flight-check/`: `project.json` (identity, profile, and applicability), `registers.json` (requirements, decisions, risks, and legal review items), and `history.jsonl`, an append-only log of every change. The design is in [design/project-state.md](design/project-state.md). The state is created by `state init`, or automatically by the next finalized audit or `ledger` command; an existing 1.0 ledger is kept unchanged and backed up first.
 
 Commands (`python3 <plugin>/scripts/flight_check.py state <command> --root <project>`):
 
@@ -235,7 +235,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ARCFrontierSystems/flight-check
-          ref: v1.5.0 # the Flight Check release you audit with
+          ref: v1.0.0 # the Flight Check release you audit with
           path: .flight-check-tool
           persist-credentials: false
       - run: python3 .flight-check-tool/plugins/flight-check/scripts/flight_check.py release-check --root . --mode require
