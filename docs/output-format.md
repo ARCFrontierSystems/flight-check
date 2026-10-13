@@ -52,7 +52,8 @@ Top-level keys:
 `status --format json` and `report --view <view> --format json` print (or, with `--out NAME`, write to `.flight-check/reports/NAME`) one object:
 - `report_version` (`1.0`), `view`, `generated_at`, `project` (`name`, `project_id`, `revision`), `scope_note`.
 - `data`, by view:
-  - `status`: `project`, `profile` (`known`, `known_total`, `unknown_aspects`), `applicability` (domains by classification), `readiness` (`latest` stamp, `historical`, `note`), `changes` (`available`, and when available `changed_files`, `reassess_domains`, `carried_forward_domains`, `widened`, `stale_evidence` count; otherwise `reason`), `findings` (`open_by_severity`, `open_total`, `top`, `accepted`, `regressions`), `risks`, `requirements` (not verified), `decisions` (`needs_attention`, `triggered_by_changes`), `legal` (`open`, `message`), `next_steps`.
+  - `status`: `project`, `profile` (`known`, `known_total`, `unknown_aspects`), `applicability` (domains by classification), `readiness` (`latest` stamp, `historical`, `note`), `changes` (`available`, and when available `changed_files`, `reassess_domains`, `carried_forward_domains`, `widened`, `stale_evidence` count; otherwise `reason`), `findings` (`open_by_severity`, `open_total`, `top`, `accepted`, `regressions`), `risks`, `requirements` (not verified), `decisions` (`needs_attention`, `triggered_by_changes`), `legal` (`open`, `message`), `next_steps`, `unblock` (as in the `unblock` view).
+  - `unblock`: `decision` (the latest stamp) and `items`, most serious first, each with `kind` (`finding`, `control`, `domain`, `requirement`, `legal`, `risk`, `records`, or `audit`), `id`, `effect` (`critical`, `insufficient`, `blocking`, or `refresh`), `problem`, `action`, and when relevant `needs` (what verifies a control) and `commands` (scanner commands for the project's ecosystems).
   - `profile`: `facts`, `applicability`.
   - `requirements`, `decisions`, `risks`, `legal`: `records` (summary rows with links), or `record` with `--id`; `legal` adds `message` when no item is open.
   - `findings`: `findings` (with first and last run), or `finding`, `history`, and `evidence_files` with `--id`.
@@ -62,7 +63,7 @@ Markdown is the default format; it is for reading, and its layout may change bet
 
 ## Ledger (`.flight-check/ledger.json`)
 
-- `entries`: keyed by fingerprint. Each entry has a stable `id`, `status`, `history[]`, optional `legal`, `accepted_risk`, and `remediations[]`. In ledger schema 1.0 (the 1.0.0-rc.1 release candidate), `legal` holds the classification, status, and history; in schema 2.0 it holds the `classification` and the `item` (`LR-` ID) whose status and history are in `registers.json`. Schema 2.0 also has `evidence_files`, and `confidence` and `release_blocking` as of the last observation, so an audit of changes only can count the finding without re-observing it.
+- `entries`: keyed by fingerprint. Each entry has a stable `id`, `status`, `history[]`, optional `legal`, `accepted_risk`, and `remediations[]`. In ledger schema 1.0 (the 1.0.0-rc.1 release candidate), `legal` holds the classification, status, and history; in schema 2.0 it holds the `classification` and the `item` (`LR-` ID) whose status and history are in `registers.json`. Schema 2.0 also has `evidence_files`, `start_line` (where the finding points in its file, used by the SARIF export), and `confidence` and `release_blocking` as of the last observation, so an audit of changes only can count the finding without re-observing it.
 - `control_acceptances`: risks accepted for UNVERIFIED controls.
 - `runs[]`: run IDs with their gate decisions.
 

@@ -5,7 +5,7 @@ All Flight Check commands are run explicitly. Claude never starts an audit on it
 ## `/flight-check:audit`
 
 ```
-/flight-check:audit [path] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2] [--changed] [--untrusted --out DIR]
+/flight-check:audit [path] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2] [--changed] [--recheck ID,...] [--untrusted --out DIR]
 ```
 
 - `path`: the project to audit. Defaults to the current directory.
@@ -28,9 +28,12 @@ All Flight Check commands are run explicitly. Claude never starts an audit on it
 - `--domains a,b`: limit the audit to some domains. The others are reported as not assessed, so the ship decision fails safe.
 - `--passes 2` (or 3): run each domain agent two or three times independently and combine the results. Language-model audits vary from run to run; combining passes finds more issues and gives a steadier ship decision. A control counts as verified when any pass verified it with evidence, a gap reported by any pass stands, and the verifier merges repeated findings. Domain-audit usage grows about in proportion. Recommended before a release decision.
 - `--changed`: reassess only what changed since the last finalized audit. See "Audits of changes only" below.
+- `--recheck ID,...`: re-examine specific controls, typically the release-critical ones the last decision could not verify, together with `--evidence` or `--context` that shows where each is met. It works like `--changed` and also reassesses the domains those controls belong to, so it costs a fraction of a full audit. Example: `/flight-check:audit --recheck SUPPLY-KNOWN-VULNS --evidence .flight-check/evidence/npm-audit.json`.
 - `--untrusted --out DIR`: for code you do not own or trust. See [hardened-mode.md](hardened-mode.md).
 
-A typical first audit ends in **BLOCKED — INSUFFICIENT EVIDENCE**, because some release-critical controls, such as dependency vulnerability status and tested restores, cannot be established from source code alone. That is intended. The report lists exactly which evidence would change the decision. You can then import that evidence, or explicitly accept the risk with `/flight-check:track`.
+A typical first audit ends in **BLOCKED — INSUFFICIENT EVIDENCE**, because some release-critical controls, such as dependency vulnerability status and tested restores, cannot be established from source code alone. That is intended. `/flight-check:status` (or `report --view unblock`) lists everything between the project and READY, each with its next step: the scanner command to run for your project's ecosystems and how to import its output, the control to re-check with `--recheck`, the finding to fix or the risk to accept with `/flight-check:track`.
+
+Before any agent starts, the audit tells you a rough usage estimate, scaled by project size, the number of domain agents it will run, and `--passes`. It is calibrated on Flight Check's measured audits, so treat it as a range, not a quote.
 
 ## `/flight-check:legal-packet`
 
@@ -154,6 +157,7 @@ The commands behind it, which you can also run directly:
 | Command | Shows |
 |---|---|
 | `status --root <project>` | Readiness (and whether it is historical), what the project is and what is unknown, what changed, the most important open issues, requirements not verified, decisions needing attention, legal questions, and next steps |
+| `report --view unblock --root <project>` | Everything between the latest decision and READY, most serious first, with the next step for each |
 | `report --view profile\|requirements\|decisions\|risks\|legal\|findings\|evidence\|changes\|readiness --root <project> [--id ID]` | One register or view; `--id` shows one record with its history |
 
 Both print Markdown by default; add `--format json` for the documented JSON (see [output-format.md](output-format.md)). `--out NAME.md` (or `NAME.json`) writes the view to `.flight-check/reports/`, which stays on your machine.
@@ -244,5 +248,42 @@ jobs:
 - **Modes.** `--mode require` (the default) exits 1 when the check fails. `--mode warn` reports the same result and exits 0, so you can see it on every release before you let it block. In GitHub Actions, failures also appear as annotations.
 - **What it blocks.** A failing check blocks only the jobs that depend on it. Put your publish or deploy job in the same workflow with `needs: flight-check`. A failing check on a tag does not delete the tag or unpublish a release. To see the result on pull requests too, add a `pull_request` trigger with `--mode warn`.
 - **Limits.** Line-ending conversion does not count as a change, files over 50 MB are compared by size, and symbolic links and submodules are not compared. The check is a process control, not a security barrier: anyone who can commit can also edit the records. The hash-chained history makes such an edit visible afterwards, but cannot prevent it.
+
+### Findings in GitHub code scanning (SARIF)
+
+`sarif --root .` turns the findings that count against release into SARIF 2.1.0, the format GitHub code scanning reads, so they appear in the repository's Security tab and on pull requests that touch the affected lines. Like the release check, it reads only the committed records, so it needs no Claude. Findings you accepted or dismissed, and findings no longer observed, are left out; a finding that does not point at a file in the checkout is counted in the output but not exported. With `--out flight-check.sarif` it writes the file to `.flight-check/reports/`.
+
+```yaml
+# .github/workflows/flight-check-sarif.yml
+name: Flight Check findings
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  sarif:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ARCFrontierSystems/flight-check
+          ref: v1.0.0 # the Flight Check release you audit with
+          path: .flight-check-tool
+          persist-credentials: false
+      - run: python3 .flight-check-tool/plugins/flight-check/scripts/flight_check.py sarif --root . --out flight-check.sarif
+      - uses: github/codeql-action/upload-sarif@<full commit SHA of the current release>
+        with:
+          sarif_file: .flight-check/reports/flight-check.sarif
+          category: flight-check
+```
+
+Replace the placeholder with the full commit SHA of the latest `github/codeql-action` release, found on its releases page; if your Actions settings require pinned actions, a version tag such as `@v4` is refused. Code scanning is free for public repositories; private repositories need GitHub Advanced Security. Line numbers come from the audit that last observed each finding, so they can drift as the code changes until the next audit.
 
 To run an audit headlessly, use `claude -p "/flight-check:audit"` with `--plugin-dir`, `--permission-mode dontAsk`, and a settings file that allows Flight Check's script and writes to `.flight-check/`. See [hardened-mode.md](hardened-mode.md) for a complete example.

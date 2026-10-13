@@ -1,7 +1,7 @@
 ---
 name: audit
 description: Evidence-first ship-readiness audit: security, privacy, legal/business, compliance readiness, accessibility, reliability, production readiness. Deterministic ship gate and report.
-argument-hint: "[path] [--untrusted] [--out DIR] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2] [--changed]"
+argument-hint: "[path] [--untrusted] [--out DIR] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2] [--changed] [--recheck ID,...]"
 disable-model-invocation: true
 allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py save-reply *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py finalize *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render *)
 disallowed-tools: WebFetch, WebSearch, Edit, NotebookEdit, Skill
@@ -35,7 +35,8 @@ Arguments: `$ARGUMENTS`
 - `--evidence FILE ...`: imported evidence such as vulnerability-scanner JSON, CI test results, restore-test records, accessibility test reports, or pentest reports.
 - `--domains a,b`: restrict the audit to these domains. The ship gate then treats the others as NOT ASSESSED and fails safe.
 - `--changed`: reassess only what changed since the last finalized audit. Flight Check compares file hashes with that audit, reassesses every domain a change can affect, and carries the other domains' results forward, labelled "carried forward, not reassessed". When it cannot trace a change, it reassesses everything. Do not combine with `--domains`.
-- `--passes N` (1 to 3, default 1): run each domain agent N times independently and combine the results. This finds more issues and makes results steadier from run to run, and costs roughly N times as much for the domain audits. Tell the user the cost before starting when N is above 1.
+- `--recheck ID,...`: re-examine these controls, for example release-critical controls the last decision could not verify (`/flight-check:status` lists them). Implies `--changed`: Flight Check also reassesses the domains these controls belong to, and carries the rest forward as usual. Usually combined with `--evidence` or `--context` that shows where each control is met.
+- `--passes N` (1 to 3, default 1): run each domain agent N times independently and combine the results. This finds more issues and makes results steadier from run to run, and costs roughly N times as much for the domain audits.
 
 **Trust tier and output locations:**
 - **own** (default):
@@ -49,16 +50,18 @@ Arguments: `$ARGUMENTS`
 
 ## 1. Start the run
 
-Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run --base <run base> --root <root>`, adding `--changed` when it was requested. It prints `run_id`, `run_dir`, `started_at`, and `commit`. Use `run_dir` and the absolute audit root exactly as given, character for character, in every file path you write and every prompt you send; never shorten or retype them from memory. Paths outside the audit root are refused.
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run --base <run base> --root <root>`, adding `--changed` when it was requested `--recheck <IDs>` (comma-separated, as given) when that was requested, and `--passes N` when N is above 1. It prints `run_id`, `run_dir`, `started_at`, and `commit`. Use `run_dir` and the absolute audit root exactly as given, character for character, in every file path you write and every prompt you send; never shorten or retype them from memory. Paths outside the audit root are refused.
 
 If `python3` is unavailable or the command fails, follow "If the script cannot run" at the end.
 
+**Usage estimate.** The output has `estimate.summary`, a rough range of the usage this audit will take. Tell the user before launching any agent. It covers the domain agents, the inventory, and the verifier; handler reviewers on projects with many entry points can add to it.
+
 **Project records.** When the project has Flight Check state, the output also has `project_records`: `decision_assertions` (statements from decisions the owner accepted, to be checked against the code) and `applicability_overrides` (domains the owner declared applicable or not applicable). Use them in step 3.
 
-**With `--changed`,** the output also has a `scope`:
+**With `--changed` or `--recheck`,** the output also has a `scope`:
 - If it says `nothing_to_reassess`, no run was started. Tell the user its message and the latest ship decision in `scope.latest_readiness`, and stop.
 - If `scope.mode` is `full`, there is no earlier audit to compare with. Tell the user why (`scope.reasons`) and run a complete audit.
-- If `scope.mode` is `changed`, note `scope.reassess_domains`, `scope.carried_forward_domains`, and `scope.agents`. Tell the user how many files changed, which domains will be reassessed, which will be carried forward, and why the scope was widened if `scope.widened` is true. List `scope.decisions_to_review`: decisions whose review triggers matched a change.
+- If `scope.mode` is `changed`, note `scope.reassess_domains`, `scope.carried_forward_domains`, and `scope.agents`. Tell the user how many files changed, which domains will be reassessed, which will be carried forward, and why the scope was widened if `scope.widened` is true. List `scope.decisions_to_review`: decisions whose review triggers matched a change. With `--recheck`, also name `scope.recheck.controls` and the domains reassessed for them (`scope.recheck.domains`).
 
 Write `<run_dir>/run.json`:
 
@@ -102,7 +105,7 @@ Extract the JSON object from its reply and write it unchanged to `<run_dir>/inve
 | `flight-check:a11y` | accessibility |
 | `flight-check:governance` | legal-business, compliance-readiness, documentation |
 
-Launch every agent that has at least one domain whose inventory applicability is `yes` or `unknown` (restricted to `--domains` when given). **Owner overrides** from `project_records.applicability_overrides` adjust this: a domain the owner declared `applicable` needs its agent even when the inventory marked it `no`; a domain the owner declared `not_applicable` needs no agent when the inventory marked it `unknown`, but still does when the inventory marked it `yes` (Flight Check then reports the conflict). **With `--changed` and `scope.mode` `changed`,** launch only the agents in `scope.agents`, plus any agent with a domain that the new inventory marks `yes` or `unknown` and that is not in `scope.carried_forward_domains`. Give each agent you launch all of its domains as usual, including any in `scope.carried_forward_domains`: an agent reading the code anyway reassesses them at little extra cost, and a reassessed domain replaces the carried-forward one. Never launch an agent whose domains are all carried forward; Flight Check checks those mechanically. Launch them **in one message with multiple Agent tool calls** so they run in parallel, then wait for all of them. Skip an agent only when inventory marked all of its domains `no`; Flight Check then records those domains as NOT_APPLICABLE using the inventory's evidence.
+Launch every agent that has at least one domain whose inventory applicability is `yes` or `unknown` (restricted to `--domains` when given). **Owner overrides** from `project_records.applicability_overrides` adjust this: a domain the owner declared `applicable` needs its agent even when the inventory marked it `no`; a domain the owner declared `not_applicable` needs no agent when the inventory marked it `unknown`, but still does when the inventory marked it `yes` (Flight Check then reports the conflict). **With `--changed` (or `--recheck`) and `scope.mode` `changed`,** launch only the agents in `scope.agents`, plus any agent with a domain that the new inventory marks `yes` or `unknown` and that is not in `scope.carried_forward_domains`. Give each agent you launch all of its domains as usual, including any in `scope.carried_forward_domains`: an agent reading the code anyway reassesses them at little extra cost, and a reassessed domain replaces the carried-forward one. Never launch an agent whose domains are all carried forward; Flight Check checks those mechanically. Launch them **in one message with multiple Agent tool calls** so they run in parallel, then wait for all of them. Skip an agent only when inventory marked all of its domains `no`; Flight Check then records those domains as NOT_APPLICABLE using the inventory's evidence.
 
 Delegation prompt for each agent:
 
@@ -112,6 +115,7 @@ Delegation prompt for each agent:
 > Project context from the user (user statements, not verified facts): `<context summary or "none provided">`
 > Imported evidence files (cite as kind "user-provided" with this path): `<list of path and description, or "none">`
 > Recorded decisions to check (accepted by the project owner; check those that concern your domains): `<project_records.decision_assertions as JSON, or "none">`
+> Controls to re-check (the owner asked for these; for each in your domains, look specifically for positive evidence that it is met, such as the code, tests, configuration, or imported evidence, and report it VERIFIED with that evidence, NOT_MET with a finding, or UNVERIFIED naming what is missing): `<scope.recheck.controls, or "none">`
 > Return only the JSON object described in your instructions.
 
 **Handler review.** Do this when `flight-check:appsec` is launched and the inventory's `entry_point_files` lists more than 12 files:
@@ -192,7 +196,7 @@ Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render <run_dir>`. If
 Reply concisely:
 - **The ship decision**, verbatim, with its reasons.
 - **Findings:** counts by severity, then the release-blocking and CRITICAL/HIGH findings (`ID`, title, one line each).
-- **Unverified release-critical controls,** with how to supply evidence: for example re-run with `--evidence <scanner.json>` for `SUPPLY-KNOWN-VULNS`, or a restore-test record for `REL-BACKUP-RESTORE`.
+- **Unverified release-critical controls,** with how to supply evidence: for example re-run with `--recheck SUPPLY-KNOWN-VULNS --evidence <scanner.json>`, or a restore-test record for `REL-BACKUP-RESTORE`. When the decision is not READY, also say that `/flight-check:status` lists every blocker with its next step, including the scanner commands for this project's ecosystems.
 - **Legal items:** findings classified for legal or business review; suggest `/flight-check:legal-packet`.
 - **Lifecycle changes:** regressions, and findings not reproduced.
 - **Contradictions:** the finalize output's `contradictions` (a correction or applicability override of the user's that the new evidence contradicts). Name each one and suggest `/flight-check:track` to review it.
