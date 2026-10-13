@@ -17,7 +17,7 @@ We aim to acknowledge reports within 5 business days. We will coordinate disclos
 
 ## Supported versions
 
-Only the latest released version receives security fixes. Flight Check is currently pre-release (1.0.0-rc.1, the 1.0 release candidate); fixes go to the latest version on `main`.
+Only the latest released version receives security fixes. Flight Check is currently pre-release (1.5.0-rc.1, the 1.5 release candidate); fixes go to the latest version on `main`.
 
 ## Design notes
 

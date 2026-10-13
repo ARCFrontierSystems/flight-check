@@ -2,7 +2,9 @@
 
 All notable changes are recorded here. Versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased] — 1.5.0 (in development)
+## [1.5.0-rc.1] — 2026-10-13 (pre-release)
+
+Release candidate for 1.5; not yet published as a release. 1.5 keeps everything 1.0 does and adds project state, so Flight Check remembers the project between audits: its profile, requirements, decisions, risks, legal review queue, finding history, and what changed. Upgrading from 1.0 changes some files in `.flight-check/` on the first command that records something; see `docs/migration-1.5.md`, including how to go back.
 
 Blind-evaluated as a baseline audit and two audits of changes on a held-out application, with recorded owner decisions (`docs/audits/2026-10-13-v1.5-sequence-evaluation.md`).
 
