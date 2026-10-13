@@ -168,7 +168,7 @@ def cmd_finalize(args):
     led_path = None if args.no_ledger else (args.ledger or os.path.join(os.path.abspath(args.root), ".flight-check", "ledger.json"))
     try:
         result = finalize.finalize(args.run_dir, args.root, led_path, args.now)
-    except (InputError, ledger.LedgerError, state.StateError) as exc:
+    except (InputError, ledger.LedgerError, state.StateError, lockfile.LockError) as exc:
         return _fail(str(exc))
     _print(result)
     return 0 if result["ok"] else 1

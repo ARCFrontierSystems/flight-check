@@ -10,14 +10,14 @@ import hashlib
 import os
 import stat
 
-from . import catalog, registers
+from . import catalog, constants, registers
 from .jsonio import InputError, dump_json, load_json
 
 MANIFEST = "manifest.json"
 SKIP_DIRS = {".git", ".hg", ".svn", ".flight-check", "node_modules", "vendor", ".venv", "venv", "site-packages", "dist",
              "build", "target", "__pycache__", ".tox", ".mypy_cache", ".pytest_cache", ".next", ".nuxt", "coverage"}
 MAX_FILES = 200000
-MAX_FILE_BYTES = 50 * 1024 * 1024
+MAX_LIST_BYTES = 100 * 1024 * 1024  # a file list for MAX_FILES long paths
 
 CURRENT, STALE, MISSING, UNVERIFIED = "current", "stale", "missing", "unverified"
 
@@ -46,16 +46,16 @@ def scan(root, max_files=MAX_FILES):
             if not stat.S_ISREG(st.st_mode):
                 continue
             rel = os.path.relpath(full, root).replace(os.sep, "/")
-            if st.st_size > MAX_FILE_BYTES:
+            if st.st_size > constants.MAX_HASHED_FILE_BYTES:
                 files[rel] = "size:%d" % st.st_size
-                notes.append("%s is larger than %d bytes; only its size is compared" % (rel, MAX_FILE_BYTES))
+                notes.append("%s is larger than %d bytes; only its size is compared" % (rel, constants.MAX_HASHED_FILE_BYTES))
                 continue
             try:
                 files[rel] = _hash_file(full)
             except OSError as exc:
                 notes.append("%s could not be read (%s)" % (rel, exc.__class__.__name__))
             if len(files) >= max_files:
-                notes.append("stopped after %d files; changes beyond that are not detected, so reassessment is widened" % max_files)
+                notes.insert(0, "stopped after %d files; changes beyond that are not detected, so reassessment is widened" % max_files)
                 return files, notes
     return files, notes
 
@@ -63,7 +63,8 @@ def scan(root, max_files=MAX_FILES):
 def write_manifest(state_dir, root, run_id, now_iso, scanned=None):
     files, notes = scanned if scanned is not None else scan(root)
     dump_json(os.path.join(state_dir, MANIFEST), {"schema_version": "1.0", "created_at": now_iso, "run_id": run_id,
-                                                  "files": files, "notes": notes, "partial": any("stopped after" in n for n in notes)})
+                                                  "files": files, "notes": notes[:200],
+                                                  "partial": any("stopped after" in n for n in notes)}, indent=None)
     return len(files)
 
 
@@ -72,7 +73,7 @@ def load_manifest(state_dir, name=MANIFEST):
     if not os.path.isfile(path) or os.path.islink(path):
         return None
     try:
-        doc = load_json(path)
+        doc = load_json(path, MAX_LIST_BYTES)
     except InputError:
         return None
     if not isinstance(doc, dict) or not isinstance(doc.get("files"), dict):
@@ -90,7 +91,8 @@ def write_snapshot(run_dir, scanned, now_iso):
     while agents are reading is reported as changed next time instead of being absorbed unassessed."""
     files, notes = scanned
     dump_json(os.path.join(run_dir, SNAPSHOT), {"schema_version": "1.0", "created_at": now_iso, "files": files,
-                                                "notes": notes, "partial": any("stopped after" in n for n in notes)})
+                                                "notes": notes[:200], "partial": any("stopped after" in n for n in notes)},
+              indent=None)
 
 
 def load_snapshot(run_dir):
@@ -181,7 +183,10 @@ def changes(root, st, max_files=MAX_FILES, scanned=None):
     """What changed since the last finalized assessment, what that affects, and which domains to reassess."""
     current, scan_notes = scanned if scanned is not None else scan(root, max_files)
     manifest = load_manifest(st.state_dir)
-    reasons = list(scan_notes)
+    big = sum(1 for n in scan_notes if "only its size is compared" in n)
+    reasons = [n for n in scan_notes if "only its size is compared" not in n][:20]
+    if big:
+        reasons.append("%d file(s) over %d bytes are compared by size only" % (big, constants.MAX_HASHED_FILE_BYTES))
     widen = any("stopped after" in n for n in scan_notes)
     if manifest:
         base = manifest["files"]
@@ -300,6 +305,16 @@ def _decision_reviews(st, changed):
     return out
 
 
+def _evidence_hash(root, path, profile):
+    """The value scan() would record for this file, so stored evidence and the file list compare alike."""
+    from . import evidence as evidence_mod
+    full, problem = evidence_mod.resolve_within(root, path)
+    if problem or not full or not os.path.isfile(full) or os.path.islink(full):
+        return None
+    size = os.path.getsize(full)
+    return ("size:%d" % size) if size > constants.MAX_HASHED_FILE_BYTES else profile.file_sha256(root, path)
+
+
 def entry_evidence_files(finding, root, cache=None):
     """{path: sha256} for the files a finding (or control, or positive control) cites, read now."""
     from . import profile
@@ -310,7 +325,7 @@ def entry_evidence_files(finding, root, cache=None):
         if not path or ev.get("kind") not in ("code", "config", "documentation", "dependency"):
             continue
         if path not in cache:
-            cache[path] = profile.file_sha256(root, path)
+            cache[path] = _evidence_hash(root, path, profile)
         if cache[path]:
             out[path] = cache[path]
     return out

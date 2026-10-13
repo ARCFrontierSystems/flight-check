@@ -10,7 +10,7 @@ import hashlib
 import os
 import re
 
-from . import catalog, textsafety
+from . import catalog, constants, textsafety
 from . import evidence as evidence_mod
 
 
@@ -26,6 +26,8 @@ def file_sha256(root, rel_path):
     path, problem = evidence_mod.resolve_within(root, rel_path)
     if problem or not path or not os.path.isfile(path):
         return None
+    if os.path.getsize(path) > constants.MAX_HASHED_FILE_BYTES:
+        return None  # compared by size only (freshness.scan); a reference to it stays unverified
     h = hashlib.sha256()
     with open(path, "rb") as fh:
         for chunk in iter(lambda: fh.read(65536), b""):
