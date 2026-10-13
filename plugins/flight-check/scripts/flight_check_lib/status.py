@@ -6,7 +6,7 @@ here infers, guesses, or changes anything: a question the records cannot answer 
 
 import datetime
 
-from . import constants, freshness, legal, profile, registers, unblock
+from . import constants, freshness, legal, plain, profile, registers, unblock, watch
 from .render_md import md
 
 REPORT_VERSION = "1.0"
@@ -102,6 +102,7 @@ def build_status(st, root, now_iso):
         "legal": {"open": items, "message": None if items else legal.NO_ISSUES},
     }
     out["unblock"] = unblock.items(st, root, _date(now_iso))
+    out["reminders"] = watch.load_reminders(root) if root else []
     out["next_steps"] = _next_steps(out)
     return out
 
@@ -205,8 +206,9 @@ def render_status(doc):
     r = s["readiness"]
     out = ["# Flight Check status: %s" % md(proj["name"]), "",
            "_Revision %d, generated %s. %s_" % (proj["revision"], doc["generated_at"], doc["scope_note"]), ""]
-    out.append("**Release readiness:** %s" % (("%s (run %s, %s)" % (r["latest"]["decision"], r["latest"]["run_id"], r["latest"]["at"]))
-                                              if r["latest"] else "none yet"))
+    out.append("**Release readiness:** %s" % (("%s _(Flight Check decision: %s, run %s, %s)_" % (
+        plain.decision(r["latest"]["decision"]), r["latest"]["decision"], r["latest"]["run_id"], r["latest"]["at"]))
+        if r["latest"] else "not checked yet. Type /flight-check:audit for the first check."))
     out += ["", md(r["note"]), "", "## What this project is"]
     out += _lines(s["profile"]["known"], lambda f: "- %s: %s (%s)" % (md(f["aspect"]), md(f["value"]), f["origin"]),
                   "- No observations recorded yet.")
@@ -260,23 +262,38 @@ def render_status(doc):
     out += _lines(s["legal"]["open"], lambda x: "- **%s** (%s) %s" % (x["id"], x["status"], md(x["title"])),
                   md(s["legal"]["message"] or ""))
     if s.get("unblock"):
-        out += ["", "## What stands between this project and READY", ""] + _unblock_lines(s["unblock"])
+        out += ["", "## What stands between this project and release", ""] + _unblock_lines(s["unblock"])
+    if s.get("reminders"):
+        out += ["", "## Reminders you set", ""]
+        out += ["- %s%s%s" % (md(r["id"]), (" (on %s)" % r["on"]) if r.get("on") else " (next time)",
+                              (": " + md(r["note"])) if r.get("note") else "") for r in s["reminders"]]
     out += ["", "## Next steps"]
     out += _lines(s["next_steps"], lambda x: "- " + x, "- Nothing pending in Flight Check's records.")
     out.append("")
     return "\n".join(out)
 
 
+LATER_NOTE = ("Not now? Say \"remind me later\" and Flight Check will bring it up again when you come back. You can keep "
+              "working in the meantime; until an item is handled, it still counts against a release.")
+
+
 def _unblock_lines(items):
     out = []
-    for i in items:
-        out.append("- **%s** Next: %s" % (md(i["problem"]), md(i["action"])))
-        if i.get("needs"):
-            out.append("  - Counts as verified when: %s" % md(i["needs"]))
-        for c in i.get("commands") or []:
-            label, _, cmd = c.partition(": ") if ": " in c and not c.startswith("mkdir") else ("", "", c)
-            out.append("  - %s`%s`" % ((md(label) + ": ") if label else "", cmd.replace("`", "'")))
-    return out
+    groups = [("I can fix these for you (I will ask once before changing anything)", [i for i in items if i.get("who") == "claude"]),
+              ("These need you", [i for i in items if i.get("who") != "claude"])]
+    for heading, group in groups:
+        if not group:
+            continue
+        out += ["**%s:**" % heading, ""]
+        for i in group:
+            out.append("- %s %s%s" % (md(i["problem"]), md(i["action"]), (" _(%s)_" % md(i["id"])) if i.get("id") else ""))
+            if i.get("needs"):
+                out.append("  - What counts as proof: %s" % md(i["needs"]))
+            for c in i.get("commands") or []:
+                label, _, cmd = c.partition(": ") if ": " in c and not c.startswith("mkdir") else ("", "", c)
+                out.append("  - %s`%s`" % ((md(label) + ": ") if label else "", cmd.replace("`", "'")))
+        out.append("")
+    return out + [LATER_NOTE]
 
 
 def _table(rows, cols):
@@ -332,8 +349,9 @@ def render_markdown(doc):
             out += ["- " + md(r) for r in d["reasons"]]
     elif doc["view"] == "unblock":
         dec = d["decision"]
-        out.append("Latest decision: %s." % (("%s (run %s, %s)" % (dec["decision"], dec["run_id"], dec["at"])) if dec else "none yet"))
-        out += [""] + (_unblock_lines(d["items"]) or ["Nothing in Flight Check's records stands between this project and READY."])
+        out.append("%s" % (("%s _(Flight Check decision: %s, run %s, %s)_" % (plain.decision(dec["decision"]), dec["decision"],
+                                                                            dec["run_id"], dec["at"])) if dec else "Not checked yet."))
+        out += [""] + (_unblock_lines(d["items"]) if d["items"] else ["Nothing in Flight Check's records stands between this project and release."])
     elif doc["view"] == "readiness":
         out += [md(d["note"]), ""]
         out += _table(list(reversed(d["history"])), [("At", lambda s: s["at"]), ("Decision", lambda s: s["decision"]),

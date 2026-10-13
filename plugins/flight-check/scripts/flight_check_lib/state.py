@@ -44,6 +44,8 @@ backups/
 pending/
 reports/
 manifest.json
+watch.json
+reminders.json
 *.lock
 """
 

@@ -2,8 +2,8 @@
 """Repository lint for Flight Check. Run from the repository root: python3 tools/lint_plugin.py
 
 Checks (all must pass in CI):
-  frontmatter   skills and agents use allowed keys; skills are manual-only; auditing agents are read-only
-  surface       the shipped plugin has no hooks, MCP servers, bin/, package.json, symlinks, or oversized files
+  frontmatter   skills and agents use allowed keys; skills are manual-only except the listed ones; auditing agents are read-only
+  surface       the only hooks are watch mode's, which call flight_check.py; no MCP servers, bin/, package.json, symlinks, or oversized files
   injection     skill and agent bodies contain no shell-injection blocks or @file imports
   scripts       bundled Python never imports network/process modules or calls eval/exec/os.system
   unicode       no invisible, bidirectional, or control characters in any text file
@@ -27,6 +27,9 @@ sys.path.insert(0, os.path.join(PLUGIN, "scripts"))
 
 from flight_check_lib import VERSION, catalog, constants, render_md  # noqa: E402
 
+# Skills Claude may start on its own: status only reads, and fix asks the user once before changing anything and starts
+# no paid audit. Audits, remediation with re-audit, packets, watch, and the user's decisions stay manual.
+MODEL_INVOCABLE_SKILLS = {"status", "fix"}
 SKILL_KEYS = {"name", "description", "when_to_use", "argument-hint", "arguments", "disable-model-invocation",
               "user-invocable", "allowed-tools", "disallowed-tools", "model", "effort", "license", "metadata", "compatibility"}
 AGENT_KEYS = {"name", "description", "tools", "disallowedTools", "model", "effort", "maxTurns", "omitClaudeMd", "skills", "color"}
@@ -61,7 +64,7 @@ def walk(base, skip_dirs=(".git",)):
 
 # Subcommands a skill may pre-approve. Commands that record the user's own decisions
 # (ledger accept, revoke, legal, close) are deliberately absent: they must always prompt.
-PREAPPROVABLE_SUBCOMMANDS = {"version", "init-run", "validate", "save-reply", "finalize", "render", "gate", "release-check", "sarif", "runs", "findings",
+PREAPPROVABLE_SUBCOMMANDS = {"version", "init-run", "validate", "save-reply", "finalize", "render", "gate", "release-check", "sarif", "later", "watch", "runs", "findings",
                              "packet", "schema-check", "ledger show", "ledger remediate", "status", "report",
                              "changes"}
 PREAPPROVAL = re.compile(r"Bash\(python3 \$\{CLAUDE_PLUGIN_ROOT\}/scripts/flight_check\.py ((?:ledger )?[a-z-]+) \*\)")
@@ -109,7 +112,7 @@ def check_frontmatter_and_bodies():
         desc = meta.get("description", "")
         if not desc or len(desc) > 1024:
             err("frontmatter", "%s: description must be 1-1024 characters" % rel(path))
-        if meta.get("disable-model-invocation") != "true":
+        if meta.get("disable-model-invocation") != "true" and name not in MODEL_INVOCABLE_SKILLS:
             err("frontmatter", "%s: skills must set disable-model-invocation: true (manual invocation only)" % rel(path))
         if body.count("\n") > 500:
             err("frontmatter", "%s: SKILL.md body exceeds 500 lines" % rel(path))
@@ -161,8 +164,43 @@ def check_body(path, body):
             err("injection", "%s:%d: @file imports are not allowed" % (rel(path), i))
 
 
+# Watch mode's hooks: exactly these events, each running only Flight Check's own script, which exits at once unless the
+# project turned watch mode on. Anything else in hooks/ fails the lint.
+HOOK_COMMAND = 'python3 "${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py" hook %s || true'
+ALLOWED_HOOKS = {"SessionStart": (None, "session-start"), "PostToolUse": ("Edit|Write", "post-edit"), "Stop": (None, "stop")}
+
+
+def check_hooks():
+    folder = os.path.join(PLUGIN, "hooks")
+    if not os.path.exists(folder):
+        return
+    names = sorted(os.listdir(folder))
+    if names != ["hooks.json"]:
+        err("surface", "hooks/ may contain only hooks.json, found %s" % ", ".join(names))
+        return
+    try:
+        doc = json.load(open(os.path.join(folder, "hooks.json"), encoding="utf-8"))
+    except ValueError as exc:
+        err("surface", "hooks/hooks.json is not valid JSON: %s" % exc)
+        return
+    events = doc.get("hooks") if isinstance(doc, dict) else None
+    if not isinstance(events, dict) or set(events) != set(ALLOWED_HOOKS) or set(doc) - {"description", "hooks"}:
+        err("surface", "hooks/hooks.json must declare exactly %s" % ", ".join(sorted(ALLOWED_HOOKS)))
+        return
+    for event, (matcher, name) in ALLOWED_HOOKS.items():
+        groups = events[event]
+        ok = isinstance(groups, list) and len(groups) == 1 and groups[0].get("matcher") == matcher \
+            and isinstance(groups[0].get("hooks"), list) and len(groups[0]["hooks"]) == 1
+        hook = groups[0]["hooks"][0] if ok else {}
+        if not ok or set(hook) - {"type", "command", "timeout"} or hook.get("type") != "command" \
+                or hook.get("command") != HOOK_COMMAND % name or not isinstance(hook.get("timeout"), int) or hook["timeout"] > 30:
+            err("surface", "hooks/hooks.json: %s must run only %r with a timeout of at most 30 seconds"
+                % (event, HOOK_COMMAND % name))
+
+
 def check_surface():
-    for forbidden in ("hooks", "bin", ".mcp.json", "package.json", "node_modules", ".lsp.json"):
+    check_hooks()
+    for forbidden in ("bin", ".mcp.json", "package.json", "node_modules", ".lsp.json"):
         if os.path.exists(os.path.join(PLUGIN, forbidden)):
             err("surface", "plugin must not contain %s" % forbidden)
     manifest = json.load(open(os.path.join(PLUGIN, ".claude-plugin", "plugin.json"), encoding="utf-8"))

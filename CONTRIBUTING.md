@@ -8,7 +8,7 @@ Thank you for helping. Flight Check is used to make release decisions, so correc
 - **Evidence first.** New checks must tell agents what evidence to collect and what counter-evidence to look for. Checklist items without an evidence method will not be accepted.
 - **No legal conclusions.** Text that states or implies legal advice, compliance, certification, enforceability, or "secure" or "safe" verdicts will not be accepted. The validator enforces this for findings and summaries; reviewers enforce it for documentation.
 - **Plugin safety:**
-  - No hooks, MCP servers, `bin/` directory, or shell-injection blocks in skills or agents.
+  - No hooks other than watch mode's (the lint pins them to Flight Check's own script), and no MCP servers, `bin/` directory, or shell-injection blocks in skills or agents.
   - Agents keep `tools: Read, Grep, Glob`.
   - Scripts stay Python 3.9+ standard library only, with no network, subprocess, `eval`, or `exec`.
 - **No secrets, real or realistic.** Build test strings that resemble credentials at runtime. Never commit invisible or bidirectional Unicode characters.

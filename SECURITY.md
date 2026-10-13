@@ -23,5 +23,5 @@ Only the latest released version receives security fixes. Flight Check 1.0.0 is 
 
 - **Read-only agents.** Flight Check's audit agents can only read (Read, Grep, Glob).
 - **Its own tooling only.** The audit skills pre-approve no command other than Flight Check's own script, which has no network access and never runs project code.
-- **No plugin extensions.** The plugin ships no hooks or MCP servers.
+- **One narrow set of hooks, no MCP servers.** Watch mode's hooks run only Flight Check's own script, which reads local files and does nothing unless you turned watch mode on for the project. The plugin ships no MCP servers.
 - **Hardened procedure.** See [docs/hardened-mode.md](docs/hardened-mode.md) for auditing untrusted code.

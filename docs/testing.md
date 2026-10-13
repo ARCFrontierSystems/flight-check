@@ -28,8 +28,8 @@ claude plugin validate --strict plugins/flight-check
 ```
 
 These enforce:
-- Manual-only skills and read-only agents.
-- No hooks, MCP servers, or shell injection in the plugin.
+- Manual-only skills, except `status` (read-only) and `fix` (asks once before changing anything), and read-only agents.
+- Only watch mode's hooks, pinned to Flight Check's own script; no MCP servers or shell injection in the plugin.
 - No network or process modules, `eval`, or `exec` in its scripts.
 - No invisible or bidirectional Unicode anywhere.
 - Consistency between catalogs, the schema, and the code.

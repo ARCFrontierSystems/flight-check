@@ -7,7 +7,7 @@ or a decision only the user can make.
 
 import os
 
-from . import catalog, constants, gate, ledger
+from . import catalog, constants, gate, ledger, plain
 
 EVIDENCE_DIR = ".flight-check/evidence"
 # A file at the project root that marks an ecosystem, and the scanner command that writes JSON Flight Check can import.
@@ -34,19 +34,19 @@ def decision_inputs_changed(st, today):
     out = []
     stamps = st.project.get("readiness") or []
     if stamps and stamps[-1]["revision"] != st.project["revision"]:
-        out.append("the project's records changed after the latest decision (revision %d, now %d)"
-                   % (stamps[-1]["revision"], st.project["revision"]))
+        out.append("your Flight Check records changed after the latest decision (revision %d, now %d), for example "
+                   "a risk you accepted or a requirement you added" % (stamps[-1]["revision"], st.project["revision"]))
     led = st.ledger or {}
     for e in (led.get("entries") or {}).values():
         if e["status"] == "ACCEPTED_RISK" and ledger.acceptance_problems(e.get("accepted_risk"), today):
-            out.append("the acceptance of %s no longer counts" % e["id"])
+            out.append("the acceptance of %s no longer counts (it is incomplete or past its review date)" % e["id"])
     for cid, acc in (led.get("control_acceptances") or {}).items():
         if ledger.acceptance_problems(acc, today):
-            out.append("the acceptance of control %s no longer counts" % cid)
+            out.append("the acceptance of check %s no longer counts (it is incomplete or past its review date)" % cid)
     for risk in (st.registers or {}).get("risks", []):
         review = (risk.get("acceptance") or {}).get("review_date")
         if risk["status"] == "ACCEPTED" and review and review < today.isoformat():
-            out.append("the acceptance of %s is past its review date" % risk["id"])
+            out.append("the review date for the accepted risk %s has passed" % risk["id"])
     return out[:20]
 
 
@@ -69,24 +69,35 @@ def scanner_commands(root):
     return cmds
 
 
+def _sev(e):
+    return plain.SEVERITY.get(e["severity"], e["severity"].lower())
+
+
+def _where(e):
+    path = ledger._entry_path(e)
+    return (" (in %s)" % path) if path else ""
+
+
 def _control_item(cid, rec, cat, root):
-    title = (cat.get("title") or cid).rstrip(".")
+    what = plain.control(cid, cat.get("title"))
     if rec["state"] == "NOT_MET":
-        return {"kind": "control", "id": cid, "effect": "blocking", "problem": "%s is not met: %s." % (cid, title),
-                "action": "Fix the findings linked to it (/flight-check:remediate), then run /flight-check:audit --changed."}
-    item = {"kind": "control", "id": cid, "effect": "insufficient",
-            "problem": "No positive evidence was recorded for %s: %s." % (cid, title)}
+        return {"kind": "control", "id": cid, "effect": "blocking", "who": "claude",
+                "problem": "This is not the case yet: %s." % what,
+                "action": "I can fix the problems behind it. Say \"fix it\" and I will show you the changes first."}
+    item = {"kind": "control", "id": cid, "effect": "insufficient", "who": "claude",
+            "problem": "Flight Check could not confirm that %s." % what}
     if cid == "SUPPLY-KNOWN-VULNS":
-        item["action"] = ("Run a vulnerability scanner, then import its output: /flight-check:audit --recheck %s "
-                          "--evidence <the JSON file>." % cid)
+        item["action"] = ("I can run a vulnerability scanner for you and save its results (say \"fix it\"). Then type "
+                          "/flight-check:audit --recheck %s --evidence <the saved file> so Flight Check reads them." % cid)
         item["commands"] = scanner_commands(root)
     elif cid == "REL-BACKUP-RESTORE":
-        item["action"] = ("Write down when a restore from backup was last tested and with what result, save it as a file, "
-                          "and import it: /flight-check:audit --recheck %s --evidence <that file>." % cid)
+        item["who"] = "you"
+        item["action"] = ("Test restoring your production data from a backup. Write down when you did it and whether it "
+                          "worked, save that as a file, and type /flight-check:audit --recheck %s --evidence <that file>." % cid)
     else:
-        item["action"] = ("If the project meets it, re-check just this control: /flight-check:audit --recheck %s (add "
-                          "--context FILE naming where it is implemented). If it does not, fix it. If you accept the gap, "
-                          "record that with /flight-check:track." % cid)
+        item["action"] = ("If the project already does this, type /flight-check:audit --recheck %s (add --context FILE "
+                          "saying where it happens). If it does not, I can add it (say \"fix it\"). If it is not needed "
+                          "for this release, record that decision with /flight-check:track." % cid)
     if cat.get("verified_when"):
         item["needs"] = cat["verified_when"]
     return item
@@ -97,33 +108,58 @@ def _finding_item(e):
     blocking = e.get("release_blocking")
     if blocking is None:  # recorded before ledger entries kept the flag: apply the gate's rule to what is known
         blocking = gate.release_blocking_effective({"severity": sev, "confidence": conf})
-    ref = "%s (%s, %s): %s" % (e["id"], sev, e["status"], e["title"])
+    title, fid = e["title"], e["id"]
+    legal_matter = e.get("domain") == "legal-business"
     if e["status"] == "REMEDIATED":
         if not blocking:
             return None
-        return {"kind": "finding", "id": e["id"], "effect": "blocking", "problem": "%s has a recorded fix that no audit has "
-                "verified yet." % ref, "action": "Run /flight-check:audit --changed to verify the fix."}
+        return {"kind": "finding", "id": fid, "effect": "blocking", "who": "you",
+                "problem": "A fix was made for \"%s\" but has not been confirmed yet." % title,
+                "action": "Type /flight-check:audit --changed to confirm the fix; it only re-checks what changed."}
     if (sev == "CRITICAL" and conf in ("POTENTIAL", "UNVERIFIED")) or (sev == "HIGH" and conf == "UNVERIFIED"):
-        return {"kind": "finding", "id": e["id"], "effect": "insufficient",
-                "problem": "%s is not confirmed (confidence %s)." % (ref, conf),
-                "action": "Have a person check it. If it is real, fix it (/flight-check:remediate %s); if it is not, mark it a "
-                          "false positive with /flight-check:track." % e["id"]}
+        return {"kind": "finding", "id": fid, "effect": "insufficient", "who": "you",
+                "problem": "Possible %s problem that needs a person to look at it: \"%s\"%s." % (_sev(e), title, _where(e)),
+                "action": "Take a look (I can walk you through it). If it is real, I can fix it (say \"fix it\"). If it is "
+                          "not, record that with /flight-check:track %s not a real problem, because <why>." % fid}
     if sev == "CRITICAL":
-        return {"kind": "finding", "id": e["id"], "effect": "critical", "problem": "%s." % ref,
-                "action": "Fix it (/flight-check:remediate %s), then run /flight-check:audit --changed. Accepting a CRITICAL "
-                          "risk does not lift the block." % e["id"]}
+        return {"kind": "finding", "id": fid, "effect": "critical", "who": "you" if legal_matter else "claude",
+                "problem": "Serious problem: \"%s\"%s." % (title, _where(e)),
+                "action": ("This needs your decision, possibly with a lawyer; I can prepare a summary for them with "
+                           "/flight-check:legal-packet." if legal_matter else
+                           "I can fix this. Say \"fix it\" and I will show you the change first.")
+                          + " A serious problem blocks release until it is fixed; accepting the risk does not unblock it."}
     if blocking:
-        return {"kind": "finding", "id": e["id"], "effect": "blocking", "problem": "%s." % ref,
-                "action": "Fix it (/flight-check:remediate %s), then run /flight-check:audit --changed; or, if the risk is "
-                          "acceptable for this release, accept it with /flight-check:track." % e["id"]}
+        return {"kind": "finding", "id": fid, "effect": "blocking", "who": "you" if legal_matter else "claude",
+                "problem": "%s problem: \"%s\"%s." % (_sev(e).capitalize(), title, _where(e)),
+                "action": ("This needs your decision, possibly with a lawyer (/flight-check:legal-packet prepares a "
+                           "summary for them)." if legal_matter else
+                           "I can fix this. Say \"fix it\" and I will show you the change first.")
+                          + " If it is intentional and acceptable for this release, record that with "
+                            "/flight-check:track accept %s." % fid}
     return None
 
 
-_REGISTER_ACTIONS = {
-    "requirement": "Link the requirement to controls an audit can verify (/flight-check:track), then run /flight-check:audit --changed.",
-    "legal": "Complete the action with counsel, then record the outcome with /flight-check:track.",
-    "risk": "Mitigate the risk and record it with /flight-check:track; a non-CRITICAL risk may instead be accepted there.",
-}
+def _register_item(kind, rid, effect, rec):
+    title = (rec or {}).get("title", rid)
+    if kind == "requirement":
+        return {"kind": kind, "id": rid, "effect": effect, "who": "you",
+                "problem": "Your must-have requirement \"%s\" (%s) is not confirmed by the code yet." % (title, rid),
+                "action": "Link it to checks an audit can confirm, or lower how critical it is, with /flight-check:track."}
+    if kind == "legal":
+        return {"kind": kind, "id": rid, "effect": effect, "who": "you",
+                "problem": "Your legal question \"%s\" (%s) is marked as needing action before release." % (title, rid),
+                "action": "Complete it, with your lawyer if needed, and record the outcome with /flight-check:track."}
+    if effect == "refresh":
+        return {"kind": kind, "id": rid, "effect": effect, "who": "you",
+                "problem": "Your acceptance of the risk \"%s\" (%s) no longer counts: it is incomplete or past its review date." % (title, rid),
+                "action": "Renew or update it with /flight-check:track, then type /flight-check:audit --changed."}
+    serious = (rec or {}).get("severity") == "CRITICAL"
+    return {"kind": kind, "id": rid, "effect": effect, "who": "you",
+            "problem": "%s risk in your risk list is still %s: \"%s\" (%s)." % (
+                "A serious" if serious else "An important", "accepted, and serious risks still block release" if effect == "critical"
+                and (rec or {}).get("status") == "ACCEPTED" else "open", title, rid),
+            "action": "Reduce it (I can help with code changes) and record that with /flight-check:track."
+                      + ("" if serious else " If it is acceptable for this release, you can accept it there instead.")}
 
 
 def items(st, root, today):
@@ -132,13 +168,14 @@ def items(st, root, today):
     latest = stamps[-1] if stamps else None
     out = []
     if not latest:
-        return [{"kind": "audit", "id": None, "effect": "refresh", "problem": "No audit has recorded a ship decision yet.",
-                 "action": "Run /flight-check:audit."}]
+        return [{"kind": "audit", "id": None, "effect": "refresh", "who": "you",
+                 "problem": "Flight Check has not checked this project yet.",
+                 "action": "Type /flight-check:audit for the first check; it tells you the expected cost before it starts."}]
     inputs = decision_inputs_changed(st, today)
     if inputs:
-        out.append({"kind": "records", "id": None, "effect": "refresh",
-                    "problem": "The decision is out of date: %s." % "; ".join(inputs),
-                    "action": "Run /flight-check:audit --changed for a new decision; it reassesses only what changed."})
+        out.append({"kind": "records", "id": None, "effect": "refresh", "who": "you",
+                    "problem": "The last release decision is out of date: %s." % "; ".join(inputs),
+                    "action": "Type /flight-check:audit --changed to update it; it only re-checks what changed."})
     if latest["decision"] == constants.GATE_READY and not inputs:
         return out
     led = st.ledger or {}
@@ -149,8 +186,10 @@ def items(st, root, today):
             out.append(_control_item(cid, rec, cat.get(cid, {}), root))
     for d, rec in sorted((st.project.get("domains") or {}).items()):
         if rec.get("status") == "NOT_ASSESSED":
-            out.append({"kind": "domain", "id": d, "effect": "insufficient", "problem": "The %s domain was not assessed." % d,
-                        "action": "Run /flight-check:audit (a full audit), or /flight-check:audit --domains %s." % d})
+            out.append({"kind": "domain", "id": d, "effect": "insufficient", "who": "you",
+                        "problem": "One area of the project was not checked: %s." % d.replace("-", " "),
+                        "action": "Type /flight-check:audit --recheck with a check from that area, or run a full "
+                                  "/flight-check:audit."})
     entries = sorted((led.get("entries") or {}).values(), key=lambda e: e["id"])
     for e in entries:
         if e["status"] in _ACTIVE + ("REMEDIATED",) or (e["status"] == "ACCEPTED_RISK" and e["severity"] == "CRITICAL"):
@@ -158,9 +197,11 @@ def items(st, root, today):
             if item:
                 out.append(item)
     gate_findings = {e["id"]: e["severity"] for e in entries if e["status"] in _ACTIVE + ("ACCEPTED_RISK",)}
-    for kind, rid, effect, explanation in gate._register_inputs(st.registers, gate_findings, today):
+    regs = st.registers or {}
+    by_id = {r["id"]: r for key in ("requirements", "legal", "risks") for r in regs.get(key, [])}
+    for kind, rid, effect, _ in gate._register_inputs(st.registers, gate_findings, today):
         if effect in ("insufficient", "blocking", "critical", "accepted_critical", "not_counted"):
-            out.append({"kind": kind, "id": rid, "effect": {"accepted_critical": "critical", "not_counted": "refresh"}.get(effect, effect),
-                        "problem": explanation, "action": _REGISTER_ACTIONS[kind]})
+            effect = {"accepted_critical": "critical", "not_counted": "refresh"}.get(effect, effect)
+            out.append(_register_item(kind, rid, effect, by_id.get(rid)))
     out.sort(key=lambda i: _RANK.get(i["effect"], 9))
     return out

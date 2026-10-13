@@ -1,0 +1,39 @@
+{
+  "description": "Flight Check watch mode. Every hook exits at once, printing nothing, unless the project has watch mode turned on (/flight-check:watch on).",
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py\" hook session-start || true",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py\" hook post-edit || true",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py\" hook stop || true",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}

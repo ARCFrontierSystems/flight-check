@@ -70,7 +70,7 @@ Run Flight Check's script only as a single plain command that starts exactly wit
    - If `--out DIR` was given for the packet, write the PDF there instead.
    - If the command rejects the request (for example a prohibited conclusion or an unknown finding), correct the request and run it again.
 
-5. **Tell the user:**
+5. **Tell the user,** in plain English first (what the packet is for and what to do with it), with paths and IDs after:
    - **Paths:** the PDF path, and the Markdown copy next to it (`.md`, which keeps any characters the PDF fonts cannot show).
    - **Contents:** the number of pages and the findings included.
    - **The disclaimer:** this is a document to organize questions for qualified counsel; it is not legal advice and establishes nothing about compliance.

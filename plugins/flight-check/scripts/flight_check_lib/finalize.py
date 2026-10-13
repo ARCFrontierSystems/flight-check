@@ -3,7 +3,7 @@
 import datetime
 import os
 
-from . import VERSION, assemble, catalog, constants, evidence, fingerprint, freshness, gate, ledger, legal, minischema, profile, registers, release, state, validate
+from . import VERSION, assemble, catalog, constants, evidence, fingerprint, freshness, gate, ledger, legal, minischema, plain, profile, registers, release, state, validate
 from .jsonio import dump_json, load_json
 
 
@@ -329,6 +329,7 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         "ok": True,
         "final": final_path,
         "gate": decision["decision"],
+        "gate_plain": plain.decision(decision["decision"]),
         "reasons": decision["reasons"],
         "counts": {s: sum(1 for f in final["findings"] if f["severity"] == s) for s in constants.SEVERITIES},
         "findings": [{"id": f["id"], "severity": f["severity"], "confidence": f["effective_confidence"], "status": f["status"],

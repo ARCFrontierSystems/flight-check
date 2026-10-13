@@ -3,7 +3,7 @@ name: audit
 description: Evidence-first ship-readiness audit: security, privacy, legal/business, compliance readiness, accessibility, reliability, production readiness. Deterministic ship gate and report.
 argument-hint: "[path] [--untrusted] [--out DIR] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2] [--changed] [--recheck ID,...]"
 disable-model-invocation: true
-allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py save-reply *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py finalize *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render *)
+allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py save-reply *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py finalize *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py report *)
 disallowed-tools: WebFetch, WebSearch, Edit, NotebookEdit, Skill
 ---
 
@@ -193,17 +193,20 @@ Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render <run_dir>`. If
 
 ## 8. Report to the user
 
-Reply concisely:
-- **The ship decision**, verbatim, with its reasons.
-- **Findings:** counts by severity, then the release-blocking and CRITICAL/HIGH findings (`ID`, title, one line each).
-- **Unverified release-critical controls,** with how to supply evidence: for example re-run with `--recheck SUPPLY-KNOWN-VULNS --evidence <scanner.json>`, or a restore-test record for `REL-BACKUP-RESTORE`. When the decision is not READY, also say that `/flight-check:status` lists every blocker with its next step, including the scanner commands for this project's ecosystems.
-- **Legal items:** findings classified for legal or business review; suggest `/flight-check:legal-packet`.
-- **Lifecycle changes:** regressions, and findings not reproduced.
-- **Contradictions:** the finalize output's `contradictions` (a correction or applicability override of the user's that the new evidence contradicts). Name each one and suggest `/flight-check:track` to review it.
-- **Carried forward** (incremental runs): the domains and findings in the finalize output's `carried_forward_domains` and `carried_forward_findings`. Say they were not reassessed in this run; never call them verified or re-checked by an agent.
-- **Paths:** `report.md`, `audit.final.json`, and the ledger.
-- **Next steps:** `/flight-check:remediate FC-...` (own projects only) and `/flight-check:track` (accepted risks, counsel decisions, closing verified items).
-- **The scope reminder:** this reflects only the evidence examined; it is not a certification or legal advice.
+## How to talk to the user
+
+- **Plain English first.** Say what is wrong, why it matters to them, and what happens next, in everyday words. Explain a technical term the first time you use it. Put IDs (`FC-0003`, `SUPPLY-KNOWN-VULNS`) and official decision names in parentheses after the plain sentence, never instead of it.
+- **Say who acts.** For each problem, say whether Claude can fix it (offer once: "Want me to fix these?"; on yes, use `/flight-check:fix`) or only the user can (give the exact steps: what to do, where, and how to tell Flight Check it is done).
+- **Never leave the user stuck.** Always end with the next step, and with the ways to move on: fix it now, "remind me later" (Flight Check brings it up again next session), accept the risk for this release (`/flight-check:track`), or say it is not a real problem (`/flight-check:track`). Putting something off does not hide it: it still counts against a release until it is handled.
+- **Keep it short.** Lead with the few things that matter most; offer the full list on request.
+
+Then run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py report --view unblock --root <root> --format json` for the list of what stands between the project and release, each item with `who` (`claude` or `you`), `problem`, and `action`. Reply in this order:
+1. **The verdict in one sentence:** the finalize output's `gate_plain`, with the official decision in parentheses.
+2. **What I can fix for you:** the `who: claude` items, one plain line each, then ask once whether to fix them. On yes, use `/flight-check:fix`.
+3. **What needs you:** the `who: you` items, each with its exact steps (scanner commands, `--recheck`, legal items with `/flight-check:legal-packet`, decisions with `/flight-check:track`).
+4. **Anything else worth knowing,** briefly: regressions (problems that came back), findings no longer seen, the finalize output's `contradictions` (a correction or override of the user's that new evidence contradicts; suggest `/flight-check:track` to review it), and, for audits of changes, the areas carried forward (`carried_forward_domains`): say they were not re-checked this time, never that they were verified.
+5. **Where the details are:** `report.md` (full report) and that `/flight-check:status` answers questions later.
+6. **The scope reminder,** in one sentence: this reflects only what Flight Check could examine; it is not a certification or legal advice.
 
 If this audit concerned untrusted code, recommend a fresh session before acting on the findings: the project's content is in this conversation's context, and the tool restrictions of this skill end when the user sends the next message.
 
