@@ -10,6 +10,10 @@ needs allowed (never the ledger commands that record user decisions). Results ar
 Usage:
     python3 tools/blindtest/run_audit.py --app path/to/app --out results/run1 [--budget 40] [--evidence f.json ...]
 
+Sequences (1.5): --decisions FILE records owner decisions in a new project state before the audit; --state-from DIR
+starts from the state saved by an earlier run (its out/state); --changed audits only what changed since then. The
+project state after the run is saved to out/state.
+
 Development-only; never shipped in the plugin.
 """
 
@@ -24,6 +28,23 @@ import tempfile
 REPO = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 PLUGIN = os.path.join(REPO, "plugins", "flight-check")
 EXCLUDE = {".git", "ground-truth", "manifest.json", ".flight-check"}
+STATE_FILES = ("project.json", "registers.json", "ledger.json", "history.jsonl", "manifest.json")
+
+
+def record_decisions(script, target, path):
+    """Owner decisions for the audit to check: {"decisions": [{"decision", "assertions", "title"?, "context"?}]}."""
+    with open(path, encoding="utf-8") as fh:
+        decisions = json.load(fh)["decisions"]
+    run = lambda *a: subprocess.run([sys.executable, script] + list(a), check=True, stdout=subprocess.DEVNULL)  # noqa: E731
+    run("state", "init", "--root", target)
+    for d in decisions:
+        argv = ["decision", "add", "--root", target, "--title", d.get("title") or d["decision"][:200],
+                "--context", d.get("context") or "Recorded by the project owner before the audit.",
+                "--decision", d["decision"], "--by", "owner"]
+        for a in d.get("assertions") or []:
+            argv += ["--assertion", a]
+        run(*argv)
+    return len(decisions)
 
 
 def summarize_stream(path):
@@ -67,6 +88,9 @@ def main(argv=None):
     p.add_argument("--model")
     p.add_argument("--passes", type=int, choices=(1, 2, 3), default=1, help="independent passes per domain agent")
     p.add_argument("--keep", action="store_true", help="keep the temporary copy")
+    p.add_argument("--decisions", help="owner decisions to record before the audit (JSON)")
+    p.add_argument("--state-from", help="directory holding the project state saved by an earlier run (its out/state)")
+    p.add_argument("--changed", action="store_true", help="audit only what changed since the state's last run")
     args = p.parse_args(argv)
 
     app = os.path.abspath(args.app)
@@ -89,6 +113,14 @@ def main(argv=None):
             evidence_args.append(os.path.join(".flight-check", "evidence", os.path.basename(ev)))
 
     script = os.path.join(PLUGIN, "scripts", "flight_check.py")
+    if args.state_from:
+        os.makedirs(os.path.join(target, ".flight-check"), exist_ok=True)
+        for name in STATE_FILES:
+            src = os.path.join(args.state_from, name)
+            if os.path.exists(src):
+                shutil.copy(src, os.path.join(target, ".flight-check", name))
+    if args.decisions:
+        print("recorded %d decision(s)" % record_decisions(script, target, args.decisions))
     # Only the four subcommands an audit needs; never the ledger commands that record user decisions.
     # The ledger is written by the script, so the session itself may write only run directories.
     settings = {"permissions": {
@@ -104,6 +136,8 @@ def main(argv=None):
         prompt += " --evidence " + " ".join(evidence_args)
     if args.passes > 1:
         prompt += " --passes %d" % args.passes
+    if args.changed:
+        prompt += " --changed"
     # Stream every event to a log so a failed run can be diagnosed (which tool call was denied, and why).
     cmd = ["claude", "-p", prompt, "--plugin-dir", PLUGIN, "--tools", "Read,Write,Agent,Bash,Glob,Grep",
            "--permission-mode", "dontAsk", "--settings", settings_path, "--strict-mcp-config",
@@ -129,6 +163,11 @@ def main(argv=None):
     ledger = os.path.join(target, ".flight-check", "ledger.json")
     if os.path.exists(ledger):
         shutil.copy(ledger, os.path.join(args.out, "ledger.json"))
+    os.makedirs(os.path.join(args.out, "state"), exist_ok=True)
+    for name in STATE_FILES:
+        src = os.path.join(target, ".flight-check", name)
+        if os.path.exists(src):
+            shutil.copy(src, os.path.join(args.out, "state", name))
     if not args.keep:
         shutil.rmtree(work, ignore_errors=True)
         shutil.rmtree(target, ignore_errors=True)
