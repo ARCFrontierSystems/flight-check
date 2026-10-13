@@ -223,6 +223,23 @@ class IncrementalTests(ProjectTestCase):
         # Nothing changed since: the carried-forward chain holds, so there is nothing to reassess.
         self.assertTrue(self.init_changed("2026-10-13T13:00:00Z")["nothing_to_reassess"])
 
+    def test_inventory_no_does_not_drop_a_carried_domain(self):
+        self.edit("docs/PRIVACY.md")
+        start = self.init_changed(T2)
+        inv = helpers.base_inventory()
+        for a in inv["applicability"]:
+            if a["domain"] == "application-security":
+                a.update(applicable="no", rationale="No application code found this time.",
+                         evidence=[{"kind": "absence", "searched": "Glob **/*.py"}])
+        helpers.write_run(parts=[privacy_part()], inventory=inv, base=os.path.join(self.sd, "runs"),
+                          run=dict(helpers.base_run(), run_id=start["run_id"]))
+        code, res = run_cli("finalize", start["run_dir"], "--root", self.root, "--ledger", self.led, "--now", T2)
+        self.assertIn(code, (0, 2, 3, 4, 5), res)
+        self.assertIn("application-security", res["carried_forward_domains"])
+        self.assertIn("carried forward", " ".join(res["warnings"]))
+        app = next(a for a in state.load(self.sd).project["applicability"] if a["domain"] == "application-security")
+        self.assertEqual(app["classification"], "uncertain")
+
     def test_change_during_run_is_not_carried_forward(self):
         self.edit("docs/PRIVACY.md")
         out, res, final = self.run_changed(T2, before_finalize=lambda: self.edit("src/store.py"))

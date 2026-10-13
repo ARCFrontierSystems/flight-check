@@ -187,6 +187,7 @@ def _conclusions(st):
 
 
 CARRY_ELIGIBLE = ("ASSESSED", "NOT_APPLICABLE", "CARRIED_FORWARD")
+_OPEN_FINDING = ("OPEN", "REGRESSION", "REMEDIATED", "UNDER_REVIEW", "REMEDIATION_PLANNED", "ACCEPTED_RISK")
 
 
 def _carry_from(rec, baseline_run):
@@ -266,10 +267,14 @@ def changes(root, st, max_files=MAX_FILES, scanned=None):
     baseline_run = manifest.get("run_id") if manifest else None
     carry_from = {d: _carry_from(recorded.get(d), baseline_run) for d in applicable}
     never = sorted(d for d, c in carry_from.items() if c is None)
+    # A domain with an open finding that cites a changed file is reassessed even if it is recorded as not
+    # applicable: recorded evidence is never dropped because of an applicability answer.
+    open_hit = {domain for a in affected for _, cid, domain, _, status in conclusions
+                if a["id"] == cid and a["kind"] == "finding" and domain and status in _OPEN_FINDING}
     if widen:
-        reassess = sorted(applicable)
+        reassess = sorted(set(applicable) | open_hit)
     else:
-        reassess = sorted(set(d for d in domains if d in applicable) | set(never))
+        reassess = sorted(set(d for d in domains if d in applicable) | set(never) | open_hit)
         if never:
             reasons.append("%d applicable domain(s) were not assessed in the last run, so there is nothing to carry "
                            "forward for them: %s" % (len(never), ", ".join(never)))

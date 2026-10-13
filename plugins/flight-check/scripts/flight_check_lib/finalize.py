@@ -179,6 +179,7 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         return decision
 
     run_id = audit["run"]["run_id"]
+    contradictions = []
     if ledger_path:
         state_dir = os.path.dirname(os.path.abspath(ledger_path))
         with state.transaction(state_dir, "flight-check", "finalize", now, root=root, run_id=run_id,
@@ -225,7 +226,10 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
                 elif (assessed.get(d) or {}).get("assessed_run_id"):
                     rec.update(assessed_run_id=assessed[d]["assessed_run_id"], assessed_at=assessed[d]["assessed_at"])
                 assessed[d] = rec
-            profile_changes = profile.merge(tx.project, audit["inventory"], root, now, run_id)
+            profile_changes = profile.merge(tx.project, audit["inventory"], root, now, run_id,
+                                            {c["domain"]: c["status"] for c in audit["coverage"]})
+            contradictions = [{"kind": "profile" if c[0] == "contradiction" else "applicability", "id": c[1], "subject": c[2]}
+                              for c in profile_changes if c[0] in ("contradiction", "override_contradiction")]
             legal_changes = legal.sync_findings(tx.registers, tx.project, led, audit["findings"], now, run_id, root)
             decision_changes, unknown = registers.apply_decision_conflicts(tx.registers, audit["findings"], now, run_id)
             warnings.extend("decision_ids: %s, which is not a recorded decision; the link was dropped" % u for u in unknown)
@@ -249,7 +253,13 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
                     tx.event("domain:" + change[1], {"applicability": change[2]}, "Evaluated by the inventory in run %s." % run_id)
                 elif change[0] == "override_contradiction":
                     tx.event("domain:" + change[1], {"contradiction": [False, True]},
-                             "The owner's override (%s) contradicts the evidence in run %s; the evidence is used." % (change[2], run_id))
+                             "The owner's override (%s) contradicts the evidence in run %s; %s." % (
+                                 change[2], run_id, "the domain stays in scope, as the owner declared" if change[2] == "applicable"
+                                 else "the evidence is used"))
+                elif change[0] == "pruned":
+                    tx.event("state", {"profile_facts_dropped": [change[2], None]},
+                             "Dropped %d older observation(s) of %s from project.json (%s); at most %d are kept per aspect."
+                             % (len(change[2]), change[1], ", ".join(change[2]), profile.KEEP_PAST_FACTS))
                 elif change[0] == "contradiction":
                     tx.event(change[1], {"contradiction": [False, True]},
                              "The latest observation of %s contradicts an active correction." % change[2])
@@ -312,6 +322,7 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         "evidence_failures": [f["id"] for f in final["findings"] if f.get("evidence_check") == "FAILED"],
         "lifecycle": final["lifecycle"],
         "carried_forward_domains": decision.get("carried_forward_domains", []),
+        "contradictions": contradictions,
         "carried_forward_findings": [{"id": f["id"], "severity": f["severity"], "status": f["status"], "domain": f["domain"],
                                       "title": f["title"]} for f in final["carried_forward_findings"]],
         "warnings": warnings,

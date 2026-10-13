@@ -456,6 +456,20 @@ def cmd_packet(args):
         return _fail(str(exc))
 
 
+def _packet_out_problem(out, md_out, run_dir):
+    """packet is pre-approved, so where it writes is limited: a .pdf (and its .md beside it), never through a link,
+    and outside the run directory never over an existing file."""
+    if not out.lower().endswith(".pdf"):
+        return "--out must name a .pdf file"
+    inside = os.path.commonpath([run_dir, out]) == run_dir
+    for path in (out, md_out):
+        if os.path.islink(path) or os.path.islink(os.path.dirname(path)):
+            return "%s is or is inside a symbolic link; refusing to write through it" % path
+        if os.path.exists(path) and not (inside and os.path.isfile(path)):
+            return "%s already exists; choose a new file name (outside the run directory a packet never replaces a file)" % path
+    return None
+
+
 def _packet(args, tx):
     try:
         final = finalize.load_final(args.run_dir)
@@ -469,8 +483,11 @@ def _packet(args, tx):
     except packet.PacketError as exc:
         return _fail("packet request rejected", errors=str(exc).split("\n"))
     out = os.path.abspath(args.out)
-    write_bytes(out, data)
     md_out = os.path.splitext(out)[0] + ".md"
+    problem = _packet_out_problem(out, md_out, os.path.abspath(args.run_dir))
+    if problem:
+        return _fail(problem)
+    write_bytes(out, data)
     write_text(md_out, md_text)
     if tx is not None:
         stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")

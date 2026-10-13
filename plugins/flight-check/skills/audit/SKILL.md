@@ -195,6 +195,7 @@ Reply concisely:
 - **Unverified release-critical controls,** with how to supply evidence: for example re-run with `--evidence <scanner.json>` for `SUPPLY-KNOWN-VULNS`, or a restore-test record for `REL-BACKUP-RESTORE`.
 - **Legal items:** findings classified for legal or business review; suggest `/flight-check:legal-packet`.
 - **Lifecycle changes:** regressions, and findings not reproduced.
+- **Contradictions:** the finalize output's `contradictions` (a correction or applicability override of the user's that the new evidence contradicts). Name each one and suggest `/flight-check:track` to review it.
 - **Carried forward** (incremental runs): the domains and findings in the finalize output's `carried_forward_domains` and `carried_forward_findings`. Say they were not reassessed in this run; never call them verified or re-checked by an agent.
 - **Paths:** `report.md`, `audit.final.json`, and the ledger.
 - **Next steps:** `/flight-check:remediate FC-...` (own projects only) and `/flight-check:track` (accepted risks, counsel decisions, closing verified items).
