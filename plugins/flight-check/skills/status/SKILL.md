@@ -3,7 +3,7 @@ name: status
 description: Answer questions about the project from Flight Check's records — readiness, open risks, changes, requirements, decisions, legal questions, evidence — without changing anything.
 argument-hint: "[question, e.g. \"what does my project still need?\"] [--out DIR]"
 disable-model-invocation: true
-allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py status *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py report *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py changes *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger show *)
+allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py status *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py report *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py changes *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger show *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py release-check *)
 disallowed-tools: WebFetch, WebSearch, Edit, Write, NotebookEdit, Skill, Agent
 ---
 
@@ -32,6 +32,7 @@ Question: `$ARGUMENTS`
 | "Show me the evidence behind FC-0003", "the history of FC-0003" | `report --view findings --id FC-0003 --root <root>`, or `ledger show --ledger <root>/.flight-check/ledger.json --id FC-0003` |
 | "What is this project?", "what is known or unknown?" | `report --view profile --root <root>` |
 | "How has readiness changed?" | `report --view readiness --root <root>` |
+| "Can I release this?", "would the release check pass?" | `release-check --root <root> --mode warn` (add `--allow-accepted-risks` if the user releases with accepted risks) |
 | "Save a report", "export the risk register" | the matching `report --view … --root <root> --out <name>.md` (or `--format json --out <name>.json`); files go to `.flight-check/reports/` |
 
 Combine a few commands when one question needs them. Run each command once; do not repeat it to "double-check".

@@ -3,7 +3,7 @@
 import datetime
 import os
 
-from . import VERSION, assemble, catalog, constants, evidence, freshness, gate, ledger, legal, minischema, profile, registers, state, validate
+from . import VERSION, assemble, catalog, constants, evidence, freshness, gate, ledger, legal, minischema, profile, registers, release, state, validate
 from .jsonio import dump_json, load_json
 
 
@@ -266,6 +266,8 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
             tx.readiness = (decision["decision"], run_id, audit["run"]["target"].get("commit"))
         # The files as this run started (init-run's snapshot) become the next baseline when available.
         freshness.write_manifest(state_dir, root, run_id, now, freshness.load_snapshot(run_dir) or scanned)
+        # The tracked files the decision describes, for the release check in CI.
+        release.publish(state_dir, root, run_dir, run_id, decision["decision"], now)
     else:
         led = ledger.new_ledger(audit["run"]["target"]["name"])
         lifecycle = merge_ledger(led)

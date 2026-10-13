@@ -8,6 +8,7 @@ Release candidate for 1.5; not yet published as a release. 1.5 keeps everything 
 
 Blind-evaluated as a baseline audit and two audits of changes on a held-out application, with recorded owner decisions (`docs/audits/2026-10-13-v1.5-sequence-evaluation.md`).
 
+- **Release check for CI** (added after the self-audit, which does not cover it): `release-check --root .` passes only when the latest ship decision is READY FOR RELEASE (or READY WITH ACCEPTED RISKS with `--allow-accepted-risks`), no record changed after it, no acceptance it relied on has expired, and every file git tracks matches the files as that audit started. Each finalized audit records those files in `.flight-check/audited-files.json` (commit it with the other state files), read from git's index without running git. `--mode warn` reports without blocking. It needs no Claude, so a release or deploy workflow can depend on it; `docs/usage.md` has a ready-to-copy GitHub Actions workflow. It is a process control: anyone who can commit can also edit the records.
 - **Changes from the release self-audit** (`docs/audits/2026-10-13-v1.5-self-audit.md`):
   - In a git worktree or submodule, `.git` is a file, and audits of changes treated it as an unexplained change and reassessed every domain. Change detection now skips `.git` and `.hg` files. A stored file-list entry under a path the scan skips is ignored, not reported as deleted.
   - The high-entropy secret rule no longer masks timestamps such as `20261013T050120Z`, so backup names in messages stay readable.

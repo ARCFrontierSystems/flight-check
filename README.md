@@ -28,6 +28,7 @@ It examines security, privacy, legal/business risk, compliance readiness, access
 - **Produces machine-readable output** for CI: `audit.final.json` and gate exit codes.
 - **Remembers the project (1.5).** Project state in `.flight-check/` keeps the project's profile and which domains apply, your requirements, decisions, and risks, a legal review queue, and a hash-chained history of every change. Your corrections and decisions are recorded only from your explicit input, and evidence still decides what is verified.
 - **Audits only what changed (1.5).** `/flight-check:audit --changed` reassesses the areas a change can affect and carries the rest forward, labelled as not reassessed. When a change cannot be traced, it reassesses everything.
+- **Release check for CI (1.5).** `release-check` passes only when the latest ship decision is ready and still describes the files being released, so a release or deploy workflow can depend on it. It reads only the committed records, so it needs no Claude and costs nothing to run. See "Release check" in [docs/usage.md](docs/usage.md).
 - **Answers questions about the project (1.5).** `/flight-check:status` answers questions such as "what does my project still need?" from the records, and `report` gives each register and view in Markdown or JSON.
 
 ## What Flight Check is not
