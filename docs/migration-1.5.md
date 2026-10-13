@@ -26,7 +26,7 @@ Read-only commands (`ledger show`, `findings`, `runs`, `render`) work on a 1.0 l
 
 ## What to commit
 
-Commit `project.json`, `registers.json`, `history.jsonl`, and `ledger.json` if your team shares Flight Check's history. Everything else in `.flight-check/` is local.
+Commit `project.json`, `registers.json`, `history.jsonl`, and `ledger.json` if your team shares Flight Check's history. Also commit `audited-files.json` if you use the release check in CI (see "Release check" in [usage.md](usage.md)). Everything else in `.flight-check/` is local.
 
 ## What behaves differently
 
@@ -35,7 +35,7 @@ Commit `project.json`, `registers.json`, `history.jsonl`, and `ledger.json` if y
 - **Positive controls** have stable IDs (`PC-0001`) across runs; 1.0 numbered them per run (`PC-001`).
 - **New finding statuses** that only you set: `UNDER_REVIEW`, `REMEDIATION_PLANNED`, `FALSE_POSITIVE`, `SUPERSEDED`. A finding you dismissed that an audit still reports keeps the decision at best READY WITH ACCEPTED RISKS.
 - **Regressions** say whether they matched exactly or only possibly.
-- New, optional: `/flight-check:audit --changed`, `/flight-check:status`, the `report` views, and the requirement, decision, risk, profile, and applicability commands in `/flight-check:track`.
+- New, optional: `/flight-check:audit --changed`, `/flight-check:status`, `release-check` for CI, the `report` views, and the requirement, decision, risk, profile, and applicability commands in `/flight-check:track`.
 
 ## Going back to 1.0
 

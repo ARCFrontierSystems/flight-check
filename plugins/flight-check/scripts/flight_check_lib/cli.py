@@ -7,7 +7,7 @@ import os
 import re
 import sys
 
-from . import VERSION, catalog, constants, finalize, freshness, gate, ledger, legal, lockfile, minischema, packet, profile, registers, render_md, state, status, validate
+from . import VERSION, catalog, constants, finalize, freshness, gate, ledger, legal, lockfile, minischema, packet, profile, registers, release, render_md, state, status, validate
 from .jsonio import InputError, dump_json, load_json, write_bytes, write_text
 
 
@@ -176,6 +176,7 @@ def cmd_init_run(args):
         dump_json(os.path.join(run_dir, "run-ref.json"), dict(ref, run_id=run_id))
     if scanned is not None:
         freshness.write_snapshot(run_dir, scanned, now.strftime("%Y-%m-%dT%H:%M:%SZ"))
+        release.write_run_record(run_dir, root, now.strftime("%Y-%m-%dT%H:%M:%SZ"))
     records = _project_records(os.path.dirname(base))
     if scope:
         dump_json(os.path.join(run_dir, "scope.json"), dict(scope, schema_version="1.0", run_id=run_id))
@@ -1050,6 +1051,43 @@ def cmd_report(args):
     return _emit_view(args, doc, st.state_dir)
 
 
+def cmd_release_check(args):
+    """Exit 0 only when the latest ship decision is ready and still describes the tracked files under --root."""
+    root = os.path.abspath(args.root)
+    try:
+        st = state.load(_state_dir(args), root=root, strict=False)
+        if not st.initialized:
+            raise state.StateError("no project state under %s; run /flight-check:audit and commit .flight-check/ first"
+                                   % st.state_dir)
+        result = release.check(st, root, _decision_inputs_changed(st, _now(args).date()), state.check_identity(st, root),
+                               args.allow_accepted_risks)
+    except (InputError, state.StateError, ledger.LedgerError) as exc:
+        result = {"ok": False, "decision": None, "problems": [str(exc)], "files": {}, "files_not_listed": 0}
+    result["mode"] = args.mode
+    if args.json:
+        _print(result)
+    else:
+        latest = result["decision"]
+        lines = ["Flight Check release check: %s%s" % ("PASSED" if result["ok"] else "FAILED",
+                                                       "" if result["ok"] or args.mode == "require" else " (warn mode: not blocking)")]
+        if latest:
+            lines.append("Latest ship decision: %s (run %s, %s)" % (latest["decision"], latest["run_id"], latest["at"]))
+        lines += ["- " + p for p in result["problems"]]
+        for kind in ("added", "changed", "deleted"):
+            lines += ["  %s: %s" % (kind, path) for path in result["files"].get(kind, [])]
+        if result["files_not_listed"]:
+            lines.append("  ... and %d more" % result["files_not_listed"])
+        lines.append("This check confirms only that the recorded decision applies to these files. It is not a "
+                     "certification, and the records it reads can be edited by anyone who can commit.")
+        sys.stdout.write("\n".join(lines) + "\n")
+        if os.environ.get("GITHUB_ACTIONS") == "true" and not result["ok"]:
+            level = "error" if args.mode == "require" else "warning"
+            for p in result["problems"]:
+                text = p.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")  # GitHub's workflow-command escaping
+                sys.stdout.write("::%s title=Flight Check release check::%s\n" % (level, text))
+    return 0 if result["ok"] or args.mode == "warn" else 1
+
+
 @_state_cmd
 def cmd_ledger_mark(args):
     def fn(tx):
@@ -1195,6 +1233,16 @@ def build_parser():
     s.add_argument("--out", help="file name (.md, or .json with --format json) to write under <state dir>/reports/ instead of printing")
     s.add_argument("--now")
     s.set_defaults(func=cmd_report)
+
+    s = sub.add_parser("release-check", help="for CI: pass only when the latest ship decision is ready and still describes the tracked files")
+    s.add_argument("--root", required=True, help="the checkout to release (the audit root)")
+    s.add_argument("--state-dir")
+    s.add_argument("--mode", choices=("require", "warn"), default="require",
+                   help="require: exit 1 when the check fails; warn: report and exit 0")
+    s.add_argument("--allow-accepted-risks", action="store_true", help="also pass READY WITH ACCEPTED RISKS")
+    s.add_argument("--json", action="store_true")
+    s.add_argument("--now")
+    s.set_defaults(func=cmd_release_check)
 
     lp = sub.add_parser("ledger", help="inspect or update the finding ledger")
     lsub = lp.add_subparsers(dest="ledger_command")

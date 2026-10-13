@@ -200,4 +200,49 @@ Exit codes:
 | 4 | BLOCKED — INSUFFICIENT EVIDENCE |
 | 5 | BLOCKED — CRITICAL RISK |
 
+### Release check
+
+`release-check` lets a release or deploy workflow depend on Flight Check's decision. It reads only the records committed in `.flight-check/` and the checked-out files, so it needs no Claude and costs nothing to run. It passes only when all of these hold:
+
+- the latest recorded ship decision is READY FOR RELEASE, or READY WITH ACCEPTED RISKS with `--allow-accepted-risks`;
+- no record changed after that decision (for example a revoked acceptance or a new risk), and no acceptance it relied on has expired;
+- every file git tracks, outside `.flight-check/`, is the same as when that audit started: none added, changed, or deleted;
+- the records pass their integrity check (`state check`).
+
+To release with it:
+
+1. Commit, or at least `git add`, every file you will release. Files git does not track are not compared, so a file added before the audit but tracked only afterwards counts as added.
+2. Run `/flight-check:audit` (or `--changed`) until the decision is ready.
+3. Commit the `.flight-check/` files the audit changed, including `audited-files.json`, and nothing else.
+4. Tag the release. A workflow like this one runs the check:
+
+```yaml
+# .github/workflows/flight-check-release.yml
+name: Flight Check release check
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  flight-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: ARCFrontierSystems/flight-check
+          ref: v1.5.0 # the Flight Check release you audit with
+          path: .flight-check-tool
+          persist-credentials: false
+      - run: python3 .flight-check-tool/plugins/flight-check/scripts/flight_check.py release-check --root . --mode require
+```
+
+- **Modes.** `--mode require` (the default) exits 1 when the check fails. `--mode warn` reports the same result and exits 0, so you can see it on every release before you let it block. In GitHub Actions, failures also appear as annotations.
+- **What it blocks.** A failing check blocks only the jobs that depend on it. Put your publish or deploy job in the same workflow with `needs: flight-check`. A failing check on a tag does not delete the tag or unpublish a release. To see the result on pull requests too, add a `pull_request` trigger with `--mode warn`.
+- **Limits.** Line-ending conversion does not count as a change, files over 50 MB are compared by size, and symbolic links and submodules are not compared. The check is a process control, not a security barrier: anyone who can commit can also edit the records. The hash-chained history makes such an edit visible afterwards, but cannot prevent it.
+
 To run an audit headlessly, use `claude -p "/flight-check:audit"` with `--plugin-dir`, `--permission-mode dontAsk`, and a settings file that allows Flight Check's script and writes to `.flight-check/`. See [hardened-mode.md](hardened-mode.md) for a complete example.

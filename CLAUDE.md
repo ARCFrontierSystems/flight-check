@@ -23,6 +23,8 @@ The user asked to keep these until they ask for them. When they do, point them t
 
 The user asked for this for the rest of development: **be as token- and usage-efficient as possible.** Prefer one targeted check over repeated runs, avoid multi-agent workflows and extra review fan-outs unless a step cannot be done reliably otherwise, combine audit runs where one batch can serve two purposes, and keep replies short.
 
+The user also asked, for the rest of development: **run only the tests a change needs.** Add or update unit tests for the changed code and run the standard pre-commit checks below (they take about a minute; CI runs them too). Do not rerun self-audits, blind evaluations, or multi-agent reviews unless a change makes one absolutely necessary, and say why before running it.
+
 ## Repository layout
 
 - `plugins/flight-check/` is the shipped Claude Code plugin (skills, agents, scripts, schemas, references). Everything in it reaches users.

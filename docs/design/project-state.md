@@ -25,13 +25,14 @@ All paths are relative to the audit root. One audit root is one project (section
 | `.flight-check/ledger.json` | Finding lifecycle (1.0 file, schema 2.0 after migration) | script | yes |
 | `.flight-check/registers.json` | Requirements, decisions, risks, legal review items | script | yes |
 | `.flight-check/history.jsonl` | Append-only, hash-chained event log of every state change | script | yes |
+| `.flight-check/audited-files.json` | The files git tracked when the latest decision's run started, with content hashes, for the release check | script | yes |
 | `.flight-check/manifest.json` | Content hashes of the project's files at the last assessment | script | no |
 | `.flight-check/runs/` | Run directories (1.0, unchanged) | script and audit skill | no |
 | `.flight-check/packets/` | Attorney Review Packets (1.0, unchanged) | script | no |
 | `.flight-check/backups/` | Copies of the state files made before migrations, restores, and imports | script | no |
 | `.flight-check/state.lock` | Held while a command changes state | script | no |
 
-- The four committed files hold references, hashes, titles, and decisions, never source code or quotes. Quotes stay in run directories, as in 1.0.
+- The committed files hold references, hashes, titles, and decisions, never source code or quotes. `audited-files.json` lists only files git tracks, so it names no file that the repository does not already contain. Quotes stay in run directories, as in 1.0.
 - `manifest.json` changes on every assessment, so it is local only. Without it (for example in a fresh clone), change detection falls back to the hashes stored with each record and treats unlisted files as changed, which widens reassessment instead of narrowing it.
 - Files are written with sorted keys and two-space indentation so that git diffs and merges stay readable.
 - Only the script writes these files. Skills and agents never edit them directly.
@@ -274,7 +275,7 @@ The 1.0 gate keeps its five decisions and rules. 1.5 adds inputs:
 - risks in the register that no finding represents: an open CRITICAL risk blocks as a critical risk, an open HIGH risk is release-blocking, an accepted CRITICAL risk still blocks, and other accepted risks lead at best to READY WITH ACCEPTED RISKS;
 - a run that was interrupted never produces a readiness decision.
 
-Every decision is stamped `{"decision", "at", "run_id", "revision", "commit"}`. The status view shows the latest decision with its stamp and, when files changed since, says that the decision is historical and which areas need reassessment. A person still makes the release decision.
+Every decision is stamped `{"decision", "at", "run_id", "revision", "commit"}`. The status view shows the latest decision with its stamp and, when files changed since, says that the decision is historical and which areas need reassessment. The release check (`release-check`) applies the same test in CI from the committed records alone: the latest decision must be ready, no record may have changed after it, and the tracked files must match `audited-files.json`, which finalize writes from the list init-run took as the run started. A person still makes the release decision.
 
 ## 12. Writing, safety, and recovery
 
