@@ -274,8 +274,8 @@ def decide(audit, ledger, today, lifecycle=None, registers=None):
                                                                "no change affects," if carried_domains else ""))
     unassessed = [f["id"] for f in carried_findings if f.get("basis") == "not_applicable"]
     if unassessed:
-        reasons.append("Open finding(s) in a domain reported not applicable in this run still count, because the "
-                       "earlier evidence was never resolved: %s." % ", ".join(unassessed))
+        reasons.append("Recorded finding(s) in a domain reported not applicable in this run still count (open or "
+                       "accepted), because they were never resolved: %s." % ", ".join(unassessed))
     if carried_domains:
         reasons.append("Carried forward, not reassessed in this run (no change since the last run affects them): %s. "
                        "Their earlier results count, re-checked only against the hashes of the files they cited%s." % (

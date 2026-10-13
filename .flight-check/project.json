@@ -1,0 +1,1738 @@
+{
+  "schema_version": "2.0",
+  "revision": 6,
+  "identity": {
+    "project_id": "4b4554345f9eed839bbe19761974414f",
+    "created_at": "2026-10-13T05:07:08Z",
+    "name": "fc-fixes",
+    "root": ".",
+    "vcs": "git",
+    "repository": "github.com/ARCFrontierSystems/project-guardian"
+  },
+  "profile": {
+    "next_id": 32,
+    "facts": [
+      {
+        "id": "PF-0001",
+        "aspect": "platform",
+        "value": "Claude Code plugin (Flight Check) distributed through a plugin marketplace. It is a developer and audit tool, not a hosted application.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "config",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": "plugins/flight-check/.claude-plugin/plugin.json",
+            "start_line": 2,
+            "end_line": 4,
+            "sha256": "209c4ef5bb7e39e1cee9506dc4aae1bd58ca7b4beea938958e8384dcae0f2792"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0002",
+        "aspect": "framework",
+        "value": "No web or application framework. The plugin consists of Claude Code agent and skill markdown prompts plus a Python standard-library CLI that uses argparse.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "code",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": "plugins/flight-check/scripts/flight_check_lib/cli.py",
+            "start_line": 3,
+            "end_line": 3,
+            "sha256": "445b018ca4a366b6a418284ec82a92fb4cc6b9e00925b17d62ca8eb91f9bf017"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0003",
+        "aspect": "language",
+        "value": "Python (CI matrix 3.9 and 3.12) for the CLI, library, tests, and tools. Markdown prompts and JSON reference data. Node is used only for CI tooling.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "config",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": ".github/workflows/ci.yml",
+            "start_line": 18,
+            "end_line": 18,
+            "sha256": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0004",
+        "aspect": "runtime",
+        "value": "CPython 3.9+ run locally by the user. Claude Code is the host for the agents. Node 22 is used in CI only.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "config",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": ".github/workflows/ci.yml",
+            "start_line": 52,
+            "end_line": 52,
+            "sha256": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0005",
+        "aspect": "package-manager",
+        "value": "The runtime has no third-party dependencies. CI uses pip with a hash-pinned requirements file (test-only tools) and npm with a lockfile (package-lock.json) to install a pinned Claude Code.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "dependency",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": "tools/ci-npm/package.json",
+            "start_line": 6,
+            "end_line": 6,
+            "sha256": "605e095ddaba93aad722ca6f0613cbdb8fdff82ca6bd6f66b302d76e26c5ffae"
+          },
+          {
+            "kind": "dependency",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": "tools/ci-requirements.txt",
+            "start_line": 5,
+            "end_line": 5,
+            "sha256": "4191dac2a8ba8bf1099b152750c59ef5b44c2ac1bf0c568e318ff3f61031bc69"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0006",
+        "aspect": "data.database",
+        "value": "No database. State is kept in local JSON files (.flight-check/ledger.json and similar).",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "absence",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "searched": "Glob for sql, migrations and schema files under plugins/. Grep for sqlite3 and DB client imports in plugins/flight-check/scripts. No matches."
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "absent",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0007",
+        "aspect": "auth.authentication",
+        "value": "None. A local CLI and prompts with no user accounts.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "absence",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "searched": "Reviewed the file layout and Grep for HTTP, socket and urllib imports in the scripts. No server, login or session code found. I did not search for auth keywords."
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "absent",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0008",
+        "aspect": "auth.authorization",
+        "value": "No user authorization model. Agents are restricted by their tool allowlists (the inventory agent is Read, Grep, Glob only). Hardened-mode and security-design docs describe the read-only design, which was not verified in depth.",
+        "origin": "inferred",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "config",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": "plugins/flight-check/agents/inventory.md",
+            "start_line": 4,
+            "end_line": 4,
+            "sha256": "5096b81b845948d334b9a1b3eb1f1c7355f31a4d89e08f4eaf42b62b80e3e9ae"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "unclear",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0009",
+        "aspect": "architecture.api",
+        "value": "No HTTP API. The interfaces are a subcommand CLI (flight_check.py, with the logic in flight_check_lib/cli.py) and Claude Code skills (audit, remediate, track, status, legal-packet).",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "code",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": "plugins/flight-check/scripts/flight_check_lib/cli.py",
+            "start_line": 786,
+            "end_line": 786,
+            "sha256": "445b018ca4a366b6a418284ec82a92fb4cc6b9e00925b17d62ca8eb91f9bf017"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0010",
+        "aspect": "architecture.frontend",
+        "value": "None. No HTML, CSS, JS or TS files under plugins/. Output is JSON, markdown and a PDF produced by pdf.py.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "absence",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "searched": "Glob for html, css, js, ts and tsx under plugins/. No files found."
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "absent",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0011",
+        "aspect": "architecture.backend",
+        "value": "Local Python CLI and library modules (catalog, evidence, fingerprint, lockfile, minischema, jsonio, pdf, textsafety) orchestrated by prompt-defined agents: inventory, appsec, data, payments, ai, a11y, platform, supply-chain, testing, governance, verifier.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "code",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": "plugins/flight-check/scripts/flight_check.py",
+            "start_line": 14,
+            "end_line": 14,
+            "sha256": "3da877edbfe2cc88d1db945b5ea695bf02a6e8ccf47e298bba80c4b933a0d733"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0012",
+        "aspect": "deployment.model",
+        "value": "Distributed as a Claude Code plugin through a marketplace.json in a GitHub repository. There is no server deployment.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "config",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": ".claude-plugin/marketplace.json",
+            "start_line": 2,
+            "end_line": 2,
+            "sha256": "7d78c5855677034baae652c3d638c41ed0b4f0adaddcea6574da32ecb14be06c"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0013",
+        "aspect": "deployment.hosting",
+        "value": "The code is hosted on GitHub. CI runs on GitHub Actions ubuntu-24.04 runners.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "config",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": ".github/workflows/ci.yml",
+            "start_line": 14,
+            "end_line": 14,
+            "sha256": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0014",
+        "aspect": "data.storage",
+        "value": "Local filesystem JSON state and evidence under .flight-check/.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "config",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": ".flight-check/ledger.json",
+            "start_line": 1,
+            "end_line": 1,
+            "sha256": "317319e3cfa28296adf36f9765d82fdbf41dfcc2462fbc72bc7029ce0da64e98"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0015",
+        "aspect": "data.files",
+        "value": "The CLI reads, writes and hashes local project files and generates PDFs. It validates quotes against files and has text-safety and JSON I/O hardening modules. No upload handling.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "code",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": "plugins/flight-check/scripts/flight_check_lib/textsafety.py",
+            "start_line": 1,
+            "end_line": 1,
+            "sha256": "ffb96526105c21df60edcb9dea02b682214bbd0db20a1986c76aac7bb59e1d15"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0016",
+        "aspect": "payments.provider",
+        "value": "No payment code or SDKs.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "absence",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "searched": "Inspected the file layout, manifests and dependency lists (npm and pip). No payment dependencies. The payments.md file is an audit agent prompt, not payment code. Did not Grep payment terms across the repo."
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "absent",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0017",
+        "aspect": "third-party.services",
+        "value": "No runtime third-party services in the code. Dependencies are the GitHub Actions used in CI, the Claude Code CLI and the npm registry.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "config",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": ".github/workflows/ci.yml",
+            "start_line": 20,
+            "end_line": 20,
+            "sha256": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0018",
+        "aspect": "ai.services",
+        "value": "Claude Code hosts the LLM-driven agents, which are markdown prompts. Blindtest tools drive audits against test apps. The plugin itself has no direct LLM SDK calls.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "dependency",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": "tools/ci-npm/package.json",
+            "start_line": 6,
+            "end_line": 6,
+            "sha256": "605e095ddaba93aad722ca6f0613cbdb8fdff82ca6bd6f66b302d76e26c5ffae"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0019",
+        "aspect": "config.environment",
+        "value": "A FLIGHT_CHECK_LEAK_DENYLIST env var and secret are used in CI lint. There are no .env files.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "config",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": ".github/workflows/ci.yml",
+            "start_line": 35,
+            "end_line": 35,
+            "sha256": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0020",
+        "aspect": "ci-cd",
+        "value": "GitHub Actions runs unit tests and lint on Python 3.9 and 3.12, plus a strict Claude Code plugin validation. Actions are pinned by SHA, permissions are contents: read, and credentials are not persisted. No release or deploy workflow is present (releasing.md documents a manual process).",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "config",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": ".github/workflows/ci.yml",
+            "start_line": 8,
+            "end_line": 9,
+            "sha256": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0021",
+        "aspect": "testing",
+        "value": "unittest suite under tests/unit with a fixture target (tests/fixtures/mini-target), plus blind-test tooling in tools/blindtest.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "config",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": ".github/workflows/ci.yml",
+            "start_line": 32,
+            "end_line": 32,
+            "sha256": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0022",
+        "aspect": "ops.logging",
+        "value": "No logging framework or logging configuration was examined. The Python CLI appears to emit output to stdout and files.",
+        "origin": "unknown",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "absence",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "searched": "Did not Grep for logging usage. Only the file layout and CLI import structure were reviewed."
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "unclear",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0023",
+        "aspect": "ops.monitoring",
+        "value": "No monitoring or telemetry configuration found. This is expected for a local tool.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "absence",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "searched": "Reviewed the file layout, CI config and manifests for monitoring, APM or telemetry. None seen. No keyword Grep was run."
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "absent",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0024",
+        "aspect": "docs.documentation",
+        "value": "README, installation, usage, methodology, security-design, hardened-mode, limitations, testing, standards, blind-test-protocol and maintainer docs. Audit reports are under docs/audits.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "documentation",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": "README.md",
+            "start_line": 1,
+            "end_line": 1,
+            "sha256": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0025",
+        "aspect": "docs.policies",
+        "value": "SECURITY.md (vulnerability reporting), CONTRIBUTING.md, LICENSE and NOTICE.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "documentation",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": "SECURITY.md",
+            "start_line": 1,
+            "end_line": 1,
+            "sha256": "073d7343ac7880f67e0a8662982ff030903a606ac36a04a3d8b0fe15c3fd3062"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0026",
+        "aspect": "docs.terms",
+        "value": "No terms of service for the tool. The Apache-2.0 LICENSE applies.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "absence",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "searched": "Glob of the top-level and docs listing for terms, legal, EULA or tos files. None found. The listing was capped at 100 of 213 files."
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "absent",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0027",
+        "aspect": "docs.privacy",
+        "value": "There is no privacy policy for the project itself in the visible listing. A PRIVACY.md exists only as a test fixture.",
+        "origin": "inferred",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "documentation",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": "tests/fixtures/mini-target/docs/PRIVACY.md",
+            "start_line": 1,
+            "end_line": 1,
+            "sha256": "02f915aebf389367d175937bff21b3ed93e5db42a01b882e22cd9741b0b30c77"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "unclear",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0028",
+        "aspect": "data.lifecycle",
+        "value": "Audit state and evidence are kept locally in .flight-check/ (ledger, evidence). Retention and deletion semantics were not examined.",
+        "origin": "inferred",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "config",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "path": ".flight-check/ledger.json",
+            "start_line": 1,
+            "end_line": 1,
+            "sha256": "317319e3cfa28296adf36f9765d82fdbf41dfcc2462fbc72bc7029ce0da64e98"
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "unclear",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0029",
+        "aspect": "users.lifecycle",
+        "value": "No user accounts.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "absence",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "searched": "Reviewed layout and imports. There are no server, user or account modules."
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "absent",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0030",
+        "aspect": "users.admin",
+        "value": "No admin interface. The maintainer docs cover GitHub settings and releasing.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "absence",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "searched": "Layout review. Only docs/maintainers/*.md and CLI subcommands exist."
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "absent",
+        "run_id": "20261013T050120Z"
+      },
+      {
+        "id": "PF-0031",
+        "aspect": "repository.size",
+        "value": "About 213+ files. The Glob output was truncated at 100, so the listing is incomplete (skills/audit, cli.py and tests/unit/test_legal.py were seen only via Grep). Not examined: .git, __pycache__ and the .flight-check/ output.",
+        "origin": "observed",
+        "source": "flight-check",
+        "status": "current",
+        "evidence": [
+          {
+            "kind": "absence",
+            "observed_at": "2026-10-13T05:07:08Z",
+            "run_id": "20261013T050120Z",
+            "searched": "Glob **/* reported 100 of 213 files shown. Further directory-scoped Globs were limited to .github and plugins."
+          }
+        ],
+        "first_observed": "2026-10-13T05:07:08Z",
+        "last_observed": "2026-10-13T05:07:08Z",
+        "corrections": [],
+        "contradiction": false,
+        "history": [
+          {
+            "at": "2026-10-13T05:07:08Z",
+            "status": "current",
+            "source": "flight-check",
+            "note": "observed by the inventory agent",
+            "run_id": "20261013T050120Z"
+          }
+        ],
+        "presence": "present",
+        "run_id": "20261013T050120Z"
+      }
+    ]
+  },
+  "applicability": [
+    {
+      "domain": "accessibility",
+      "classification": "not_applicable",
+      "reasoning": "No UI. The output is JSON, markdown and a PDF report. Accessibility of the generated PDF and markdown was not assessed.",
+      "evidence": [
+        {
+          "kind": "absence",
+          "observed_at": "2026-10-13T05:07:08Z",
+          "run_id": "20261013T050120Z",
+          "searched": "Glob for html, css, js, ts and tsx under plugins/. Layout review shows no frontend or mobile project."
+        }
+      ],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "ai-llm",
+      "classification": "applicable",
+      "reasoning": "LLM agents process untrusted content, so prompt injection, tool scoping and output verification apply.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "application-security",
+      "classification": "applicable",
+      "reasoning": "The CLI parses untrusted project files, validates quotes, handles paths and writes state and PDFs. The prompts process untrusted project content, so prompt-injection resistance applies.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "authentication",
+      "classification": "uncertain",
+      "reasoning": "The inventory found no sign of this domain, but this run assessed it, so it is treated as uncertain. Local CLI plugin with no login, sessions or accounts.",
+      "evidence": [
+        {
+          "kind": "absence",
+          "observed_at": "2026-10-13T05:07:08Z",
+          "run_id": "20261013T050120Z",
+          "searched": "Reviewed the layout and Grep for network/HTTP imports (urllib, socket, requests) in the scripts. No server or login surface found. Did not Grep for auth keywords."
+        }
+      ],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "authorization",
+      "classification": "uncertain",
+      "reasoning": "There is no user authorization. Agent tool allowlists and read-only boundaries are a permission design that should be assessed under appsec or platform.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "compliance-readiness",
+      "classification": "applicable",
+      "reasoning": "Offered to users and positioned for compliance-readiness auditing, so its own claims should be checked.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "data-protection",
+      "classification": "uncertain",
+      "reasoning": "The tool stores audit results and quoted project content locally, which may include redacted secrets. It also handles ledger integrity. Whether this is in scope needs assessment.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "documentation",
+      "classification": "applicable",
+      "reasoning": "Extensive docs and audit reports exist, and their consistency with the implementation should be checked.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "infrastructure",
+      "classification": "applicable",
+      "reasoning": "A GitHub Actions workflow and repository settings are present. There is no server infrastructure.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "ip-assets",
+      "classification": "applicable",
+      "reasoning": "Apache-2.0 LICENSE and NOTICE files exist. Any bundled references or standards content should be checked for attribution.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "legal-business",
+      "classification": "applicable",
+      "reasoning": "Publicly distributed under a license. It makes claims about legal-review assistance and includes disclaimers, so counsel review is recommended.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "operational-readiness",
+      "classification": "applicable",
+      "reasoning": "A release process, maintainer documentation and a vulnerability reporting policy exist. Support and incident handling should be assessed.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "payments",
+      "classification": "not_applicable",
+      "reasoning": "No payment surface found in manifests or layout.",
+      "evidence": [
+        {
+          "kind": "absence",
+          "observed_at": "2026-10-13T05:07:08Z",
+          "run_id": "20261013T050120Z",
+          "searched": "Inspected dependency manifests (package.json, ci-requirements.txt) and the file layout. No payment SDKs or checkout code. Did not run a repo-wide payment keyword Grep."
+        }
+      ],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "privacy",
+      "classification": "uncertain",
+      "reasoning": "The tool processes arbitrary third-party project content. Whether personal data is collected or transmitted was not established. A project privacy statement was not found.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "production-readiness",
+      "classification": "applicable",
+      "reasoning": "The project is a 1.0.0-rc.1 release candidate being prepared for release.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "reliability",
+      "classification": "uncertain",
+      "reasoning": "A local CLI with state files. Atomic writes, recovery and idempotency should be assessed.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "supply-chain",
+      "classification": "applicable",
+      "reasoning": "Hash-pinned pip requirements, an npm lockfile and SHA-pinned actions. Dependency audit evidence is present in .flight-check/evidence.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "testing",
+      "classification": "applicable",
+      "reasoning": "A unit test suite, a CI test job and blind-test tools are present.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    },
+    {
+      "domain": "third-party",
+      "classification": "applicable",
+      "reasoning": "Depends on GitHub Actions, the npm registry, Claude Code and its model service, and the pip registry.",
+      "evidence": [],
+      "evaluated_at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "override": null,
+      "contradiction": false
+    }
+  ],
+  "readiness": [
+    {
+      "decision": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "at": "2026-10-13T05:07:08Z",
+      "run_id": "20261013T050120Z",
+      "revision": 4
+    }
+  ],
+  "controls": {
+    "APPSEC-SECRETS": {
+      "state": "UNVERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "APPSEC-INJECTION": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/evidence.py": "8f6730c0d14f58e7f4691d3a9756890d66b2f4a79b0384f65c28979913347a7c"
+      }
+    },
+    "APPSEC-OUTPUT-ENCODING": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "APPSEC-WEBHOOKS": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "APPSEC-FILE-HANDLING": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/cli.py": "445b018ca4a366b6a418284ec82a92fb4cc6b9e00925b17d62ca8eb91f9bf017"
+      }
+    },
+    "APPSEC-WEB-HARDENING": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "APPSEC-ERROR-DISCLOSURE": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/jsonio.py": "e01637656de49a20662b40d40430f3b947a8568f17a7444d0cbb990d2809de13",
+        "plugins/flight-check/scripts/flight_check_lib/state.py": "2fe2a2f2fac5e98bb376438b88ab8b9abc19588cc109572ab65f1395776d71f3"
+      }
+    },
+    "AUTHN-ENFORCED": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "AUTHN-CREDENTIALS": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "AUTHN-SESSIONS": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "AUTHN-ABUSE": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "AUTHZ-SERVER-SIDE": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "plugins/flight-check/agents/appsec.md": "efc36d417147715925e8dc3d8bf5bed1abb821268d71f700945e19ee207e1e72"
+      }
+    },
+    "AUTHZ-OBJECT-LEVEL": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "AUTHZ-ADMIN": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "DATA-STORE-ACCESS": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/cli.py": "445b018ca4a366b6a418284ec82a92fb4cc6b9e00925b17d62ca8eb91f9bf017",
+        "plugins/flight-check/scripts/flight_check_lib/jsonio.py": "e01637656de49a20662b40d40430f3b947a8568f17a7444d0cbb990d2809de13",
+        ".gitignore": "1ea5dc3d7d9fdc20b90af40861ab596e177476ef2eee3921b5719092b7831132"
+      }
+    },
+    "DATA-SENSITIVE-HANDLING": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/assemble.py": "9dcd12a45ea3ab45b3cb97677a051a80bd086543abe2f581294eef5c8ba032fd",
+        "plugins/flight-check/scripts/flight_check_lib/state.py": "2fe2a2f2fac5e98bb376438b88ab8b9abc19588cc109572ab65f1395776d71f3"
+      }
+    },
+    "PRIV-DELETION": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "PRIV-DISCLOSURE-CONSISTENCY": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "README.md": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5"
+      }
+    },
+    "PRIV-RETENTION": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "docs/security-design.md": "dfa59720ecfb201e67a4c31fa8afd88ae0c84a17ed9a03c10fa106b912625261"
+      }
+    },
+    "PAY-ENTITLEMENTS": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "PAY-WEBHOOK-INTEGRITY": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "PAY-SECRET-BOUNDARY": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "SUPPLY-LOCKFILES": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+      }
+    },
+    "SUPPLY-KNOWN-VULNS": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "SUPPLY-BUILD-INTEGRITY": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+      }
+    },
+    "THIRD-PARTY-INVENTORY": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+      }
+    },
+    "IP-LICENSING": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "NOTICE": "a4e028345d02d5e28bb08e979c79d3141702fe129956ccf55065e50ce6de6505"
+      }
+    },
+    "INFRA-ACCESS": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+      }
+    },
+    "PROD-CONFIG": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "PROD-LIMITS": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "REL-BACKUP-RESTORE": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "REL-FAILURE-HANDLING": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "OPS-MONITORING": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "OPS-ROLLBACK": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "docs/maintainers/releasing.md": "ed60b3cdfdd4c197fc909680fef7ba91e3c4750cc364a0afce7fad2339c79881"
+      }
+    },
+    "TEST-CRITICAL-PATHS": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "tests/unit/test_textsafety_evidence.py": "628fd2c622db63c0a4e16620690de0f98e3c8ce155521adec390596c4f715a09",
+        "tests/unit/test_state_hardening.py": "5067d1d17fe3b110a6dabae9155ff917e41d924dddb12c01a716bfdef5bfccf4"
+      }
+    },
+    "TEST-EXECUTION": {
+      "state": "UNVERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "AI-TOOL-AUTHORIZATION": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "plugins/flight-check/agents/ai.md": "8e2d32bc9c46ab4f383e43275d9e7a17bb1afb6691823f27d30c0b103575f83b",
+        "plugins/flight-check/skills/audit/SKILL.md": "d79b5cfba46d8e599bcddb29622b52b7528d51013b8bf1989e3945d08a4a65bd",
+        "plugins/flight-check/skills/remediate/SKILL.md": "3f344968c3915b914f86dc1d6668ed823edd07fe986be0e545faee0fc1b5a59d",
+        "tools/blindtest/run_audit.py": "7223cd0823db316ef774249397af2219927742da244e17d7787bcdd1634c00df"
+      }
+    },
+    "AI-DATA-BOUNDARIES": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "plugins/flight-check/skills/audit/SKILL.md": "d79b5cfba46d8e599bcddb29622b52b7528d51013b8bf1989e3945d08a4a65bd"
+      }
+    },
+    "AI-OUTPUT-HANDLING": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "plugins/flight-check/skills/audit/SKILL.md": "d79b5cfba46d8e599bcddb29622b52b7528d51013b8bf1989e3945d08a4a65bd"
+      }
+    },
+    "AI-COST-LIMITS": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "tools/blindtest/run_audit.py": "7223cd0823db316ef774249397af2219927742da244e17d7787bcdd1634c00df"
+      }
+    },
+    "A11Y-STATIC-BASELINE": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "A11Y-RUNTIME": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "LEGAL-TERMS": {
+      "state": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "README.md": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5"
+      }
+    },
+    "LEGAL-GOVERNING-LAW": {
+      "state": "UNVERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {}
+    },
+    "COMP-REGULATED-DATA": {
+      "state": "UNVERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "README.md": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5"
+      }
+    },
+    "DOC-CLAIMS": {
+      "state": "VERIFIED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "evidence_files": {
+        "README.md": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5",
+        "plugins/flight-check/scripts/flight_check.py": "3da877edbfe2cc88d1db945b5ea695bf02a6e8ccf47e298bba80c4b933a0d733",
+        "plugins/flight-check/scripts/flight_check_lib/cli.py": "445b018ca4a366b6a418284ec82a92fb4cc6b9e00925b17d62ca8eb91f9bf017"
+      }
+    }
+  },
+  "domains": {
+    "application-security": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "authentication": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "authorization": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "data-protection": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "privacy": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "payments": {
+      "status": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "third-party": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "supply-chain": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "ip-assets": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "infrastructure": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "reliability": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "operational-readiness": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "production-readiness": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "testing": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "ai-llm": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "accessibility": {
+      "status": "NOT_APPLICABLE",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "legal-business": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "compliance-readiness": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    },
+    "documentation": {
+      "status": "ASSESSED",
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "assessed_run_id": "20261013T050120Z",
+      "assessed_at": "2026-10-13T05:07:08Z"
+    }
+  }
+}

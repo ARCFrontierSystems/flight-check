@@ -1,0 +1,8 @@
+# Flight Check: files that stay on this machine (see docs/design/project-state.md).
+runs/
+packets/
+backups/
+pending/
+reports/
+manifest.json
+*.lock

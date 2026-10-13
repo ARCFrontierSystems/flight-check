@@ -1,0 +1,569 @@
+{
+  "schema_version": "2.0",
+  "next_ids": {
+    "REQ": 1,
+    "DEC": 1,
+    "RISK": 1,
+    "LR": 14
+  },
+  "requirements": [],
+  "decisions": [],
+  "risks": [],
+  "legal": [
+    {
+      "id": "LR-0001",
+      "status": "NEEDS_REVIEW",
+      "origin": "observed",
+      "source": "flight-check",
+      "created_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:07:08Z",
+      "links": {
+        "findings": [
+          "FC-0001"
+        ]
+      },
+      "evidence": [],
+      "history": [
+        {
+          "at": "2026-10-04T22:40:25Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: classified BUSINESS DECISION REQUIRED",
+          "run_id": "20261004T223431Z"
+        },
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "moved from the 1.0 ledger into the legal review queue"
+        }
+      ],
+      "jurisdiction_unknown": true,
+      "title": "Generated attorney review packet PDF is untagged and has no document language (pdf.py to_bytes)",
+      "category": "Accessibility",
+      "description": "Raised by finding FC-0001: Generated attorney review packet PDF is untagged and has no document language (pdf.py to_bytes)",
+      "trigger": "finding FC-0001",
+      "classification": "BUSINESS DECISION REQUIRED"
+    },
+    {
+      "id": "LR-0002",
+      "status": "NEEDS_REVIEW",
+      "origin": "observed",
+      "source": "flight-check",
+      "created_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:07:08Z",
+      "links": {
+        "findings": [
+          "FC-0002"
+        ]
+      },
+      "evidence": [],
+      "history": [
+        {
+          "at": "2026-10-04T22:40:25Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: classified LEGAL REVIEW REQUIRED",
+          "run_id": "20261004T223431Z"
+        },
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "moved from the 1.0 ledger into the legal review queue"
+        }
+      ],
+      "jurisdiction_unknown": true,
+      "title": "Public marketplace plugin has no terms of use, and its repository, marketplace and schema identifiers still use the former name 'project-guardian'",
+      "category": "Legal / Business Risk",
+      "description": "Raised by finding FC-0002: Public marketplace plugin has no terms of use, and its repository, marketplace and schema identifiers still use the former name 'project-guardian'",
+      "trigger": "finding FC-0002",
+      "classification": "LEGAL REVIEW REQUIRED"
+    },
+    {
+      "id": "LR-0003",
+      "status": "NEEDS_REVIEW",
+      "origin": "observed",
+      "source": "flight-check",
+      "created_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:07:08Z",
+      "links": {
+        "findings": [
+          "FC-0003"
+        ]
+      },
+      "evidence": [],
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: classified BUSINESS DECISION REQUIRED",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:27:15Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: included in attorney review packet attorney-review-packet.pdf"
+        },
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "moved from the 1.0 ledger into the legal review queue"
+        }
+      ],
+      "jurisdiction_unknown": true,
+      "title": "Product name Flight Check differs from repository, marketplace and schema identifiers (project-guardian), with no recorded name-clearance decision",
+      "category": "Legal / Business Risk",
+      "description": "Raised by finding FC-0003: Product name Flight Check differs from repository, marketplace and schema identifiers (project-guardian), with no recorded name-clearance decision",
+      "trigger": "finding FC-0003",
+      "classification": "BUSINESS DECISION REQUIRED"
+    },
+    {
+      "id": "LR-0004",
+      "status": "NEEDS_REVIEW",
+      "origin": "observed",
+      "source": "flight-check",
+      "created_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:07:08Z",
+      "links": {
+        "findings": [
+          "FC-0004"
+        ]
+      },
+      "evidence": [],
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: classified BUSINESS DECISION REQUIRED",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:27:15Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: included in attorney review packet attorney-review-packet.pdf"
+        },
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "moved from the 1.0 ledger into the legal review queue"
+        }
+      ],
+      "jurisdiction_unknown": true,
+      "title": "CONTRIBUTING.md does not state the license or terms under which contributions are accepted",
+      "category": "Legal / Business Risk",
+      "description": "Raised by finding FC-0004: CONTRIBUTING.md does not state the license or terms under which contributions are accepted",
+      "trigger": "finding FC-0004",
+      "classification": "BUSINESS DECISION REQUIRED"
+    },
+    {
+      "id": "LR-0005",
+      "status": "NEEDS_REVIEW",
+      "origin": "observed",
+      "source": "flight-check",
+      "created_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:07:08Z",
+      "links": {
+        "findings": [
+          "FC-0005"
+        ]
+      },
+      "evidence": [],
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: classified LEGAL REVIEW REQUIRED",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:27:15Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: included in attorney review packet attorney-review-packet.pdf"
+        },
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "moved from the 1.0 ledger into the legal review queue"
+        }
+      ],
+      "jurisdiction_unknown": true,
+      "title": "Public plugin that produces legal-adjacent output has only Apache-2.0 and disclaimers, with no terms of use or governing-law decision",
+      "category": "Legal / Business Risk",
+      "description": "Raised by finding FC-0005: Public plugin that produces legal-adjacent output has only Apache-2.0 and disclaimers, with no terms of use or governing-law decision",
+      "trigger": "finding FC-0005",
+      "classification": "LEGAL REVIEW REQUIRED"
+    },
+    {
+      "id": "LR-0006",
+      "status": "NEEDS_REVIEW",
+      "origin": "observed",
+      "source": "flight-check",
+      "created_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:07:08Z",
+      "links": {
+        "findings": [
+          "FC-0007"
+        ]
+      },
+      "evidence": [],
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: classified POLICY/IMPLEMENTATION CONTRADICTION",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "moved from the 1.0 ledger into the legal review queue"
+        }
+      ],
+      "jurisdiction_unknown": true,
+      "title": "README says secrets are masked in all output files, but masking is applied only when rendering Markdown and PDF",
+      "category": "Privacy",
+      "description": "Raised by finding FC-0007: README says secrets are masked in all output files, but masking is applied only when rendering Markdown and PDF",
+      "trigger": "finding FC-0007",
+      "classification": "POLICY/IMPLEMENTATION CONTRADICTION"
+    },
+    {
+      "id": "LR-0007",
+      "status": "NEEDS_REVIEW",
+      "origin": "observed",
+      "source": "flight-check",
+      "created_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:07:08Z",
+      "links": {
+        "findings": [
+          "FC-0012"
+        ]
+      },
+      "evidence": [],
+      "history": [
+        {
+          "at": "2026-10-07T12:12:32Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: classified POTENTIAL LEGAL RISK",
+          "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "moved from the 1.0 ledger into the legal review queue"
+        }
+      ],
+      "jurisdiction_unknown": true,
+      "title": "Run directories keep raw agent replies containing audited content; no retention or deletion guidance beyond gitignore",
+      "category": "Legal / Business Risk",
+      "description": "Raised by finding FC-0012: Run directories keep raw agent replies containing audited content; no retention or deletion guidance beyond gitignore",
+      "trigger": "finding FC-0012",
+      "classification": "POTENTIAL LEGAL RISK"
+    },
+    {
+      "id": "LR-0008",
+      "status": "RESOLVED",
+      "origin": "observed",
+      "source": "flight-check",
+      "created_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:07:08Z",
+      "links": {
+        "findings": [
+          "FC-0013"
+        ]
+      },
+      "evidence": [],
+      "history": [
+        {
+          "at": "2026-10-07T12:12:32Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: classified LEGAL REVIEW REQUIRED",
+          "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-12T20:01:20Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: included in attorney review packet attorney-review-packet.pdf"
+        },
+        {
+          "at": "2026-10-12T20:12:44Z",
+          "status": "REVIEWED",
+          "source": "user",
+          "note": "1.0 status DECISION_RECEIVED: Owner reported on 2026-10-12: the name check is complete and the Flight Check name is fine to use."
+        },
+        {
+          "at": "2026-10-12T20:12:44Z",
+          "status": "RESOLVED",
+          "source": "user",
+          "note": "1.0 status CLOSED: Owner reported on 2026-10-12: the name check is complete and the Flight Check name is fine to use."
+        },
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "RESOLVED",
+          "source": "flight-check",
+          "note": "moved from the 1.0 ledger into the legal review queue"
+        }
+      ],
+      "jurisdiction_unknown": true,
+      "title": "Product name \"Flight Check\" is acknowledged to overlap with existing marks; counsel review is deferred",
+      "category": "Legal / Business Risk",
+      "description": "Raised by finding FC-0013: Product name \"Flight Check\" is acknowledged to overlap with existing marks; counsel review is deferred",
+      "trigger": "finding FC-0013",
+      "classification": "LEGAL REVIEW REQUIRED"
+    },
+    {
+      "id": "LR-0009",
+      "status": "REVIEWED",
+      "origin": "observed",
+      "source": "flight-check",
+      "created_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:07:08Z",
+      "links": {
+        "findings": [
+          "FC-0014"
+        ]
+      },
+      "evidence": [],
+      "history": [
+        {
+          "at": "2026-10-07T12:12:32Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: classified BUSINESS DECISION REQUIRED",
+          "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-12T20:00:56Z",
+          "status": "REVIEWED",
+          "source": "user",
+          "note": "1.0 status DECISION_RECEIVED: Owner decision 2026-10-12: no separate terms of use (Apache-2.0 license plus disclaimers, since Flight Check is free and runs in the user's own Claude Code); no governing-law clause while there are no separate terms; contributions under Apache-2.0 section 5 with a Developer Certificate of Origin sign-off."
+        },
+        {
+          "at": "2026-10-12T20:00:56Z",
+          "status": "REVIEWED",
+          "source": "user",
+          "note": "1.0 status IMPLEMENTED: README states there are no separate terms of use; CONTRIBUTING.md states the contribution terms and the sign-off."
+        },
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "REVIEWED",
+          "source": "flight-check",
+          "note": "moved from the 1.0 ledger into the legal review queue"
+        }
+      ],
+      "jurisdiction_unknown": true,
+      "title": "No terms of use, governing-law decision or contribution-terms statement beyond the Apache-2.0 license",
+      "category": "Legal / Business Risk",
+      "description": "Raised by finding FC-0014: No terms of use, governing-law decision or contribution-terms statement beyond the Apache-2.0 license",
+      "trigger": "finding FC-0014",
+      "classification": "BUSINESS DECISION REQUIRED"
+    },
+    {
+      "id": "LR-0010",
+      "status": "RESOLVED",
+      "origin": "observed",
+      "source": "flight-check",
+      "created_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:07:08Z",
+      "links": {
+        "findings": [
+          "FC-0019"
+        ]
+      },
+      "evidence": [],
+      "history": [
+        {
+          "at": "2026-10-12T20:32:33Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: classified POTENTIAL LEGAL RISK",
+          "run_id": "20261012T202214Z"
+        },
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "status": "RESOLVED",
+          "source": "user",
+          "note": "1.0 status CLOSED: Same subject as FC-0013. Owner on 2026-10-12: 'Name check is good. No need to keep that open anymore.' | reason: Owner decision on the name check"
+        },
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "RESOLVED",
+          "source": "flight-check",
+          "note": "moved from the 1.0 ledger into the legal review queue"
+        }
+      ],
+      "jurisdiction_unknown": true,
+      "title": "Repository records that the name overlaps a registered mark; closure rests on the owner's own report, with no evidence of counsel review",
+      "category": "Legal / Business Risk",
+      "description": "Raised by finding FC-0019: Repository records that the name overlaps a registered mark; closure rests on the owner's own report, with no evidence of counsel review",
+      "trigger": "finding FC-0019",
+      "classification": "POTENTIAL LEGAL RISK"
+    },
+    {
+      "id": "LR-0011",
+      "status": "RESOLVED",
+      "origin": "observed",
+      "source": "flight-check",
+      "created_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:07:08Z",
+      "links": {
+        "findings": [
+          "FC-0023"
+        ]
+      },
+      "evidence": [],
+      "history": [
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: classified BUSINESS DECISION REQUIRED",
+          "run_id": "20261012T220354Z"
+        },
+        {
+          "at": "2026-10-12T22:16:06Z",
+          "status": "RESOLVED",
+          "source": "user",
+          "note": "1.0 status CLOSED: Owner on 2026-10-12: 'license plus disclaimers should be enough since it is free and not operating on its own software'; README states there are no separate terms of use. | reason: Owner decision on terms"
+        },
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "RESOLVED",
+          "source": "flight-check",
+          "note": "moved from the 1.0 ledger into the legal review queue"
+        }
+      ],
+      "jurisdiction_unknown": true,
+      "title": "No terms of use or governing-law decision beyond Apache-2.0 for a publicly distributed audit tool whose output users may rely on",
+      "category": "Legal / Business Risk",
+      "description": "Raised by finding FC-0023: No terms of use or governing-law decision beyond Apache-2.0 for a publicly distributed audit tool whose output users may rely on",
+      "trigger": "finding FC-0023",
+      "classification": "BUSINESS DECISION REQUIRED"
+    },
+    {
+      "id": "LR-0012",
+      "status": "RESOLVED",
+      "origin": "observed",
+      "source": "flight-check",
+      "created_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:07:08Z",
+      "links": {
+        "findings": [
+          "FC-0024"
+        ]
+      },
+      "evidence": [],
+      "history": [
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "1.0 status OPEN: classified POTENTIAL LEGAL RISK",
+          "run_id": "20261012T220354Z"
+        },
+        {
+          "at": "2026-10-12T22:16:06Z",
+          "status": "RESOLVED",
+          "source": "user",
+          "note": "1.0 status CLOSED: Same subject as FC-0013 and FC-0019. Owner on 2026-10-12: 'Name check is good. No need to keep that open anymore.' | reason: Owner decision on the name check"
+        },
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "RESOLVED",
+          "source": "flight-check",
+          "note": "moved from the 1.0 ledger into the legal review queue"
+        }
+      ],
+      "jurisdiction_unknown": true,
+      "title": "Product name 'Flight Check' is publicly distributed although the repository records overlap with a registered mark and shows no counsel review",
+      "category": "Legal / Business Risk",
+      "description": "Raised by finding FC-0024: Product name 'Flight Check' is publicly distributed although the repository records overlap with a registered mark and shows no counsel review",
+      "trigger": "finding FC-0024",
+      "classification": "POTENTIAL LEGAL RISK"
+    },
+    {
+      "id": "LR-0013",
+      "status": "NEEDS_REVIEW",
+      "origin": "observed",
+      "source": "flight-check",
+      "created_at": "2026-10-13T05:07:08Z",
+      "updated_at": "2026-10-13T05:07:08Z",
+      "links": {
+        "findings": [
+          "FC-0026"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "documentation",
+          "observed_at": "2026-10-13T05:07:08Z",
+          "run_id": "20261013T050120Z",
+          "path": "README.md",
+          "start_line": 11,
+          "end_line": 11,
+          "sha256": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5"
+        },
+        {
+          "kind": "documentation",
+          "observed_at": "2026-10-13T05:07:08Z",
+          "run_id": "20261013T050120Z",
+          "path": "README.md",
+          "start_line": 60,
+          "end_line": 60,
+          "sha256": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5"
+        },
+        {
+          "kind": "documentation",
+          "observed_at": "2026-10-13T05:07:08Z",
+          "run_id": "20261013T050120Z",
+          "path": "CHANGELOG.md",
+          "start_line": 5,
+          "end_line": 5,
+          "sha256": "6a3ec25bc2ab43955b01880548f3d95906ec545949a00eaab1e98891600328b3"
+        },
+        {
+          "kind": "config",
+          "observed_at": "2026-10-13T05:07:08Z",
+          "run_id": "20261013T050120Z",
+          "path": "plugins/flight-check/.claude-plugin/plugin.json",
+          "start_line": 4,
+          "end_line": 4,
+          "sha256": "209c4ef5bb7e39e1cee9506dc4aae1bd58ca7b4beea938958e8384dcae0f2792"
+        }
+      ],
+      "history": [
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "NEEDS_REVIEW",
+          "source": "flight-check",
+          "note": "opened for finding FC-0026",
+          "run_id": "20261013T050120Z"
+        }
+      ],
+      "jurisdiction_unknown": true,
+      "title": "README presents version 1.0.0-rc.1 but documents 1.5 features the CHANGELOG lists as unreleased",
+      "category": "Documentation Consistency",
+      "description": "Raised by finding FC-0026: README presents version 1.0.0-rc.1 but documents 1.5 features the CHANGELOG lists as unreleased",
+      "trigger": "finding FC-0026",
+      "classification": "BUSINESS DECISION REQUIRED",
+      "questions": [
+        "Should the supported-versions statement in SECURITY.md name the version a vulnerability fix will ship in, given the README describes features from the unreleased 1.5.0 line?"
+      ]
+    }
+  ]
+}

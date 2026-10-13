@@ -113,7 +113,7 @@ class InitAndLoadTests(StateTestCase):
 class MigrationTests(StateTestCase):
     def test_v1_ledger_migrates_with_legal_items_and_a_backup(self):
         os.makedirs(self.sd)
-        src = os.path.join(helpers.REPO, ".flight-check", "ledger.json")
+        src = os.path.join(helpers.REPO, "tests", "fixtures", "ledger-1.0.json")
         shutil.copy(src, os.path.join(self.sd, "ledger.json"))
         before = read(os.path.join(self.sd, "ledger.json"))
         st = self.load()

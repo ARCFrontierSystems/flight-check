@@ -1,0 +1,1225 @@
+{
+  "schema_version": "1.0",
+  "next_id": 26,
+  "entries": {
+    "23182de0fc497035": {
+      "id": "FC-0001",
+      "fingerprint": "23182de0fc497035",
+      "match_key": "accessibility.untagged-pdf-output|plugins/flight-check/scripts/flight_check_lib/pdf.py",
+      "rule": "accessibility.untagged-pdf-output",
+      "domain": "accessibility",
+      "title": "Generated attorney review packet PDF is untagged and has no document language (pdf.py to_bytes)",
+      "severity": "LOW",
+      "status": "ACCEPTED_RISK",
+      "first_seen_run": "20261004T223431Z",
+      "last_seen_run": "20261004T223431Z",
+      "history": [
+        {
+          "at": "2026-10-04T22:40:25Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T223431Z"
+        },
+        {
+          "at": "2026-10-04T23:05:24Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: Partial fix: the packet PDF now declares its document language (/Lang) and displays its title (/ViewerPreferences DisplayDocTitle); docs/limitations.md states that the PDF is untagged and that the Markdown copy is the accessible version. Full PDF tagging is not implemented."
+        },
+        {
+          "at": "2026-10-07T12:12:32Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "verifier reports the fix is not effective: The language and title part of the fix is real. The catalog in pdf.py declares /Lang and DisplayDocTitle. docs/limitations.md line 31 discloses that the PDF is untagged and points to the Markdown copy as the accessible version. My Grep for StructTreeRoot and MarkInfo in flight_check_lib returned no match, so the PDF is still untagged. The finding's root cause is therefore still present, and the remediation note itself says full tagging is not implemented. The remaining gap is documented and has a Markdown workaround. Treat it as an accepted limitation or a risk decision, not a fix.",
+          "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-12T19:13:28Z",
+          "status": "ACCEPTED_RISK",
+          "source": "user",
+          "note": "accepted by ARC Frontier Systems (repository owner): Owner decision on 2026-10-12: the Markdown copy written next to every packet is the accessible version; full PDF tagging is deferred."
+        }
+      ],
+      "legal": {
+        "classification": "BUSINESS DECISION REQUIRED",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T22:40:25Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified BUSINESS DECISION REQUIRED",
+            "run_id": "20261004T223431Z"
+          }
+        ]
+      },
+      "remediations": [
+        {
+          "at": "2026-10-04T23:05:24Z",
+          "note": "Partial fix: the packet PDF now declares its document language (/Lang) and displays its title (/ViewerPreferences DisplayDocTitle); docs/limitations.md states that the PDF is untagged and that the Markdown copy is the accessible version. Full PDF tagging is not implemented.",
+          "files": [
+            "plugins/flight-check/scripts/flight_check_lib/pdf.py",
+            "plugins/flight-check/scripts/flight_check_lib/packet.py",
+            "docs/limitations.md"
+          ],
+          "source": "flight-check"
+        }
+      ],
+      "accepted_risk": {
+        "risk": "Attorney Review Packet PDFs are untagged, so screen readers cannot navigate their headings and lists. The PDF does declare its language and display its title.",
+        "reason": "Owner decision on 2026-10-12: the Markdown copy written next to every packet is the accessible version; full PDF tagging is deferred.",
+        "owner": "ARC Frontier Systems (repository owner)",
+        "date": "2026-10-12",
+        "scope": "Attorney Review Packet PDFs produced by Flight Check 0.1.0",
+        "compensating_controls": "Every packet is also written as Markdown with the same content; the PDF declares its language and displays its title; docs/limitations.md documents the limitation.",
+        "review_date": "2027-04-12",
+        "recorded_at": "2026-10-12T19:13:28Z",
+        "source": "user"
+      }
+    },
+    "e713f5835e4d758d": {
+      "id": "FC-0002",
+      "fingerprint": "e713f5835e4d758d",
+      "match_key": "legal-business.no-terms-or-naming-decision|CHANGELOG.md",
+      "rule": "legal-business.no-terms-or-naming-decision",
+      "domain": "legal-business",
+      "title": "Public marketplace plugin has no terms of use, and its repository, marketplace and schema identifiers still use the former name 'project-guardian'",
+      "severity": "INFORMATIONAL",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261004T223431Z",
+      "last_seen_run": "20261004T223431Z",
+      "history": [
+        {
+          "at": "2026-10-04T22:40:25Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T223431Z"
+        },
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T230555Z"
+        }
+      ],
+      "legal": {
+        "classification": "LEGAL REVIEW REQUIRED",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T22:40:25Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified LEGAL REVIEW REQUIRED",
+            "run_id": "20261004T223431Z"
+          }
+        ]
+      }
+    },
+    "322e7d04eae0e68b": {
+      "id": "FC-0003",
+      "fingerprint": "322e7d04eae0e68b",
+      "match_key": "legal-business.name-and-identifier-inconsistency|docs/maintainers/github-settings.md",
+      "rule": "legal-business.name-and-identifier-inconsistency",
+      "domain": "legal-business",
+      "title": "Product name Flight Check differs from repository, marketplace and schema identifiers (project-guardian), with no recorded name-clearance decision",
+      "severity": "INFORMATIONAL",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
+        }
+      ],
+      "legal": {
+        "classification": "BUSINESS DECISION REQUIRED",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T23:14:06Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified BUSINESS DECISION REQUIRED",
+            "run_id": "20261004T230555Z"
+          },
+          {
+            "at": "2026-10-04T23:27:15Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "included in attorney review packet attorney-review-packet.pdf"
+          }
+        ]
+      }
+    },
+    "08a1e6f628d3ca50": {
+      "id": "FC-0004",
+      "fingerprint": "08a1e6f628d3ca50",
+      "match_key": "legal-business.no-contributor-licensing-statement|contributing.md",
+      "rule": "legal-business.no-contributor-licensing-statement",
+      "domain": "legal-business",
+      "title": "CONTRIBUTING.md does not state the license or terms under which contributions are accepted",
+      "severity": "INFORMATIONAL",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
+        }
+      ],
+      "legal": {
+        "classification": "BUSINESS DECISION REQUIRED",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T23:14:06Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified BUSINESS DECISION REQUIRED",
+            "run_id": "20261004T230555Z"
+          },
+          {
+            "at": "2026-10-04T23:27:15Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "included in attorney review packet attorney-review-packet.pdf"
+          }
+        ]
+      }
+    },
+    "7df675a2e8ee5b37": {
+      "id": "FC-0005",
+      "fingerprint": "7df675a2e8ee5b37",
+      "match_key": "legal-business.no-terms-or-governing-law|README.md",
+      "rule": "legal-business.no-terms-or-governing-law",
+      "domain": "legal-business",
+      "title": "Public plugin that produces legal-adjacent output has only Apache-2.0 and disclaimers, with no terms of use or governing-law decision",
+      "severity": "INFORMATIONAL",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
+        }
+      ],
+      "legal": {
+        "classification": "LEGAL REVIEW REQUIRED",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T23:14:06Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified LEGAL REVIEW REQUIRED",
+            "run_id": "20261004T230555Z"
+          },
+          {
+            "at": "2026-10-04T23:27:15Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "included in attorney review packet attorney-review-packet.pdf"
+          }
+        ]
+      }
+    },
+    "04eca0a73cf7bdc2": {
+      "id": "FC-0006",
+      "fingerprint": "04eca0a73cf7bdc2",
+      "match_key": "operational-readiness.vulnerability-reporting-channel-not-enabled|SECURITY.md",
+      "rule": "operational-readiness.vulnerability-reporting-channel-not-enabled",
+      "domain": "operational-readiness",
+      "title": "SECURITY.md directs reporters to private vulnerability reporting, which maintainer docs say is not yet enabled",
+      "severity": "LOW",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
+        }
+      ]
+    },
+    "12d63ea1baf611d6": {
+      "id": "FC-0007",
+      "fingerprint": "12d63ea1baf611d6",
+      "match_key": "privacy.output-masking-claim-broader-than-implementation|README.md",
+      "rule": "privacy.output-masking-claim-broader-than-implementation",
+      "domain": "privacy",
+      "title": "README says secrets are masked in all output files, but masking is applied only when rendering Markdown and PDF",
+      "severity": "LOW",
+      "status": "VERIFIED",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:17:01Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: Likely secrets are now masked in all agent text when a run is assembled, so audit.final.json and the ledger never hold them; the README states exactly which outputs are masked and that raw agent replies stay in the gitignored run directory."
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: assemble.py runs mask_secrets over the inventory, the verification output and every part file. This matches the README claim.",
+          "run_id": "20261004T231719Z"
+        }
+      ],
+      "legal": {
+        "classification": "POLICY/IMPLEMENTATION CONTRADICTION",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-04T23:14:06Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified POLICY/IMPLEMENTATION CONTRADICTION",
+            "run_id": "20261004T230555Z"
+          }
+        ]
+      },
+      "remediations": [
+        {
+          "at": "2026-10-04T23:17:01Z",
+          "note": "Likely secrets are now masked in all agent text when a run is assembled, so audit.final.json and the ledger never hold them; the README states exactly which outputs are masked and that raw agent replies stay in the gitignored run directory.",
+          "files": [
+            "plugins/flight-check/scripts/flight_check_lib/assemble.py",
+            "README.md",
+            "tests/unit/test_end_to_end.py"
+          ],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "d0da96ebe040b52a": {
+      "id": "FC-0008",
+      "fingerprint": "d0da96ebe040b52a",
+      "match_key": "supply-chain.ci-tools-not-locked|.github/workflows/ci.yml",
+      "rule": "supply-chain.ci-tools-not-locked",
+      "domain": "supply-chain",
+      "title": "CI installs test and validation tools without lockfiles (jsonschema transitive deps, npm global, apt)",
+      "severity": "INFORMATIONAL",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261004T230555Z",
+      "last_seen_run": "20261004T230555Z",
+      "history": [
+        {
+          "at": "2026-10-04T23:14:06Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261004T230555Z"
+        },
+        {
+          "at": "2026-10-04T23:25:26Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261004T231719Z"
+        }
+      ]
+    },
+    "92e81f6d573e7da6": {
+      "id": "FC-0009",
+      "fingerprint": "92e81f6d573e7da6",
+      "match_key": "ai-llm.weak-quote-verification-with-gaps|plugins/flight-check/scripts/flight_check_lib/evidence.py",
+      "anchor_hash": "5dc65ca31fdb70a0",
+      "rule": "ai-llm.weak-quote-verification-with-gaps",
+      "domain": "ai-llm",
+      "title": "Mechanical quote check accepts gap-heavy or very short segments, so a fabricated quote can still pass as OK",
+      "severity": "LOW",
+      "status": "VERIFIED",
+      "first_seen_run": "20261007T120434Z",
+      "last_seen_run": "20261007T120434Z",
+      "history": [
+        {
+          "at": "2026-10-07T12:12:32Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-07T12:14:45Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: Quotes that skip lines with '...' must contain at least 12 checkable characters, or they are UNCHECKABLE instead of OK."
+        },
+        {
+          "at": "2026-10-12T19:46:17Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: quote_matches now returns None when the quote contains an elision (\"...\" or an ellipsis character) and its checkable segments total fewer than 12 characters. check_item turns None into UNCHECKABLE_QUOTE, which is in the UNCHECKED set, so these quotes no longer count as OK. Segments under 3 characters are dropped before the count. I could not run the code, so this rests on reading it. A gap-heavy quote with 12 or more checkable characters is still allowed, as the note describes. A quote whose only gaps are [REDACTED] markers is not covered by the 12-character floor, because only elisions trigger it. That is a narrower, separate case.",
+          "run_id": "20261012T194029Z"
+        }
+      ],
+      "remediations": [
+        {
+          "at": "2026-10-07T12:14:45Z",
+          "note": "Quotes that skip lines with '...' must contain at least 12 checkable characters, or they are UNCHECKABLE instead of OK.",
+          "files": [
+            "plugins/flight-check/scripts/flight_check_lib/evidence.py"
+          ],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "e4be167d43b6ed72": {
+      "id": "FC-0010",
+      "fingerprint": "e4be167d43b6ed72",
+      "match_key": "documentation.stale-status-claim|README.md",
+      "anchor_hash": "a76448fe66756d3e",
+      "rule": "documentation.stale-status-claim",
+      "domain": "documentation",
+      "title": "README says the blind evaluation is unpublished, but a Phase 5 blind-test record is in the repository",
+      "severity": "LOW",
+      "status": "VERIFIED",
+      "first_seen_run": "20261007T120434Z",
+      "last_seen_run": "20261007T120434Z",
+      "history": [
+        {
+          "at": "2026-10-07T12:12:32Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-07T12:14:45Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: README status now links the published Phase 5 blind-test record."
+        },
+        {
+          "at": "2026-10-12T19:46:17Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: README line 11 no longer says the evaluation is unpublished. It links docs/audits/2026-10-06-phase-5-blind-test.md, and Glob confirms that file exists. The README now says held-out test application results are scored at release, which fits a pre-release status. I did not read the record itself to check that the README's description matches its contents.",
+          "run_id": "20261012T194029Z"
+        }
+      ],
+      "remediations": [
+        {
+          "at": "2026-10-07T12:14:45Z",
+          "note": "README status now links the published Phase 5 blind-test record.",
+          "files": [
+            "README.md"
+          ],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "8ad950c4dac2b55d": {
+      "id": "FC-0011",
+      "fingerprint": "8ad950c4dac2b55d",
+      "match_key": "documentation.vulnerability-channel-may-not-be-enabled|SECURITY.md",
+      "anchor_hash": "6585a3903c339bc9",
+      "rule": "documentation.vulnerability-channel-may-not-be-enabled",
+      "domain": "documentation",
+      "title": "SECURITY.md directs reporters to GitHub private vulnerability reporting, which the maintainer checklist shows as not yet enabled",
+      "severity": "LOW",
+      "status": "CLOSED",
+      "first_seen_run": "20261007T120434Z",
+      "last_seen_run": "20261007T120434Z",
+      "history": [
+        {
+          "at": "2026-10-07T12:12:32Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-12T19:46:17Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261012T194029Z"
+        },
+        {
+          "at": "2026-10-12T19:52:20Z",
+          "status": "CLOSED",
+          "source": "user",
+          "note": "Owner confirmed on 2026-10-12 that GitHub private vulnerability reporting is enabled for the repository."
+        }
+      ]
+    },
+    "fccf1192700fe511": {
+      "id": "FC-0012",
+      "fingerprint": "fccf1192700fe511",
+      "match_key": "legal-business.outputs-hold-audited-content-no-retention-statement|README.md",
+      "anchor_hash": "b078f60f526592bf",
+      "rule": "legal-business.outputs-hold-audited-content-no-retention-statement",
+      "domain": "legal-business",
+      "title": "Run directories keep raw agent replies containing audited content; no retention or deletion guidance beyond gitignore",
+      "severity": "LOW",
+      "status": "VERIFIED",
+      "first_seen_run": "20261007T120434Z",
+      "last_seen_run": "20261007T120434Z",
+      "history": [
+        {
+          "at": "2026-10-07T12:12:32Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-07T12:14:45Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: README tells users that run directories hold quoted project content and can be deleted; the ledger keeps finding history."
+        },
+        {
+          "at": "2026-10-12T19:46:17Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: The README Privacy and data handling section now says the raw agent replies in run directories are kept as received and can contain quoted project content. It tells users to delete `.flight-check/runs/<run>/` directories they no longer need, and says the ledger keeps finding history without them. It also says run directories are gitignored automatically. The finding asked for retention and deletion guidance, and this supplies it as documentation. The tool has no automatic purge, so the guidance is manual.",
+          "run_id": "20261012T194029Z"
+        }
+      ],
+      "legal": {
+        "classification": "POTENTIAL LEGAL RISK",
+        "status": "OPEN",
+        "history": [
+          {
+            "at": "2026-10-07T12:12:32Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified POTENTIAL LEGAL RISK",
+            "run_id": "20261007T120434Z"
+          }
+        ]
+      },
+      "remediations": [
+        {
+          "at": "2026-10-07T12:14:45Z",
+          "note": "README tells users that run directories hold quoted project content and can be deleted; the ledger keeps finding history.",
+          "files": [
+            "README.md"
+          ],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "ef84b8c5813cf708": {
+      "id": "FC-0013",
+      "fingerprint": "ef84b8c5813cf708",
+      "match_key": "legal-business.product-name-trademark-conflict|CLAUDE.md",
+      "anchor_hash": "b3517c358ba3001c",
+      "rule": "legal-business.product-name-trademark-conflict",
+      "domain": "legal-business",
+      "title": "Product name \"Flight Check\" is acknowledged to overlap with existing marks; counsel review is deferred",
+      "severity": "MEDIUM",
+      "status": "CLOSED",
+      "first_seen_run": "20261007T120434Z",
+      "last_seen_run": "20261007T120434Z",
+      "history": [
+        {
+          "at": "2026-10-07T12:12:32Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-12T19:46:17Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261012T194029Z"
+        },
+        {
+          "at": "2026-10-12T20:12:44Z",
+          "status": "CLOSED",
+          "source": "user",
+          "note": "Owner reported on 2026-10-12: the name check is complete and the Flight Check name is fine to use."
+        }
+      ],
+      "legal": {
+        "classification": "LEGAL REVIEW REQUIRED",
+        "status": "CLOSED",
+        "history": [
+          {
+            "at": "2026-10-07T12:12:32Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified LEGAL REVIEW REQUIRED",
+            "run_id": "20261007T120434Z"
+          },
+          {
+            "at": "2026-10-12T20:01:20Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "included in attorney review packet attorney-review-packet.pdf"
+          },
+          {
+            "at": "2026-10-12T20:12:44Z",
+            "status": "DECISION_RECEIVED",
+            "source": "user",
+            "note": "Owner reported on 2026-10-12: the name check is complete and the Flight Check name is fine to use."
+          },
+          {
+            "at": "2026-10-12T20:12:44Z",
+            "status": "CLOSED",
+            "source": "user",
+            "note": "Owner reported on 2026-10-12: the name check is complete and the Flight Check name is fine to use."
+          }
+        ]
+      }
+    },
+    "7b22ab336aeaa5b6": {
+      "id": "FC-0014",
+      "fingerprint": "7b22ab336aeaa5b6",
+      "match_key": "legal-business.terms-and-governing-law-undecided|docs/audits/2026-10-04-phase-4-remediation.md",
+      "anchor_hash": "5b0a2ec216eb8d99",
+      "rule": "legal-business.terms-and-governing-law-undecided",
+      "domain": "legal-business",
+      "title": "No terms of use, governing-law decision or contribution-terms statement beyond the Apache-2.0 license",
+      "severity": "LOW",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261007T120434Z",
+      "last_seen_run": "20261007T120434Z",
+      "history": [
+        {
+          "at": "2026-10-07T12:12:32Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-12T19:46:17Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261012T194029Z"
+        }
+      ],
+      "legal": {
+        "classification": "BUSINESS DECISION REQUIRED",
+        "status": "IMPLEMENTED",
+        "history": [
+          {
+            "at": "2026-10-07T12:12:32Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified BUSINESS DECISION REQUIRED",
+            "run_id": "20261007T120434Z"
+          },
+          {
+            "at": "2026-10-12T20:00:56Z",
+            "status": "DECISION_RECEIVED",
+            "source": "user",
+            "note": "Owner decision 2026-10-12: no separate terms of use (Apache-2.0 license plus disclaimers, since Flight Check is free and runs in the user's own Claude Code); no governing-law clause while there are no separate terms; contributions under Apache-2.0 section 5 with a Developer Certificate of Origin sign-off."
+          },
+          {
+            "at": "2026-10-12T20:00:56Z",
+            "status": "IMPLEMENTED",
+            "source": "user",
+            "note": "README states there are no separate terms of use; CONTRIBUTING.md states the contribution terms and the sign-off."
+          }
+        ]
+      }
+    },
+    "36a86acf42d3e01f": {
+      "id": "FC-0015",
+      "fingerprint": "36a86acf42d3e01f",
+      "match_key": "supply-chain.unpinned-ci-dependencies|.github/workflows/ci.yml",
+      "anchor_hash": "b5aeeabc5ebff5ae",
+      "rule": "supply-chain.unpinned-ci-dependencies",
+      "domain": "supply-chain",
+      "title": "CI installs jsonschema without a lockfile, so transitive Python dependencies float; the npm install is pinned only at the top level",
+      "severity": "LOW",
+      "status": "VERIFIED",
+      "first_seen_run": "20261007T120434Z",
+      "last_seen_run": "20261007T120434Z",
+      "history": [
+        {
+          "at": "2026-10-07T12:12:32Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261007T120434Z"
+        },
+        {
+          "at": "2026-10-12T19:46:17Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261012T194029Z"
+        },
+        {
+          "at": "2026-10-12T20:00:56Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: CI installs test tools from tools/ci-requirements.txt with exact versions and sha256 hashes (--require-hashes)."
+        },
+        {
+          "at": "2026-10-12T20:32:33Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "verifier reports the fix is not effective: The Python half of the finding is fixed. ci.yml line 30 installs with `--require-hashes --only-binary=:all: -r tools/ci-requirements.txt`. The requirements file pins seven entries with sha256 hashes, including the transitive packages attrs, referencing, rpds-py, jsonschema-specifications and typing-extensions, with per-Python-version markers. The finding's title also says the npm install is pinned only at the top level. That is still true: ci.yml line 54 runs `npm install -g @anthropic-ai/claude-code@2.1.289`, and I found no lockfile, `npm ci` or integrity pin. This is tracked as supply-chain.S1. Mark the finding fixed only if the owner accepts and documents the npm residual risk, or commits a lockfile for the CI tool.",
+          "run_id": "20261012T202214Z"
+        },
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: npm half fixed: CI installs Claude Code with npm ci from tools/ci-npm/package-lock.json (integrity-pinned); pip half was already hash-locked."
+        },
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: Both halves are locked. The pip install uses --require-hashes and --only-binary with tools/ci-requirements.txt. That file pins all 6 distinct packages, with environment markers for the Python-version-specific ones, and each carries a sha256 hash. The npm install uses npm ci against tools/ci-npm/package-lock.json, which has integrity entries. The package.json pins version 2.1.289.",
+          "run_id": "20261012T220354Z"
+        }
+      ],
+      "remediations": [
+        {
+          "at": "2026-10-12T20:00:56Z",
+          "note": "CI installs test tools from tools/ci-requirements.txt with exact versions and sha256 hashes (--require-hashes).",
+          "files": [
+            "tools/ci-requirements.txt",
+            ".github/workflows/ci.yml"
+          ],
+          "source": "flight-check"
+        },
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "note": "npm half fixed: CI installs Claude Code with npm ci from tools/ci-npm/package-lock.json (integrity-pinned); pip half was already hash-locked.",
+          "files": [],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "22a00e4688cedc17": {
+      "id": "FC-0016",
+      "fingerprint": "22a00e4688cedc17",
+      "match_key": "documentation.ci-python-versions-mismatch|docs/audits/2026-10-12-phase-7-final-report.md",
+      "anchor_hash": "abdb07616fd7c7e9",
+      "rule": "documentation.ci-python-versions-mismatch",
+      "domain": "documentation",
+      "title": "Final report says CI runs 91 tests on Python 3.9, 3.11 and 3.12, but the CI matrix has only 3.9 and 3.12",
+      "severity": "LOW",
+      "status": "VERIFIED",
+      "first_seen_run": "20261012T202214Z",
+      "last_seen_run": "20261012T202214Z",
+      "history": [
+        {
+          "at": "2026-10-12T20:32:33Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T202214Z"
+        },
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: Final report now says 3.9 and 3.12 in CI, 3.9 and 3.11 locally."
+        },
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: The Phase 7 report now matches the CI matrix, which has only 3.9 and 3.12. The 91 tests figure differs from the 96 in the local-checks evidence. That is a possible staleness issue, but it is not the finding's claim.",
+          "run_id": "20261012T220354Z"
+        }
+      ],
+      "remediations": [
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "note": "Final report now says 3.9 and 3.12 in CI, 3.9 and 3.11 locally.",
+          "files": [],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "2a4d520763e8af7f": {
+      "id": "FC-0017",
+      "fingerprint": "2a4d520763e8af7f",
+      "match_key": "documentation.stale-held-out-results-statement|README.md",
+      "anchor_hash": "2fe955bce72e39de",
+      "rule": "documentation.stale-held-out-results-statement",
+      "domain": "documentation",
+      "title": "README and CHANGELOG say the held-out fixture 'is scored at release', but the Phase 7 report already publishes held-out scores",
+      "severity": "LOW",
+      "status": "VERIFIED",
+      "first_seen_run": "20261012T202214Z",
+      "last_seen_run": "20261012T202214Z",
+      "history": [
+        {
+          "at": "2026-10-12T20:32:33Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T202214Z"
+        },
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: README status and CHANGELOG now link the published Phase 7 held-out results."
+        },
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: The README status and the CHANGELOG no longer say the held-out fixture is scored at release. They link the published held-out results. 'Scored at release time' remains only in the Phase 5 record and the protocol document, which are historical or forward-looking process descriptions rather than status claims.",
+          "run_id": "20261012T220354Z"
+        }
+      ],
+      "remediations": [
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "note": "README status and CHANGELOG now link the published Phase 7 held-out results.",
+          "files": [],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "8fb37d121bd51e16": {
+      "id": "FC-0018",
+      "fingerprint": "8fb37d121bd51e16",
+      "match_key": "documentation.usage-claim-understates-agent-tasks|README.md",
+      "anchor_hash": "2a4a91ffa1e3bb1b",
+      "rule": "documentation.usage-claim-understates-agent-tasks",
+      "domain": "documentation",
+      "title": "README says an audit runs 'up to eleven agent tasks', but the audit skill can launch more (handler reviewers and repeat passes)",
+      "severity": "LOW",
+      "status": "VERIFIED",
+      "first_seen_run": "20261012T202214Z",
+      "last_seen_run": "20261012T202214Z",
+      "history": [
+        {
+          "at": "2026-10-12T20:32:33Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T202214Z"
+        },
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: README usage section now counts handler reviewers and repeat passes."
+        },
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: The README usage section now counts handler reviewers (up to eight) and repeat passes. No 'up to eleven' wording remains in any Markdown file.",
+          "run_id": "20261012T220354Z"
+        }
+      ],
+      "remediations": [
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "note": "README usage section now counts handler reviewers and repeat passes.",
+          "files": [],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "75a36ef5a6dcc17f": {
+      "id": "FC-0019",
+      "fingerprint": "75a36ef5a6dcc17f",
+      "match_key": "legal-business.trademark-overlap-recorded-without-counsel-evidence|CLAUDE.md",
+      "anchor_hash": "68c3d24d644e2df7",
+      "rule": "legal-business.trademark-overlap-recorded-without-counsel-evidence",
+      "domain": "legal-business",
+      "title": "Repository records that the name overlaps a registered mark; closure rests on the owner's own report, with no evidence of counsel review",
+      "severity": "LOW",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261012T202214Z",
+      "last_seen_run": "20261012T202214Z",
+      "history": [
+        {
+          "at": "2026-10-12T20:32:33Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T202214Z"
+        },
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261012T220354Z"
+        }
+      ],
+      "legal": {
+        "classification": "POTENTIAL LEGAL RISK",
+        "status": "CLOSED",
+        "history": [
+          {
+            "at": "2026-10-12T20:32:33Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified POTENTIAL LEGAL RISK",
+            "run_id": "20261012T202214Z"
+          },
+          {
+            "at": "2026-10-12T20:36:33Z",
+            "status": "CLOSED",
+            "source": "user",
+            "note": "Same subject as FC-0013. Owner on 2026-10-12: 'Name check is good. No need to keep that open anymore.' | reason: Owner decision on the name check"
+          }
+        ]
+      }
+    },
+    "41063de38b26753d": {
+      "id": "FC-0020",
+      "fingerprint": "41063de38b26753d",
+      "match_key": "supply-chain.unlocked-npm-install-in-ci|.github/workflows/ci.yml",
+      "anchor_hash": "1ffad3081ba37866",
+      "rule": "supply-chain.unlocked-npm-install-in-ci",
+      "domain": "supply-chain",
+      "title": "CI installs @anthropic-ai/claude-code with only the top-level version pinned, with no lockfile or integrity check",
+      "severity": "LOW",
+      "status": "VERIFIED",
+      "first_seen_run": "20261012T202214Z",
+      "last_seen_run": "20261012T202214Z",
+      "history": [
+        {
+          "at": "2026-10-12T20:32:33Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T202214Z"
+        },
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: CI installs Claude Code with npm ci from tools/ci-npm/package-lock.json, which pins every package with its integrity hash."
+        },
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: CI installs Claude Code through npm ci from a committed lockfile with integrity entries, and the top-level version is pinned to 2.1.289.",
+          "run_id": "20261012T220354Z"
+        }
+      ],
+      "remediations": [
+        {
+          "at": "2026-10-12T20:36:33Z",
+          "note": "CI installs Claude Code with npm ci from tools/ci-npm/package-lock.json, which pins every package with its integrity hash.",
+          "files": [],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "adf5f10744d5ccb9": {
+      "id": "FC-0021",
+      "fingerprint": "adf5f10744d5ccb9",
+      "match_key": "ai-llm.unverified-model-claims-drive-ship-gate|plugins/flight-check/scripts/flight_check_lib/gate.py",
+      "anchor_hash": "4fd3b4b10d76873f",
+      "rule": "ai-llm.unverified-model-claims-drive-ship-gate",
+      "domain": "ai-llm",
+      "title": "VERIFIED control claims and absent findings reach the ship gate with only a mechanical quote check and no verifier review",
+      "severity": "LOW",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261012T220354Z",
+      "last_seen_run": "20261012T220354Z",
+      "history": [
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T220354Z"
+        },
+        {
+          "at": "2026-10-12T22:28:49Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261012T222035Z"
+        }
+      ]
+    },
+    "96f5e8a95c42bedf": {
+      "id": "FC-0022",
+      "fingerprint": "96f5e8a95c42bedf",
+      "match_key": "documentation.repository-description-overclaims|docs/maintainers/github-settings.md",
+      "anchor_hash": "06e0a84431323d37",
+      "rule": "documentation.repository-description-overclaims",
+      "domain": "documentation",
+      "title": "GitHub repository description reportedly claims the project will 'enforce secure development practices'; the correction is still unchecked in the maintainer checklist",
+      "severity": "LOW",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261012T220354Z",
+      "last_seen_run": "20261012T220354Z",
+      "history": [
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T220354Z"
+        },
+        {
+          "at": "2026-10-12T22:28:49Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261012T222035Z"
+        }
+      ]
+    },
+    "542c65caa70a34bc": {
+      "id": "FC-0023",
+      "fingerprint": "542c65caa70a34bc",
+      "match_key": "legal-business.no-terms-or-governing-law-decision|README.md",
+      "anchor_hash": "75ffc6728f5a45ef",
+      "rule": "legal-business.no-terms-or-governing-law-decision",
+      "domain": "legal-business",
+      "title": "No terms of use or governing-law decision beyond Apache-2.0 for a publicly distributed audit tool whose output users may rely on",
+      "severity": "INFORMATIONAL",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261012T220354Z",
+      "last_seen_run": "20261012T220354Z",
+      "history": [
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T220354Z"
+        },
+        {
+          "at": "2026-10-12T22:28:49Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261012T222035Z"
+        }
+      ],
+      "legal": {
+        "classification": "BUSINESS DECISION REQUIRED",
+        "status": "CLOSED",
+        "history": [
+          {
+            "at": "2026-10-12T22:14:45Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified BUSINESS DECISION REQUIRED",
+            "run_id": "20261012T220354Z"
+          },
+          {
+            "at": "2026-10-12T22:16:06Z",
+            "status": "CLOSED",
+            "source": "user",
+            "note": "Owner on 2026-10-12: 'license plus disclaimers should be enough since it is free and not operating on its own software'; README states there are no separate terms of use. | reason: Owner decision on terms"
+          }
+        ]
+      }
+    },
+    "80b80694ac9fe4b9": {
+      "id": "FC-0024",
+      "fingerprint": "80b80694ac9fe4b9",
+      "match_key": "legal-business.product-name-overlap-without-counsel-evidence|CLAUDE.md",
+      "anchor_hash": "e56f4fe65a2a98de",
+      "rule": "legal-business.product-name-overlap-without-counsel-evidence",
+      "domain": "legal-business",
+      "title": "Product name 'Flight Check' is publicly distributed although the repository records overlap with a registered mark and shows no counsel review",
+      "severity": "LOW",
+      "status": "NOT_REPRODUCED",
+      "first_seen_run": "20261012T220354Z",
+      "last_seen_run": "20261012T220354Z",
+      "history": [
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T220354Z"
+        },
+        {
+          "at": "2026-10-12T22:28:49Z",
+          "status": "NOT_REPRODUCED",
+          "source": "flight-check",
+          "note": "not observed in an assessed domain; confirm resolution",
+          "run_id": "20261012T222035Z"
+        }
+      ],
+      "legal": {
+        "classification": "POTENTIAL LEGAL RISK",
+        "status": "CLOSED",
+        "history": [
+          {
+            "at": "2026-10-12T22:14:45Z",
+            "status": "OPEN",
+            "source": "flight-check",
+            "note": "classified POTENTIAL LEGAL RISK",
+            "run_id": "20261012T220354Z"
+          },
+          {
+            "at": "2026-10-12T22:16:06Z",
+            "status": "CLOSED",
+            "source": "user",
+            "note": "Same subject as FC-0013 and FC-0019. Owner on 2026-10-12: 'Name check is good. No need to keep that open anymore.' | reason: Owner decision on the name check"
+          }
+        ]
+      }
+    },
+    "3d0e1e0cf38ca9d1": {
+      "id": "FC-0025",
+      "fingerprint": "3d0e1e0cf38ca9d1",
+      "match_key": "reliability.ledger-unlocked-read-modify-write|plugins/flight-check/scripts/flight_check_lib/ledger.py",
+      "anchor_hash": "d588001f2170b8a1",
+      "rule": "reliability.ledger-unlocked-read-modify-write",
+      "domain": "reliability",
+      "title": "Ledger load and save have no file locking, so concurrent CLI invocations can lose updates",
+      "severity": "LOW",
+      "status": "VERIFIED",
+      "first_seen_run": "20261012T220354Z",
+      "last_seen_run": "20261012T220354Z",
+      "history": [
+        {
+          "at": "2026-10-12T22:14:45Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261012T220354Z"
+        },
+        {
+          "at": "2026-10-12T22:20:19Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: Commands that change the ledger now hold a lock file from read to write (ledger.locked), with tests."
+        },
+        {
+          "at": "2026-10-12T22:28:49Z",
+          "status": "VERIFIED",
+          "source": "flight-check",
+          "note": "re-audit verified the fix: Every path in the code that loads a ledger and then saves it now runs inside ledger.locked(). The lock is an O_CREAT|O_EXCL lock file at <ledger>.lock. It waits up to 30 seconds, removes lock files older than 600 seconds as stale, and releases in a finally block. Covered paths: _ledger_write (used by accept, revoke, legal, remediate and close) wraps load, change and save in the lock. cmd_packet holds the lock around _packet, which loads and saves the ledger. finalize.py line 76 holds the lock around load and the save at line 94 (based on the indentation I read; I did not read finalize.py's body). The only unlocked ledger load is the read-only ledger show, which cannot lose updates. Tests in tests/unit/test_ledger_gate.py (lines 217-243) cover lock creation and release, contention timeout, and stale-lock removal. Limitation: a lock held longer than 600 seconds could be treated as stale. That is a minor edge and does not undo the fix. I did not trace the finalize.py path beyond the grep lines.",
+          "run_id": "20261012T222035Z"
+        }
+      ],
+      "remediations": [
+        {
+          "at": "2026-10-12T22:20:19Z",
+          "note": "Commands that change the ledger now hold a lock file from read to write (ledger.locked), with tests.",
+          "files": [],
+          "source": "flight-check"
+        }
+      ]
+    }
+  },
+  "control_acceptances": {},
+  "runs": [
+    {
+      "run_id": "20261004T223431Z",
+      "at": "2026-10-04T22:40:25Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    },
+    {
+      "run_id": "20261004T230555Z",
+      "at": "2026-10-04T23:14:06Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    },
+    {
+      "run_id": "20261004T231719Z",
+      "at": "2026-10-04T23:25:26Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    },
+    {
+      "run_id": "20261007T120434Z",
+      "at": "2026-10-07T12:12:32Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    },
+    {
+      "run_id": "20261012T194029Z",
+      "at": "2026-10-12T19:46:17Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    },
+    {
+      "run_id": "20261012T202214Z",
+      "at": "2026-10-12T20:32:33Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    },
+    {
+      "run_id": "20261012T220354Z",
+      "at": "2026-10-12T22:14:45Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
+    },
+    {
+      "run_id": "20261012T222035Z",
+      "at": "2026-10-12T22:28:49Z",
+      "gate": "READY FOR RELEASE",
+      "mode": "audit"
+    }
+  ],
+  "project": {
+    "name": "project-guardian"
+  }
+}

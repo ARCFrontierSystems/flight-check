@@ -1,6 +1,6 @@
 {
-  "schema_version": "1.0",
-  "next_id": 26,
+  "schema_version": "2.0",
+  "next_id": 30,
   "entries": {
     "23182de0fc497035": {
       "id": "FC-0001",
@@ -43,16 +43,7 @@
       ],
       "legal": {
         "classification": "BUSINESS DECISION REQUIRED",
-        "status": "OPEN",
-        "history": [
-          {
-            "at": "2026-10-04T22:40:25Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "classified BUSINESS DECISION REQUIRED",
-            "run_id": "20261004T223431Z"
-          }
-        ]
+        "item": "LR-0001"
       },
       "remediations": [
         {
@@ -107,16 +98,7 @@
       ],
       "legal": {
         "classification": "LEGAL REVIEW REQUIRED",
-        "status": "OPEN",
-        "history": [
-          {
-            "at": "2026-10-04T22:40:25Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "classified LEGAL REVIEW REQUIRED",
-            "run_id": "20261004T223431Z"
-          }
-        ]
+        "item": "LR-0002"
       }
     },
     "322e7d04eae0e68b": {
@@ -148,22 +130,7 @@
       ],
       "legal": {
         "classification": "BUSINESS DECISION REQUIRED",
-        "status": "OPEN",
-        "history": [
-          {
-            "at": "2026-10-04T23:14:06Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "classified BUSINESS DECISION REQUIRED",
-            "run_id": "20261004T230555Z"
-          },
-          {
-            "at": "2026-10-04T23:27:15Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "included in attorney review packet attorney-review-packet.pdf"
-          }
-        ]
+        "item": "LR-0003"
       }
     },
     "08a1e6f628d3ca50": {
@@ -195,22 +162,7 @@
       ],
       "legal": {
         "classification": "BUSINESS DECISION REQUIRED",
-        "status": "OPEN",
-        "history": [
-          {
-            "at": "2026-10-04T23:14:06Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "classified BUSINESS DECISION REQUIRED",
-            "run_id": "20261004T230555Z"
-          },
-          {
-            "at": "2026-10-04T23:27:15Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "included in attorney review packet attorney-review-packet.pdf"
-          }
-        ]
+        "item": "LR-0004"
       }
     },
     "7df675a2e8ee5b37": {
@@ -242,22 +194,7 @@
       ],
       "legal": {
         "classification": "LEGAL REVIEW REQUIRED",
-        "status": "OPEN",
-        "history": [
-          {
-            "at": "2026-10-04T23:14:06Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "classified LEGAL REVIEW REQUIRED",
-            "run_id": "20261004T230555Z"
-          },
-          {
-            "at": "2026-10-04T23:27:15Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "included in attorney review packet attorney-review-packet.pdf"
-          }
-        ]
+        "item": "LR-0005"
       }
     },
     "04eca0a73cf7bdc2": {
@@ -323,16 +260,7 @@
       ],
       "legal": {
         "classification": "POLICY/IMPLEMENTATION CONTRADICTION",
-        "status": "OPEN",
-        "history": [
-          {
-            "at": "2026-10-04T23:14:06Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "classified POLICY/IMPLEMENTATION CONTRADICTION",
-            "run_id": "20261004T230555Z"
-          }
-        ]
+        "item": "LR-0006"
       },
       "remediations": [
         {
@@ -536,16 +464,7 @@
       ],
       "legal": {
         "classification": "POTENTIAL LEGAL RISK",
-        "status": "OPEN",
-        "history": [
-          {
-            "at": "2026-10-07T12:12:32Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "classified POTENTIAL LEGAL RISK",
-            "run_id": "20261007T120434Z"
-          }
-        ]
+        "item": "LR-0007"
       },
       "remediations": [
         {
@@ -594,34 +513,7 @@
       ],
       "legal": {
         "classification": "LEGAL REVIEW REQUIRED",
-        "status": "CLOSED",
-        "history": [
-          {
-            "at": "2026-10-07T12:12:32Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "classified LEGAL REVIEW REQUIRED",
-            "run_id": "20261007T120434Z"
-          },
-          {
-            "at": "2026-10-12T20:01:20Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "included in attorney review packet attorney-review-packet.pdf"
-          },
-          {
-            "at": "2026-10-12T20:12:44Z",
-            "status": "DECISION_RECEIVED",
-            "source": "user",
-            "note": "Owner reported on 2026-10-12: the name check is complete and the Flight Check name is fine to use."
-          },
-          {
-            "at": "2026-10-12T20:12:44Z",
-            "status": "CLOSED",
-            "source": "user",
-            "note": "Owner reported on 2026-10-12: the name check is complete and the Flight Check name is fine to use."
-          }
-        ]
+        "item": "LR-0008"
       }
     },
     "7b22ab336aeaa5b6": {
@@ -654,28 +546,7 @@
       ],
       "legal": {
         "classification": "BUSINESS DECISION REQUIRED",
-        "status": "IMPLEMENTED",
-        "history": [
-          {
-            "at": "2026-10-07T12:12:32Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "classified BUSINESS DECISION REQUIRED",
-            "run_id": "20261007T120434Z"
-          },
-          {
-            "at": "2026-10-12T20:00:56Z",
-            "status": "DECISION_RECEIVED",
-            "source": "user",
-            "note": "Owner decision 2026-10-12: no separate terms of use (Apache-2.0 license plus disclaimers, since Flight Check is free and runs in the user's own Claude Code); no governing-law clause while there are no separate terms; contributions under Apache-2.0 section 5 with a Developer Certificate of Origin sign-off."
-          },
-          {
-            "at": "2026-10-12T20:00:56Z",
-            "status": "IMPLEMENTED",
-            "source": "user",
-            "note": "README states there are no separate terms of use; CONTRIBUTING.md states the contribution terms and the sign-off."
-          }
-        ]
+        "item": "LR-0009"
       }
     },
     "36a86acf42d3e01f": {
@@ -909,22 +780,7 @@
       ],
       "legal": {
         "classification": "POTENTIAL LEGAL RISK",
-        "status": "CLOSED",
-        "history": [
-          {
-            "at": "2026-10-12T20:32:33Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "classified POTENTIAL LEGAL RISK",
-            "run_id": "20261012T202214Z"
-          },
-          {
-            "at": "2026-10-12T20:36:33Z",
-            "status": "CLOSED",
-            "source": "user",
-            "note": "Same subject as FC-0013. Owner on 2026-10-12: 'Name check is good. No need to keep that open anymore.' | reason: Owner decision on the name check"
-          }
-        ]
+        "item": "LR-0010"
       }
     },
     "41063de38b26753d": {
@@ -1058,22 +914,7 @@
       ],
       "legal": {
         "classification": "BUSINESS DECISION REQUIRED",
-        "status": "CLOSED",
-        "history": [
-          {
-            "at": "2026-10-12T22:14:45Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "classified BUSINESS DECISION REQUIRED",
-            "run_id": "20261012T220354Z"
-          },
-          {
-            "at": "2026-10-12T22:16:06Z",
-            "status": "CLOSED",
-            "source": "user",
-            "note": "Owner on 2026-10-12: 'license plus disclaimers should be enough since it is free and not operating on its own software'; README states there are no separate terms of use. | reason: Owner decision on terms"
-          }
-        ]
+        "item": "LR-0011"
       }
     },
     "80b80694ac9fe4b9": {
@@ -1106,22 +947,7 @@
       ],
       "legal": {
         "classification": "POTENTIAL LEGAL RISK",
-        "status": "CLOSED",
-        "history": [
-          {
-            "at": "2026-10-12T22:14:45Z",
-            "status": "OPEN",
-            "source": "flight-check",
-            "note": "classified POTENTIAL LEGAL RISK",
-            "run_id": "20261012T220354Z"
-          },
-          {
-            "at": "2026-10-12T22:16:06Z",
-            "status": "CLOSED",
-            "source": "user",
-            "note": "Same subject as FC-0013 and FC-0019. Owner on 2026-10-12: 'Name check is good. No need to keep that open anymore.' | reason: Owner decision on the name check"
-          }
-        ]
+        "item": "LR-0012"
       }
     },
     "3d0e1e0cf38ca9d1": {
@@ -1166,6 +992,155 @@
           "source": "flight-check"
         }
       ]
+    },
+    "2b980ffff8e02002": {
+      "id": "FC-0026",
+      "fingerprint": "2b980ffff8e02002",
+      "match_key": "documentation.version-status-inconsistent|README.md",
+      "anchor_hash": "4803effc00bef142",
+      "rule": "documentation.version-status-inconsistent",
+      "domain": "documentation",
+      "title": "README presents version 1.0.0-rc.1 but documents 1.5 features the CHANGELOG lists as unreleased",
+      "severity": "LOW",
+      "status": "REMEDIATED",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "history": [
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261013T050120Z"
+        },
+        {
+          "at": "2026-10-13T05:10:21Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: README, CHANGELOG, SECURITY.md, plugin.json, and VERSION now all say 1.5.0-rc.1 (pre-release); the CHANGELOG section is no longer 'Unreleased'."
+        }
+      ],
+      "legal": {
+        "classification": "BUSINESS DECISION REQUIRED",
+        "item": "LR-0013"
+      },
+      "evidence_files": {
+        "README.md": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5",
+        "CHANGELOG.md": "6a3ec25bc2ab43955b01880548f3d95906ec545949a00eaab1e98891600328b3",
+        "plugins/flight-check/.claude-plugin/plugin.json": "209c4ef5bb7e39e1cee9506dc4aae1bd58ca7b4beea938958e8384dcae0f2792"
+      },
+      "confidence": "CONFIRMED",
+      "release_blocking": false,
+      "remediations": [
+        {
+          "at": "2026-10-13T05:10:21Z",
+          "note": "README, CHANGELOG, SECURITY.md, plugin.json, and VERSION now all say 1.5.0-rc.1 (pre-release); the CHANGELOG section is no longer 'Unreleased'.",
+          "files": [
+            "README.md",
+            "CHANGELOG.md",
+            "plugins/flight-check/.claude-plugin/plugin.json"
+          ],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "ef7ed5ab4d59f7d6": {
+      "id": "FC-0027",
+      "fingerprint": "ef7ed5ab4d59f7d6",
+      "match_key": "infrastructure.release-protections-not-applied|docs/maintainers/github-settings.md",
+      "anchor_hash": "e406929cc1b1b072",
+      "rule": "infrastructure.release-protections-not-applied",
+      "domain": "infrastructure",
+      "title": "Branch and tag rulesets, secret scanning and Actions restrictions are documented as not yet applied, while releasing.md relies on the tag ruleset",
+      "severity": "LOW",
+      "status": "OPEN",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "history": [
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261013T050120Z"
+        }
+      ],
+      "evidence_files": {
+        "docs/maintainers/github-settings.md": "4479b3e4ef596bf4cdc014a406ba9e237a7a83378554169132f1c465b24b8146",
+        "docs/maintainers/releasing.md": "ed60b3cdfdd4c197fc909680fef7ba91e3c4750cc364a0afce7fad2339c79881"
+      },
+      "confidence": "POTENTIAL",
+      "release_blocking": false
+    },
+    "cf5d45908409ce3b": {
+      "id": "FC-0028",
+      "fingerprint": "cf5d45908409ce3b",
+      "match_key": "supply-chain.scan-notes-stale-ci-description|.github/workflows/ci.yml",
+      "anchor_hash": "fc29906f9b0ece1a",
+      "rule": "supply-chain.scan-notes-stale-ci-description",
+      "domain": "supply-chain",
+      "title": "Vulnerability scan notes describe CI installs that no longer match ci.yml",
+      "severity": "INFORMATIONAL",
+      "status": "REMEDIATED",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "history": [
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261013T050120Z"
+        },
+        {
+          "at": "2026-10-13T05:10:21Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: Rescanned the CI tools as ci.yml installs them now (hash-pinned tools/ci-requirements.txt and the tools/ci-npm lockfile) and rewrote the scan notes to match."
+        }
+      ],
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+      },
+      "confidence": "CONFIRMED",
+      "release_blocking": false,
+      "remediations": [
+        {
+          "at": "2026-10-13T05:10:21Z",
+          "note": "Rescanned the CI tools as ci.yml installs them now (hash-pinned tools/ci-requirements.txt and the tools/ci-npm lockfile) and rewrote the scan notes to match.",
+          "files": [
+            ".flight-check/evidence/ci-tools-scan-notes.txt"
+          ],
+          "source": "flight-check"
+        }
+      ]
+    },
+    "3e7b483395e9fec0": {
+      "id": "FC-0029",
+      "fingerprint": "3e7b483395e9fec0",
+      "match_key": "supply-chain.unpinned-system-package|.github/workflows/ci.yml",
+      "anchor_hash": "c8f045c6e1f6cb91",
+      "rule": "supply-chain.unpinned-system-package",
+      "domain": "supply-chain",
+      "title": "CI installs poppler-utils from apt without a version pin or vulnerability scan",
+      "severity": "INFORMATIONAL",
+      "status": "OPEN",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "history": [
+        {
+          "at": "2026-10-13T05:07:08Z",
+          "status": "OPEN",
+          "source": "flight-check",
+          "note": "first observed",
+          "run_id": "20261013T050120Z"
+        }
+      ],
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+      },
+      "confidence": "CONFIRMED",
+      "release_blocking": false
     }
   },
   "control_acceptances": {},
@@ -1217,9 +1192,464 @@
       "at": "2026-10-12T22:28:49Z",
       "gate": "READY FOR RELEASE",
       "mode": "audit"
+    },
+    {
+      "run_id": "20261013T050120Z",
+      "at": "2026-10-13T05:07:08Z",
+      "gate": "BLOCKED — INSUFFICIENT EVIDENCE",
+      "mode": "audit"
     }
   ],
   "project": {
     "name": "project-guardian"
-  }
+  },
+  "positive_controls": {
+    "ai-llm|plugins/flight-check/agents/appsec.md|agents and are audit content domain glob grep only project read skill the treats untrusted": {
+      "id": "PC-0001",
+      "domain": "ai-llm",
+      "title": "Domain agents are read-only (Read, Grep, Glob) and the audit skill treats project content as untrusted",
+      "path": "plugins/flight-check/agents/appsec.md",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/agents/appsec.md": "efc36d417147715925e8dc3d8bf5bed1abb821268d71f700945e19ee207e1e72",
+        "plugins/flight-check/skills/audit/SKILL.md": "d79b5cfba46d8e599bcddb29622b52b7528d51013b8bf1989e3945d08a4a65bd"
+      }
+    },
+    "ai-llm|plugins/flight-check/skills/remediate/SKILL.md|and authorization embedded explicit files instructions project projects refuses rejects remediate requires skill the untrusted user": {
+      "id": "PC-0002",
+      "domain": "ai-llm",
+      "title": "The remediate skill requires explicit user authorization, refuses untrusted projects, and rejects instructions embedded in project files",
+      "path": "plugins/flight-check/skills/remediate/SKILL.md",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/skills/remediate/SKILL.md": "3f344968c3915b914f86dc1d6668ed823edd07fe986be0e545faee0fc1b5a59d"
+      }
+    },
+    "ai-llm|plugins/flight-check/agents/appsec.md|agents and are audit disallows domain network only read skill the tools write": {
+      "id": "PC-0003",
+      "domain": "ai-llm",
+      "title": "Domain agents are read-only, and the audit skill disallows write and network tools",
+      "path": "plugins/flight-check/agents/appsec.md",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/agents/appsec.md": "efc36d417147715925e8dc3d8bf5bed1abb821268d71f700945e19ee207e1e72",
+        "plugins/flight-check/skills/audit/SKILL.md": "d79b5cfba46d8e599bcddb29622b52b7528d51013b8bf1989e3945d08a4a65bd"
+      }
+    },
+    "ai-llm|plugins/flight-check/skills/remediate/SKILL.md|and approval authorization explicit files never project projects refuses remediation requires text treated untrusted user": {
+      "id": "PC-0004",
+      "domain": "ai-llm",
+      "title": "Remediation requires explicit user approval and refuses untrusted projects; text in project files is never treated as authorization",
+      "path": "plugins/flight-check/skills/remediate/SKILL.md",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/skills/remediate/SKILL.md": "3f344968c3915b914f86dc1d6668ed823edd07fe986be0e545faee0fc1b5a59d"
+      }
+    },
+    "application-security|plugins/flight-check/scripts/flight_check_lib/evidence.py|are audit confined evidence first paths resolved root symlinks the with": {
+      "id": "PC-0005",
+      "domain": "application-security",
+      "title": "Evidence paths are confined to the audit root, with symlinks resolved first",
+      "path": "plugins/flight-check/scripts/flight_check_lib/evidence.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/evidence.py": "8f6730c0d14f58e7f4691d3a9756890d66b2f4a79b0384f65c28979913347a7c"
+      }
+    },
+    "application-security|plugins/flight-check/scripts/flight_check_lib/jsonio.py|and atomic json limited reads size writes": {
+      "id": "PC-0006",
+      "domain": "application-security",
+      "title": "Atomic JSON writes and size-limited reads",
+      "path": "plugins/flight-check/scripts/flight_check_lib/jsonio.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/jsonio.py": "e01637656de49a20662b40d40430f3b947a8568f17a7444d0cbb990d2809de13"
+      }
+    },
+    "authorization|plugins/flight-check/agents/appsec.md|agents and are audit glob grep limited read": {
+      "id": "PC-0007",
+      "domain": "authorization",
+      "title": "Audit agents are limited to Read, Grep and Glob",
+      "path": "plugins/flight-check/agents/appsec.md",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/agents/appsec.md": "efc36d417147715925e8dc3d8bf5bed1abb821268d71f700945e19ee207e1e72"
+      }
+    },
+    "application-security|plugins/flight-check/scripts/flight_check_lib/cli.py|and are confined folder output refused report reports state symlinks the": {
+      "id": "PC-0008",
+      "domain": "application-security",
+      "title": "Report output is confined to the state reports folder, and symlinks are refused",
+      "path": "plugins/flight-check/scripts/flight_check_lib/cli.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/cli.py": "445b018ca4a366b6a418284ec82a92fb4cc6b9e00925b17d62ca8eb91f9bf017"
+      }
+    },
+    "application-security|plugins/flight-check/scripts/flight_check_lib/evidence.py|and are audit confined evidence paths resolved root symlink the": {
+      "id": "PC-0009",
+      "domain": "application-security",
+      "title": "Evidence paths are symlink-resolved and confined to the audit root",
+      "path": "plugins/flight-check/scripts/flight_check_lib/evidence.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/evidence.py": "8f6730c0d14f58e7f4691d3a9756890d66b2f4a79b0384f65c28979913347a7c"
+      }
+    },
+    "application-security|plugins/flight-check/scripts/flight_check_lib/cli.py|approved command files overwrite packet pre refuses symlinks the through write": {
+      "id": "PC-0010",
+      "domain": "application-security",
+      "title": "The pre-approved packet command refuses to write through symlinks or overwrite files",
+      "path": "plugins/flight-check/scripts/flight_check_lib/cli.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/cli.py": "445b018ca4a366b6a418284ec82a92fb4cc6b9e00925b17d62ca8eb91f9bf017"
+      }
+    },
+    "application-security|plugins/flight-check/scripts/flight_check_lib/jsonio.py|and are atomic has json limits loading size writes": {
+      "id": "PC-0011",
+      "domain": "application-security",
+      "title": "JSON loading has size limits and writes are atomic",
+      "path": "plugins/flight-check/scripts/flight_check_lib/jsonio.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/jsonio.py": "e01637656de49a20662b40d40430f3b947a8568f17a7444d0cbb990d2809de13"
+      }
+    },
+    "authorization|tools/blindtest/run_audit.py|and audit blind commands denies harness ledger restricts session test the tools writes": {
+      "id": "PC-0012",
+      "domain": "authorization",
+      "title": "The blind-test harness restricts the audit session's tools and writes, and denies ledger commands",
+      "path": "tools/blindtest/run_audit.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "tools/blindtest/run_audit.py": "7223cd0823db316ef774249397af2219927742da244e17d7787bcdd1634c00df"
+      }
+    },
+    "data-protection|plugins/flight-check/scripts/flight_check_lib/cli.py|and atomic directories file only owner run writes": {
+      "id": "PC-0013",
+      "domain": "data-protection",
+      "title": "Owner-only run directories and atomic owner-only file writes",
+      "path": "plugins/flight-check/scripts/flight_check_lib/cli.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/cli.py": "445b018ca4a366b6a418284ec82a92fb4cc6b9e00925b17d62ca8eb91f9bf017"
+      }
+    },
+    "privacy|README.md|accurate bundled code network privacy readme script section telemetry the with": {
+      "id": "PC-0014",
+      "domain": "privacy",
+      "title": "No network or telemetry code in the bundled script, with an accurate privacy section in the README",
+      "path": "README.md",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "README.md": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5"
+      }
+    },
+    "data-protection|plugins/flight-check/scripts/flight_check_lib/state.py|auto control gitignore keeps out output run version written": {
+      "id": "PC-0015",
+      "domain": "data-protection",
+      "title": "Auto-written .gitignore keeps run output out of version control",
+      "path": "plugins/flight-check/scripts/flight_check_lib/state.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/state.py": "2fe2a2f2fac5e98bb376438b88ab8b9abc19588cc109572ab65f1395776d71f3"
+      }
+    },
+    "data-protection|plugins/flight-check/scripts/flight_check_lib/state.py|and default gitignored local only owner state": {
+      "id": "PC-0016",
+      "domain": "data-protection",
+      "title": "Local state is owner-only and gitignored by default",
+      "path": "plugins/flight-check/scripts/flight_check_lib/state.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/state.py": "2fe2a2f2fac5e98bb376438b88ab8b9abc19588cc109572ab65f1395776d71f3"
+      }
+    },
+    "privacy|README.md|and discloses local model party privacy processing raw reply retention section third": {
+      "id": "PC-0017",
+      "domain": "privacy",
+      "title": "Privacy section discloses third-party model processing and local raw-reply retention",
+      "path": "README.md",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "README.md": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5"
+      }
+    },
+    "documentation|README.md|about and data discloses expectations file flow local model provider readme retention sets": {
+      "id": "PC-0018",
+      "domain": "documentation",
+      "title": "README discloses model-provider data flow and sets expectations about local file retention",
+      "path": "README.md",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "README.md": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5"
+      }
+    },
+    "compliance-readiness|docs/limitations.md|advice and certification compliance conclusions consistently disclaims legal project": {
+      "id": "PC-0019",
+      "domain": "compliance-readiness",
+      "title": "Project consistently disclaims legal advice, certification and compliance conclusions",
+      "path": "docs/limitations.md",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "docs/limitations.md": "17c3158c3540dc67fb1435e0152e569d1954ecd6ffa83ccd30a79990a01fd8d5"
+      }
+    },
+    "legal-business|NOTICE|and are clearly license party standards stated third usage": {
+      "id": "PC-0020",
+      "domain": "legal-business",
+      "title": "License and third-party standards usage are stated clearly",
+      "path": "NOTICE",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "NOTICE": "a4e028345d02d5e28bb08e979c79d3141702fe129956ccf55065e50ce6de6505"
+      }
+    },
+    "documentation|README.md|and data discloses flow its limits model provider readme scope the": {
+      "id": "PC-0021",
+      "domain": "documentation",
+      "title": "README limits its scope and discloses the model-provider data flow",
+      "path": "README.md",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "README.md": "ac81c66ef2ccc68438c3f2b46656a4355dc53776a5f32afed5888dea027b34d5"
+      }
+    },
+    "legal-business|plugins/flight-check/.claude-plugin/plugin.json|across and consistent declaration license manifest notice plugin readme the": {
+      "id": "PC-0022",
+      "domain": "legal-business",
+      "title": "Consistent license declaration across the README, NOTICE and plugin manifest",
+      "path": "plugins/flight-check/.claude-plugin/plugin.json",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/.claude-plugin/plugin.json": "209c4ef5bb7e39e1cee9506dc4aae1bd58ca7b4beea938958e8384dcae0f2792"
+      }
+    },
+    "reliability|plugins/flight-check/scripts/flight_check_lib/jsonio.py|atomic cleanup directory failure file replace same temp the then with writes": {
+      "id": "PC-0023",
+      "domain": "reliability",
+      "title": "Atomic file writes: temp file in the same directory, then os.replace, with cleanup on failure",
+      "path": "plugins/flight-check/scripts/flight_check_lib/jsonio.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/jsonio.py": "e01637656de49a20662b40d40430f3b947a8568f17a7444d0cbb990d2809de13"
+      }
+    },
+    "reliability|plugins/flight-check/scripts/flight_check_lib/lockfile.py|and bounded check create exclusive lock recovery stale state symlink wait with": {
+      "id": "PC-0024",
+      "domain": "reliability",
+      "title": "Exclusive-create state lock with a bounded wait, stale-lock recovery, and a symlink check",
+      "path": "plugins/flight-check/scripts/flight_check_lib/lockfile.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/lockfile.py": "3bc472ca0e8f33501222c9a95433951400ac1a02fc571d5cd25ac8b2b8c62a85"
+      }
+    },
+    "reliability|plugins/flight-check/scripts/flight_check_lib/state.py|back changes command completes file interrupted journaled multi recover rolls state that with writes": {
+      "id": "PC-0025",
+      "domain": "reliability",
+      "title": "Journaled multi-file state changes with a recover command that rolls back or completes interrupted writes",
+      "path": "plugins/flight-check/scripts/flight_check_lib/state.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/state.py": "2fe2a2f2fac5e98bb376438b88ab8b9abc19588cc109572ab65f1395776d71f3"
+      }
+    },
+    "infrastructure|.github/workflows/ci.yml|action chain hardening hash locked lockfile npm pinned pip shas supply": {
+      "id": "PC-0026",
+      "domain": "infrastructure",
+      "title": "CI supply chain hardening: pinned action SHAs, hash-locked pip, lockfile npm ci",
+      "path": ".github/workflows/ci.yml",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+      }
+    },
+    "infrastructure|.github/workflows/ci.yml|actions and hash installs least locked pinned privilege sha uses workflow": {
+      "id": "PC-0027",
+      "domain": "infrastructure",
+      "title": "CI workflow uses least privilege, SHA-pinned actions and hash-locked installs",
+      "path": ".github/workflows/ci.yml",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+      }
+    },
+    "reliability|plugins/flight-check/scripts/flight_check_lib/jsonio.py|and atomic file files for ledger replace report temp then writes": {
+      "id": "PC-0028",
+      "domain": "reliability",
+      "title": "Atomic writes (temp file then os.replace) for ledger and report files",
+      "path": "plugins/flight-check/scripts/flight_check_lib/jsonio.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/jsonio.py": "e01637656de49a20662b40d40430f3b947a8568f17a7444d0cbb990d2809de13"
+      }
+    },
+    "reliability|plugins/flight-check/scripts/flight_check_lib/state.py|back commands complete crash journaled recovery roll state with": {
+      "id": "PC-0029",
+      "domain": "reliability",
+      "title": "Journaled state commands with crash recovery (complete or roll back)",
+      "path": "plugins/flight-check/scripts/flight_check_lib/state.py",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "plugins/flight-check/scripts/flight_check_lib/state.py": "2fe2a2f2fac5e98bb376438b88ab8b9abc19588cc109572ab65f1395776d71f3"
+      }
+    },
+    "operational-readiness|docs/maintainers/releasing.md|and checks documented includes migration path procedure release rollback": {
+      "id": "PC-0030",
+      "domain": "operational-readiness",
+      "title": "Release procedure includes migration checks and a documented rollback path",
+      "path": "docs/maintainers/releasing.md",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "docs/maintainers/releasing.md": "ed60b3cdfdd4c197fc909680fef7ba91e3c4750cc364a0afce7fad2339c79881"
+      }
+    },
+    "supply-chain|tools/ci-requirements.txt|binary hash installs only pinned python wheels with": {
+      "id": "PC-0031",
+      "domain": "supply-chain",
+      "title": "Hash-pinned Python installs with binary-only wheels",
+      "path": "tools/ci-requirements.txt",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "tools/ci-requirements.txt": "4191dac2a8ba8bf1099b152750c59ef5b44c2ac1bf0c568e318ff3f61031bc69"
+      }
+    },
+    "supply-chain|.github/workflows/ci.yml|actions credentials only persisted pinned read sha token": {
+      "id": "PC-0032",
+      "domain": "supply-chain",
+      "title": "SHA-pinned actions, read-only token, no persisted credentials",
+      "path": ".github/workflows/ci.yml",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+      }
+    },
+    "supply-chain|.github/workflows/ci.yml|actions all and commit credentials github only persisted pinned read shas token with": {
+      "id": "PC-0033",
+      "domain": "supply-chain",
+      "title": "All GitHub Actions pinned to commit SHAs with read-only token and no persisted credentials",
+      "path": ".github/workflows/ci.yml",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+      }
+    },
+    "supply-chain|tools/ci-requirements.txt|hash hashes installed pinned python require test tools with": {
+      "id": "PC-0034",
+      "domain": "supply-chain",
+      "title": "Hash-pinned Python test tools installed with --require-hashes",
+      "path": "tools/ci-requirements.txt",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        "tools/ci-requirements.txt": "4191dac2a8ba8bf1099b152750c59ef5b44c2ac1bf0c568e318ff3f61031bc69"
+      }
+    },
+    "supply-chain|.github/workflows/ci.yml|claude cli code from hashed installed integrity lockfile npm via": {
+      "id": "PC-0035",
+      "domain": "supply-chain",
+      "title": "Claude Code CLI installed from an integrity-hashed lockfile via npm ci",
+      "path": ".github/workflows/ci.yml",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+      }
+    },
+    "testing|.github/workflows/ci.yml|and are dependencies for full hashes installed main pinned pull pushes python requests runs suite the unit with": {
+      "id": "PC-0036",
+      "domain": "testing",
+      "title": "CI runs the full unit suite on Python 3.9 and 3.12 for pushes to main and for pull requests. CI dependencies are installed with pinned hashes.",
+      "path": ".github/workflows/ci.yml",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+      }
+    },
+    "testing|.github/workflows/ci.yml|all and dependencies for full hash main pinned pull pushes python requests runs suite test the unit with": {
+      "id": "PC-0037",
+      "domain": "testing",
+      "title": "CI runs the full unit suite on Python 3.9 and 3.12 for pushes to main and for all pull requests, with hash-pinned test dependencies",
+      "path": ".github/workflows/ci.yml",
+      "first_seen_run": "20261013T050120Z",
+      "last_seen_run": "20261013T050120Z",
+      "status": "observed",
+      "evidence_files": {
+        ".github/workflows/ci.yml": "fb88c74162774203e08405a40a3c68df0f5dc3f4b342894f597341003803baab"
+      }
+    }
+  },
+  "next_pc_id": 38
 }

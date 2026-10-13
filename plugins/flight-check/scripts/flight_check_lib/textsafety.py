@@ -88,7 +88,8 @@ def _entropy(s):
 
 
 _HIGH_ENTROPY = re.compile(r"[A-Za-z0-9+/=_-]{32,}")
-_WORDY_PART = re.compile(r"^(?:[A-Za-z]+|[0-9]+|[A-Za-z0-9]{1,3})$")
+# A part may also be a compact UTC timestamp (20261013T050708Z), as in Flight Check's run IDs and backup names.
+_WORDY_PART = re.compile(r"^(?:[A-Za-z]+|[0-9]+|[A-Za-z0-9]{1,3}|[0-9]{8}T[0-9]{6}Z)$")
 
 
 def _looks_like_words(token):

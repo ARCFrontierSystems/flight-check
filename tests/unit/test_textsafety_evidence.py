@@ -38,6 +38,12 @@ class TextSafetyTests(unittest.TestCase):
         self.assertEqual(n, 1)
         self.assertNotIn(token, red)
 
+    def test_run_ids_and_backup_names_are_not_redacted(self):
+        for text in ("Backup: backups/20261013T050708Z-migrate-from-1-0", "runs/20261013T050120Z/audit.final.json"):
+            self.assertEqual(textsafety.redact(text), (text, 0))
+        secret = "tok_" + "9fK2xQ7mZ1vB8nW3pL5rT0yH6cJ4dS2a"
+        self.assertEqual(textsafety.redact("key " + secret)[1], 1)
+
     def test_placeholders_are_not_redacted(self):
         for s in ('password = "${DB_PASSWORD}"', "api_key: process.env.API_KEY", 'secret = "changeme"', "token = <your-token>"):
             red, n = textsafety.redact(s)
