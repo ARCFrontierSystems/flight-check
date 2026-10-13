@@ -1,6 +1,8 @@
 """Shared vocabulary. These strings are part of Flight Check's public output format."""
 
 SCHEMA_VERSION = "1.0"
+# Ledger schema 2.0 (Flight Check 1.5) keeps only the legal classification and a link to a legal review item.
+LEDGER_SCHEMA_VERSION = "2.0"
 
 SEVERITIES = ("CRITICAL", "HIGH", "MEDIUM", "LOW", "INFORMATIONAL")
 CONFIDENCES = ("CONFIRMED", "LIKELY", "POTENTIAL", "UNVERIFIED")
@@ -39,6 +41,15 @@ LEGAL_STATUSES = (
 )
 # Statuses that may only be recorded from information the user supplies.
 LEGAL_STATUSES_USER_ONLY = ("COUNSEL_REVIEWED", "DECISION_RECEIVED")
+
+# Legal review queue (1.5). The 1.0 statuses above remain accepted by `ledger legal` and map onto these.
+LEGAL_ITEM_STATUSES = ("NEEDS_REVIEW", "AWAITING_BUSINESS_DECISION", "AWAITING_COUNSEL", "REVIEWED", "ACTION_REQUIRED",
+                       "RESOLVED", "NOT_APPLICABLE")
+LEGAL_ITEM_FLOW = ("NEEDS_REVIEW", "AWAITING_COUNSEL", "REVIEWED", "ACTION_REQUIRED", "RESOLVED")
+LEGAL_ITEM_CLOSED = ("RESOLVED", "NOT_APPLICABLE")
+V1_LEGAL_TO_ITEM = {"OPEN": "NEEDS_REVIEW", "LEGAL_REVIEW_REQUESTED": "AWAITING_COUNSEL", "COUNSEL_REVIEWED": "REVIEWED",
+                    "DECISION_RECEIVED": "REVIEWED", "IMPLEMENTATION_REQUIRED": "ACTION_REQUIRED",
+                    "IMPLEMENTED": "ACTION_REQUIRED", "VERIFIED": "RESOLVED", "CLOSED": "RESOLVED"}
 
 HUMAN_REVIEW_TYPES = ("legal", "security", "privacy", "accessibility", "compliance", "business")
 

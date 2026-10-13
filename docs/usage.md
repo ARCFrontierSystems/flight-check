@@ -121,6 +121,18 @@ What only evidence can do:
 - A requirement becomes **VERIFIED** only when a finalized audit verifies all of its linked controls with checked evidence and none of its linked findings is still open. "Implemented" never means verified. If a later audit can no longer verify it, it goes back to IMPLEMENTED.
 - A risk becomes **MITIGATED** automatically when all of its linked findings are verified fixed or closed, and **REOPENED** when one of them regresses. You can also mark a risk mitigated or resolved yourself, with a note on what changed.
 
+### Legal review queue
+
+Every legal or business question is a legal review item (`LR-0001`) in `registers.json`. A finding with a legal or business classification (other than INFORMATIONAL) gets one automatically, with the audit's questions and evidence references; you can add questions that no finding raised. Statuses: `NEEDS_REVIEW` → `AWAITING_COUNSEL` (or `AWAITING_BUSINESS_DECISION`) → `REVIEWED` → `ACTION_REQUIRED` → `RESOLVED`, or `NOT_APPLICABLE`. Flight Check never marks a question reviewed, resolved, or not applicable; you do, with a note on what you were told or decided. If a finding comes back after its item was closed, the item is reopened for review.
+
+| Command | What it does |
+|---|---|
+| `legal list [--status S]`, `legal show --id LR-0001` | The queue; when nothing is open it says "Based on the project evidence currently available, no specific legal-review issue has been identified." |
+| `legal add --title T --category C --description D --trigger WHAT_RAISED_IT [--question Q] [--jurisdiction J]` | Add a question no finding raised; the jurisdiction is recorded as unknown unless you give one |
+| `legal update --id FC-0003 or LR-0001 --status AWAITING_COUNSEL --note "..."` | Record progress |
+
+`/flight-check:legal-packet` builds a packet from findings and, on request, from open items without a finding (`item_ids` in the packet request). It refuses to build an empty packet. The 1.0 command `ledger legal` still works with the old status names and records the matching new status.
+
 Commit `project.json`, `registers.json`, `history.jsonl`, and `ledger.json` if your team shares the history. Flight Check writes `.flight-check/.gitignore` so run output, backups, and lock files stay local.
 
 ## Continuous integration

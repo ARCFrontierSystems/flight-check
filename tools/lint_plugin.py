@@ -272,7 +272,8 @@ def check_consistency():
              (constants.LEGAL_CLASSES, defs["legal"]["properties"]["classification"]["enum"], "legal classes"),
              (constants.GATES, defs["auditFinal"]["properties"]["gate"]["properties"]["decision"]["enum"], "gates"),
              (constants.LEGAL_STATUSES, defs["ledgerEntry"]["properties"]["legal"]["properties"]["status"]["enum"], "legal statuses"),
-             (constants.FINDING_STATUSES, defs["ledgerEntry"]["properties"]["status"]["enum"], "finding statuses")]
+             (constants.FINDING_STATUSES, defs["ledgerEntry"]["properties"]["status"]["enum"], "finding statuses"),
+             (constants.LEGAL_ITEM_STATUSES, defs["legalItem"]["properties"]["status"]["enum"], "legal item statuses")]
     for code_vals, schema_vals, label in pairs:
         if list(code_vals) != list(schema_vals):
             err("consistency", "%s differ between constants.py and the schema" % label)

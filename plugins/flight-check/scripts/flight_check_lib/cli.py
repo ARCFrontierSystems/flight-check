@@ -7,7 +7,7 @@ import os
 import re
 import sys
 
-from . import VERSION, catalog, constants, finalize, gate, ledger, lockfile, minischema, packet, profile, registers, render_md, state, validate
+from . import VERSION, catalog, constants, finalize, gate, ledger, legal, lockfile, minischema, packet, profile, registers, render_md, state, validate
 from .jsonio import InputError, dump_json, load_json, write_bytes, write_text
 
 
@@ -231,6 +231,20 @@ def _load_ledger(args):
     return ledger.load(args.ledger, create=False)
 
 
+def _legal_status(args, entry, _cache={}):
+    legal_block = entry.get("legal") or {}
+    if "status" in legal_block:
+        return legal_block["status"]
+    item_id = legal_block.get("item")
+    if not item_id:
+        return None
+    key = os.path.abspath(args.ledger)
+    if key not in _cache:
+        st = state.load(os.path.dirname(key), strict=False)
+        _cache[key] = {i["id"]: i["status"] for i in (st.registers or {}).get("legal", [])}
+    return _cache[key].get(item_id)
+
+
 def cmd_ledger_show(args):
     led = _load_ledger(args)
     if args.id:
@@ -238,7 +252,7 @@ def cmd_ledger_show(args):
         _print({"ok": True, "entry": entry})
     else:
         _print({"ok": True, "entries": sorted(({"id": e["id"], "status": e["status"], "severity": e["severity"], "domain": e["domain"],
-                                                   "title": e["title"], "legal_status": e.get("legal", {}).get("status")}
+                                                   "title": e["title"], "legal_status": _legal_status(args, e)}
                                                   for e in led["entries"].values()), key=lambda e: e["id"]),
                 "control_acceptances": led["control_acceptances"], "runs": led["runs"][-10:]})
     return 0
@@ -294,9 +308,19 @@ def cmd_ledger_revoke(args):
 
 
 def cmd_ledger_legal(args):
-    return _ledger_write(args, lambda led, now: ledger.set_legal_status(led, args.id, args.status, args.note, args.source,
-                                                                      now.strftime("%Y-%m-%dT%H:%M:%SZ"), args.reason),
-                         "ledger legal", args.id, actor=args.source, reason=args.note or args.reason)
+    """1.0 command: maps the 1.0 legal statuses onto the finding's legal review item."""
+    status = constants.V1_LEGAL_TO_ITEM[args.status]
+    note = " | ".join(x for x in (args.note, ("reason: " + args.reason) if args.reason else None) if x) or None
+    try:
+        with state.transaction(os.path.dirname(os.path.abspath(args.ledger)), args.source, "ledger legal",
+                               _now(args).strftime("%Y-%m-%dT%H:%M:%SZ"), ledger_name=os.path.basename(args.ledger),
+                               require_ledger=True) as tx:
+            rec, old = legal.set_status(tx.registers, tx.project, tx.ledger, args.id, status, args.source, tx.now_iso, note)
+            tx.event(rec["id"], {"status": [old, rec["status"]]}, note)
+    except (InputError, ledger.LedgerError, state.StateError, legal.LegalError) as exc:
+        return _fail(str(exc))
+    _print({"ok": True, "finding": args.id, "item": rec["id"], "status": rec["status"]})
+    return 0
 
 
 def cmd_ledger_remediate(args):
@@ -330,21 +354,22 @@ def _packet(args, tx):
     led = tx.ledger if tx else None
     now = _now(args)
     try:
-        data, md_text, meta = packet.build(final, request, led, now, args.page_size)
+        data, md_text, meta = packet.build(final, request, led, now, args.page_size, regs=tx.registers if tx else None)
     except packet.PacketError as exc:
         return _fail("packet request rejected", errors=str(exc).split("\n"))
     out = os.path.abspath(args.out)
     write_bytes(out, data)
     md_out = os.path.splitext(out)[0] + ".md"
     write_text(md_out, md_text)
-    if led is not None:
+    if tx is not None:
         stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
-        for fid in meta["findings"]:
-            _, entry = ledger.find_entry(led, fid)
-            if "legal" in entry:
-                entry["legal"]["history"].append({"at": stamp, "status": entry["legal"]["status"], "source": "flight-check",
-                                                  "note": "included in attorney review packet %s" % os.path.basename(out)})
-        tx.event("state", {}, "Attorney Review Packet %s covers %s." % (os.path.basename(out), ", ".join(meta["findings"]) or "no findings"))
+        included = [i for i in list(meta["item_for_finding"].values()) + meta["items"] if i]
+        for item in tx.registers["legal"]:
+            if item["id"] in included:
+                item["history"].append({"at": stamp, "status": item["status"], "source": "flight-check",
+                                        "note": "included in attorney review packet %s" % os.path.basename(out)})
+        tx.event("state", {}, "Attorney Review Packet %s covers %s." % (
+            os.path.basename(out), ", ".join(meta["findings"] + meta["items"])))
     _print({"ok": True, "pdf": out, "markdown": md_out, "pages": meta["pages"], "findings": meta["findings"],
             "replaced_characters": meta["replaced_characters"]})
     return 0
@@ -625,6 +650,9 @@ REGISTER_FIELDS = {
                  ("owner", None), ("date", None), ("review_triggers", "review-trigger"), ("assertions", "assertion")],
     "risk": [("title", None), ("description", None), ("domain", None), ("severity", None), ("confidence", None),
              ("impact", None), ("likelihood", None), ("owner", None), ("mitigation_plan", None), ("next_review", None)],
+    "legal": [("title", None), ("category", None), ("description", None), ("trigger", None), ("classification", None),
+              ("jurisdiction", None), ("questions", "question"), ("owner", None), ("review_date", None),
+              ("resolution_notes", None), ("references", "reference")],
 }
 
 
@@ -638,7 +666,7 @@ def _register_change(args, command, fn):
                            initialize=False) as tx:
         try:
             record, change, reason, result = fn(tx)
-        except registers.RegisterError as exc:
+        except (registers.RegisterError, legal.LegalError) as exc:
             raise state.StateError(str(exc))
         tx.event(record, change, reason)
     return result
@@ -667,6 +695,8 @@ def _make_register_commands(kind):
     @_state_cmd
     def update(args):
         def fn(tx):
+            if kind == "legal" and args.id.startswith("FC-"):
+                args.id = legal.item_for_finding(tx.registers, tx.project, tx.ledger, args.id, tx.now_iso, create=True)["id"]
             _, rec, old = registers.update(tx.project, tx.registers, tx.ledger, args.id, args.source, tx.now_iso,
                                            status=args.status, fields=_register_fields(kind, args), links=args.link,
                                            note=args.note, by=args.by, superseded_by=getattr(args, "superseded_by", None))
@@ -685,7 +715,10 @@ def _make_register_commands(kind):
             return {"record": rec, "linked_from": registers.reverse_links(st.registers, args.id)}
         rows = [registers.summary_row(kind, r) for r in st.registers[key]
                 if not args.status or r["status"] == args.status]
-        return {key: rows}
+        result = {key: rows}
+        if kind == "legal" and not legal.open_items(st.registers):
+            result["message"] = legal.NO_ISSUES
+        return result
     return add, update, show
 
 
@@ -716,8 +749,9 @@ def _add_register_parsers(sub):
                             "authentication", "authorization", "infrastructure", "deployment", "legal-business",
                             "product-behavior", "release"],
                "criticality": ["release-critical", "high", "normal"], "severity": list(constants.SEVERITIES),
-               "confidence": list(constants.CONFIDENCES), "domain": catalog.domain_ids()}
-    names = {"requirement": "req", "decision": "decision", "risk": "risk"}
+               "confidence": list(constants.CONFIDENCES), "domain": catalog.domain_ids(),
+               "classification": list(constants.LEGAL_CLASSES)}
+    names = {"requirement": "req", "decision": "decision", "risk": "risk", "legal": "legal"}
     for kind, command in names.items():
         add, update, show = _make_register_commands(kind)
         parser = sub.add_parser(command, help="the %s register" % kind)
@@ -739,7 +773,7 @@ def _add_register_parsers(sub):
                 opt = "--" + (flag or name.replace("_", "-"))
                 if flag:
                     s.add_argument(opt, dest=name, action="append")
-                elif choices.get(name):
+                elif choices.get(name) and not (kind == "legal" and name == "category"):
                     s.add_argument(opt, dest=name, choices=choices[name])
                 else:
                     s.add_argument(opt, dest=name)

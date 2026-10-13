@@ -19,7 +19,7 @@ import re
 import shutil
 import stat
 
-from . import catalog, ledger, lockfile, minischema, textsafety
+from . import catalog, legal, ledger, lockfile, minischema, textsafety
 from .jsonio import InputError, dump_json, load_json, write_text
 
 SCHEMA_VERSION = "2.0"
@@ -613,6 +613,17 @@ def _initialize(tx, root, project_name):
     tx.created = [PROJECT, REGISTERS]
 
 
+def _migrate_ledger(tx):
+    """Ledger 1.0 -> 2.0: legal review status moves from findings into legal review items (design section 13)."""
+    where = None if tx.created else backup(tx.st, "migrate-ledger-2.0", tx.now_iso)
+    moved = legal.migrate_ledger(tx.ledger, tx.registers, tx.project, tx.now_iso)
+    reason = "Ledger moved to schema 2.0: the legal review status of %d finding(s) is now kept in legal review items%s." % (
+        len(moved), (" " + ", ".join(moved)) if moved else "")
+    if where:
+        reason += " Backup: %s" % os.path.relpath(where, tx.st.state_dir)
+    tx.events.append(("state", {"ledger_schema": ["1.0", "2.0"]}, reason, "flight-check"))
+
+
 @contextlib.contextmanager
 def transaction(state_dir, actor, command, now_iso=None, root=None, run_id=None, by=None, ledger_name=LEDGER,
                 require_ledger=False, create_ledger=False, project_name=None, initialize=True):
@@ -645,6 +656,8 @@ def transaction(state_dir, actor, command, now_iso=None, root=None, run_id=None,
             if not initialize:
                 raise StateError("Flight Check state is not initialized in %s; run `state init`" % state_dir)
             _initialize(tx, root, project_name)
+        if tx.ledger is not None and tx.ledger.get("schema_version") == "1.0":
+            _migrate_ledger(tx)
         yield tx
         _commit(tx)
     finally:

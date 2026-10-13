@@ -329,7 +329,8 @@
         "prepared_for": {"type": "string", "maxLength": 200}, "language": {"type": "string", "pattern": "^[A-Za-z]{2,3}(-[A-Za-z0-9]{1,8}){0,4}$"},
         "executive_summary": {"type": "string", "minLength": 40, "maxLength": 6000},
         "overall_summary": {"type": "string", "minLength": 40, "maxLength": 6000},
-        "finding_ids": {"type": "array", "items": {"type": "string", "pattern": "^FC-[0-9]{4,}$"}, "minItems": 1, "maxItems": 100},
+        "finding_ids": {"type": "array", "items": {"type": "string", "pattern": "^FC-[0-9]{4,}$"}, "maxItems": 100},
+        "item_ids": {"type": "array", "items": {"type": "string", "pattern": "^LR-[0-9]{4,}$"}, "maxItems": 100},
         "per_finding": {
           "type": "object",
           "additionalProperties": {
@@ -393,10 +394,11 @@
         "history": {"type": "array", "items": {"$ref": "#/$defs/historyEvent"}},
         "legal": {
           "type": "object",
-          "required": ["classification", "status", "history"],
+          "required": ["classification"],
           "additionalProperties": false,
           "properties": {
             "classification": {"type": "string"},
+            "item": {"type": "string", "pattern": "^LR-[0-9]{4,}$"},
             "status": {"type": "string", "enum": ["OPEN", "LEGAL_REVIEW_REQUESTED", "COUNSEL_REVIEWED", "DECISION_RECEIVED", "IMPLEMENTATION_REQUIRED", "IMPLEMENTED", "VERIFIED", "CLOSED"]},
             "history": {"type": "array", "items": {"$ref": "#/$defs/historyEvent"}}
           }
@@ -423,7 +425,7 @@
       "required": ["schema_version", "next_id", "entries", "control_acceptances", "runs"],
       "additionalProperties": false,
       "properties": {
-        "schema_version": {"const": "1.0"},
+        "schema_version": {"type": "string", "enum": ["1.0", "2.0"]},
         "project": {"type": "object", "properties": {"name": {"type": "string"}}, "additionalProperties": false},
         "next_id": {"type": "integer", "minimum": 1},
         "entries": {"type": "object", "additionalProperties": {"$ref": "#/$defs/ledgerEntry"}},

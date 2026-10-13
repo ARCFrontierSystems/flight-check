@@ -202,7 +202,8 @@ Fields: `category`, `description`, `trigger` (the finding, profile fact, or docu
 | `AWAITING_BUSINESS_DECISION`, `AWAITING_COUNSEL`, `ACTION_REQUIRED` | user (Flight Check may propose) |
 | `REVIEWED`, `RESOLVED`, `NOT_APPLICABLE` | user only, with a note |
 
-- Items are created from specific triggers: a finding with a legal classification other than INFORMATIONAL (as in 1.0), or a user request. A domain being applicable is not a trigger by itself.
+- Items are created from specific triggers: a finding with a legal classification other than INFORMATIONAL, or a user request. A domain being applicable is not a trigger by itself. An item opened from a finding records the finding's questions and evidence references (file hashes, no quotes); later audits update its classification, add new questions (up to 20), and reopen it for review when the finding regresses after the item was reviewed, resolved, or marked not applicable.
+- The finding's ledger entry keeps only `legal.classification` and `legal.item`; the item is the single source of the review status, and `legal_status` in audit results is read from it.
 - Attorney Review Packets can be built from selected or unresolved items. When there are none, the packet command says "Based on the project evidence currently available, no specific legal-review issue has been identified." and adds that this is not a guarantee that no legal issues exist. It never produces an empty packet.
 
 ## 8. History log

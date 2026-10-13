@@ -287,7 +287,9 @@ class EndToEndTests(unittest.TestCase):
             self.assertIn("POLICY/IMPLEMENTATION CONTRADICTION", flat)
         led = read_json(ledger_path)
         entry = next(e for e in led["entries"].values() if e["id"] == legal_id)
-        self.assertIn("attorney review packet", entry["legal"]["history"][-1]["note"])
+        regs = read_json(os.path.join(os.path.dirname(ledger_path), "registers.json"))
+        item = next(i for i in regs["legal"] if i["id"] == entry["legal"]["item"])
+        self.assertIn("attorney review packet", item["history"][-1]["note"])
 
         # non-legal finding and legal conclusions are refused
         bad = dict(req, finding_ids=[sql_id], per_finding={})
