@@ -102,7 +102,7 @@ Extract the JSON object from its reply and write it unchanged to `<run_dir>/inve
 | `flight-check:a11y` | accessibility |
 | `flight-check:governance` | legal-business, compliance-readiness, documentation |
 
-Launch every agent that has at least one domain whose inventory applicability is `yes` or `unknown` (restricted to `--domains` when given). **Owner overrides** from `project_records.applicability_overrides` adjust this: a domain the owner declared `applicable` needs its agent even when the inventory marked it `no`; a domain the owner declared `not_applicable` needs no agent when the inventory marked it `unknown`, but still does when the inventory marked it `yes` (Flight Check then reports the conflict). **With `--changed` and `scope.mode` `changed`,** launch only the agents in `scope.agents`, plus any agent with a domain that the new inventory marks `yes` or `unknown` and that is not in `scope.carried_forward_domains`. Never launch an agent just to re-check a carried-forward domain; Flight Check checks those mechanically. Launch them **in one message with multiple Agent tool calls** so they run in parallel, then wait for all of them. Skip an agent only when inventory marked all of its domains `no`; Flight Check then records those domains as NOT_APPLICABLE using the inventory's evidence.
+Launch every agent that has at least one domain whose inventory applicability is `yes` or `unknown` (restricted to `--domains` when given). **Owner overrides** from `project_records.applicability_overrides` adjust this: a domain the owner declared `applicable` needs its agent even when the inventory marked it `no`; a domain the owner declared `not_applicable` needs no agent when the inventory marked it `unknown`, but still does when the inventory marked it `yes` (Flight Check then reports the conflict). **With `--changed` and `scope.mode` `changed`,** launch only the agents in `scope.agents`, plus any agent with a domain that the new inventory marks `yes` or `unknown` and that is not in `scope.carried_forward_domains`. Give each agent you launch all of its domains as usual, including any in `scope.carried_forward_domains`: an agent reading the code anyway reassesses them at little extra cost, and a reassessed domain replaces the carried-forward one. Never launch an agent whose domains are all carried forward; Flight Check checks those mechanically. Launch them **in one message with multiple Agent tool calls** so they run in parallel, then wait for all of them. Skip an agent only when inventory marked all of its domains `no`; Flight Check then records those domains as NOT_APPLICABLE using the inventory's evidence.
 
 Delegation prompt for each agent:
 
@@ -145,6 +145,7 @@ If `inventory.json` is invalid, re-run the inventory agent once with the errors.
 If any part file contains findings, or there are pending fixes, launch `flight-check:verifier` with:
 
 > Run directory: `<run_dir>`. Audit root: `<absolute root>`. Read these Flight Check part files and give a verdict for every finding: `<list of part-*.json paths>`. Identify findings as `<agent>.<local_id>`. Return only the JSON object described in your instructions.
+> Recorded findings from earlier audits (to identify the same problems; not a checklist): `<init-run's project_records.recorded_findings as JSON, or "none">`
 
 When there are pending fixes, add:
 

@@ -6,6 +6,7 @@ import shutil
 import sys
 import tempfile
 import unittest
+from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import helpers  # noqa: E402
@@ -74,6 +75,17 @@ class ChangeDetectionTests(ProjectTestCase):
         self.assertFalse(out["widened"])
         self.assertTrue(out["readiness_is_historical"])
         self.assertTrue(set(out["carried_forward_domains"]).isdisjoint(out["reassess_domains"]))
+
+    def test_source_change_reassesses_access_control_and_data_domains(self):
+        self.edit("src/store.py")
+        with mock.patch.object(freshness, "_applicable_domains", lambda st: set(catalog.domain_ids())):
+            out = self.changes_direct()
+        for d in ("application-security", "authentication", "authorization", "data-protection", "privacy"):
+            self.assertIn(d, out["reassess_domains"])
+        self.assertIn("accessibility", out["carried_forward_domains"])
+
+    def changes_direct(self):
+        return freshness.changes(self.root, state.load(self.sd, root=self.root))
 
     def test_unexplained_file_and_missing_manifest_widen(self):
         with open(os.path.join(self.root, "blob.xyz"), "w") as fh:
@@ -257,6 +269,73 @@ class LifecycleTests(unittest.TestCase):
         changes = ledger.merge(self.led, dict(self.audit, run={"run_id": "r2"}, findings=[helpers.sql_finding()]), T3, None)
         self.assertEqual(changes["false_positive_reobserved"], ["FC-0001"])
         self.assertEqual(entry["status"], "FALSE_POSITIVE")
+
+
+class RecordedIdentityTests(unittest.TestCase):
+    """The verifier's recorded_id keeps a finding's history when an agent rewords it (Phase 10)."""
+
+    def setUp(self):
+        self.led = ledger.new_ledger("t")
+        self.cov = [{"domain": d, "status": "ASSESSED"} for d in catalog.domain_ids()]
+        ledger.merge(self.led, {"run": {"run_id": "r1"}, "findings": [helpers.sql_finding()], "coverage": self.cov}, T1, None)
+
+    def reworded(self, **over):
+        f = helpers.sql_finding(rule="application-security.unsafe-query-building", title="Notes search builds SQL from a raw term")
+        f["evidence"][0]["quote"] = f["evidence"][0]["quote"].replace("SELECT", "select")  # the anchor changed too
+        f.update(over)
+        return f
+
+    def test_reworded_finding_without_identity_is_new(self):
+        changes = ledger.merge(self.led, {"run": {"run_id": "r2"}, "findings": [self.reworded()], "coverage": self.cov}, T2, None)
+        self.assertEqual((changes["new"], changes["not_reproduced"]), (["FC-0002"], ["FC-0001"]))
+
+    def test_recorded_id_keeps_history_across_rule_title_and_domain(self):
+        f = self.reworded(recorded_id="FC-0001", domain="data-protection", rule="data-protection.query-exposure")
+        changes = ledger.merge(self.led, {"run": {"run_id": "r2"}, "findings": [f], "coverage": self.cov}, T2, None)
+        self.assertEqual((changes["new"], changes["not_reproduced"], changes["recorded_matches"]), ([], [], ["FC-0001"]))
+        entry = ledger.find_entry(self.led, "FC-0001")[1]
+        self.assertEqual((entry["domain"], entry["rule"], entry["last_seen_run"]), ("data-protection", "data-protection.query-exposure", "r2"))
+        self.assertIn("identified by the verifier", entry["history"][-1]["note"])
+
+    def test_identity_judgment_is_only_a_possible_regression_and_never_beats_a_fingerprint(self):
+        ledger.mark(self.led, "FC-0001", "FALSE_POSITIVE", "constant input in this deployment", T2, by="owner")
+        entry = ledger.find_entry(self.led, "FC-0001")[1]
+        entry["status"] = "VERIFIED"
+        changes = ledger.merge(self.led, {"run": {"run_id": "r2"}, "findings": [self.reworded(recorded_id="FC-0001")],
+                                          "coverage": self.cov}, T2, None)
+        self.assertEqual((changes["regressions"], changes["possible_regressions"]), ([], ["FC-0001"]))
+        # An exact fingerprint match wins over another finding's claim, and an unknown ID is reported, not invented.
+        both = [helpers.sql_finding(), self.reworded(recorded_id="FC-0001"), self.reworded(local_id="F9", recorded_id="FC-0042",
+                                                                                             title="Another reworded title here")]
+        changes = ledger.merge(self.led, {"run": {"run_id": "r3"}, "findings": both, "coverage": self.cov}, T3, None)
+        self.assertEqual(changes["unknown_recorded_ids"], ["FC-0042"])
+        self.assertEqual(len(changes["new"]), 2)
+        self.assertEqual(both[0]["id"], "FC-0001")
+
+
+class RecordedIdentityFinalizeTests(ProjectTestCase):
+    def test_verifier_recorded_id_reaches_the_ledger_through_a_duplicate(self):
+        sql_id = next(e["id"] for e in state.load(self.sd).ledger["entries"].values() if e["rule"].endswith("sql-injection"))
+        code, out = run_cli("init-run", "--base", os.path.join(self.sd, "runs"), "--root", self.root, "--now", T2)
+        self.assertIn(sql_id, [r["id"] for r in out["project_records"]["recorded_findings"]])
+        main = helpers.all_controls_resolved(helpers.base_part(findings=[helpers.sql_finding(rule="application-security.raw-sql-search",
+                                                                                              title="Search term reaches raw SQL"),
+                                                                          helpers.deletion_finding()]))
+        second = helpers.base_part(findings=[helpers.sql_finding(local_id="F7", rule="application-security.sql-built-from-input",
+                                                                 title="SQL text built from user input")])
+        second.update(agent="appsec-p2", controls=[], positive_controls=[])
+        verification = {"verdicts": [
+            {"local_id": "appsec.F1", "verdict": "CONFIRMED", "notes": "Re-read the search query; confirmed."},
+            {"local_id": "appsec.F2", "verdict": "CONFIRMED", "notes": "Re-read deletion and policy; confirmed."},
+            {"local_id": "appsec-p2.F7", "verdict": "DUPLICATE", "duplicate_of": "appsec.F1", "recorded_id": sql_id,
+             "notes": "Same raw SQL search as appsec.F1."}]}
+        helpers.write_run(parts=[main, second], verification=verification, base=os.path.join(self.sd, "runs"),
+                          run=dict(helpers.base_run(), run_id=out["run_id"]))
+        code, res = run_cli("finalize", out["run_dir"], "--root", self.root, "--ledger", self.led, "--now", T2)
+        self.assertIn(code, (0, 2, 3, 4, 5), res)
+        self.assertIn(sql_id, [f["id"] for f in res["findings"]])
+        self.assertEqual(res["lifecycle"]["recorded_matches"], [sql_id])
+        self.assertEqual(res["lifecycle"]["new"], [])
 
 
 def clean_audit(findings=()):

@@ -166,7 +166,7 @@ Owner applicability overrides (`applicability override`) also steer which agents
 
 ### Audits of changes only
 
-`/flight-check:audit --changed` runs `changes` first, then launches only the domain agents for the domains a change can affect. The inventory always runs again. Every other applicable domain is **carried forward**:
+`/flight-check:audit --changed` runs `changes` first, then launches only the domain agents for the domains a change can affect; each agent it launches reassesses all of its domains. A change to source code always reassesses application security, authentication, authorization, data protection, and privacy. The inventory always runs again. Every other applicable domain is **carried forward**:
 - its coverage is reported as `CARRIED_FORWARD`, labelled "carried forward, not reassessed", with the run that last assessed it;
 - its controls keep their last recorded state only while the files they cited are unchanged; a control whose cited file changed or disappeared becomes UNVERIFIED, so a release-critical one blocks as insufficient evidence;
 - its open, accepted, or dismissed findings from that assessment still count in the ship decision exactly as before, listed as carried forward;

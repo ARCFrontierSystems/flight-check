@@ -256,6 +256,14 @@ def validate_run_dir(run_dir):
                         dup_targets[v["local_id"]] = target
                 elif v.get("duplicate_of"):
                     errors.append("verification.json: duplicate_of is only allowed with a DUPLICATE verdict (%r)" % v["local_id"])
+            claimed = {}
+            for v in verification["verdicts"]:
+                if v.get("recorded_id") and v["verdict"] not in ("DUPLICATE", "REJECTED"):
+                    claimed.setdefault(v["recorded_id"], []).append(v["local_id"])
+            for rid, lids in sorted(claimed.items()):
+                if len(lids) > 1:
+                    warnings.append("verification.json: %s is named as the recorded finding for %s; only the first keeps its "
+                                    "history (mark repeats DUPLICATE)" % (rid, ", ".join(lids)))
             for src, target in dup_targets.items():
                 if target in dup_targets:
                     errors.append("verification.json: %r is marked duplicate of %r, which is itself a duplicate" % (src, target))

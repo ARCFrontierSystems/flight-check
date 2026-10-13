@@ -146,6 +146,8 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
 
     def merge_ledger(led):
         lifecycle = ledger.merge(led, audit, now, today)
+        for rid in lifecycle.get("unknown_recorded_ids") or []:
+            warnings.append("verification.json: recorded_id %s is not in the ledger; the finding was matched as usual" % rid)
         local_to_id = {f["local_id"]: f["id"] for f in audit["findings"]}
         for f in audit["findings"]:
             f["effective_confidence"] = gate.effective_confidence(f)

@@ -38,11 +38,12 @@ Top-level keys:
   - `legal` (classification, questions, decisions) and `legal_status`: from version 1.5, the status of the finding's legal review item (`NEEDS_REVIEW`, `AWAITING_BUSINESS_DECISION`, `AWAITING_COUNSEL`, `REVIEWED`, `ACTION_REQUIRED`, `RESOLVED`, `NOT_APPLICABLE`), or null when the finding has no item (no legal classification, or INFORMATIONAL). Version 1.0 used the older ledger statuses (`OPEN`, `LEGAL_REVIEW_REQUESTED`, ...).
   - `human_review`, and `verification` (the verifier's verdict and notes).
   - `decision_ids` (1.5, optional): recorded decisions (`DEC-`) the finding contradicts.
+  - `recorded_id` (1.5, optional): the earlier finding the verifier judged to be the same problem; the finding keeps that ID.
 - **`rejected_findings`, `duplicate_findings`:** kept for transparency; they do not affect the gate.
 - **`positive_controls`, `unconfirmed_positive_controls`, `unverified_areas`.**
 - **`regressions`, `not_reproduced`, `remediated_pending`, `lifecycle`.**
 - **`gate`:** `decision`, `reasons`, `critical_findings`, `blocking_findings`, `insufficient_evidence`, `accepted_findings`, `accepted_controls`, `scope_statement`, `exit_code`. From 1.5 also `dismissed_findings` (marked false positive or superseded but still reported), `accepted_register_risks`, `carried_forward_domains`, and `carried_forward_findings`; `critical_findings`, `blocking_findings`, and `insufficient_evidence` can then also name requirements (`REQ-`), legal items (`LR-`), and risks (`RISK-`) from the project's records.
-- **`lifecycle`** (1.5): also `possible_regressions`, `false_positive_reobserved`, `superseded_reobserved`, and `carried_forward_open`. Positive controls carry stable IDs (`PC-0001`) across runs.
+- **`lifecycle`** (1.5): also `possible_regressions`, `false_positive_reobserved`, `superseded_reobserved`, `carried_forward_open`, `recorded_matches` (findings the verifier identified as an earlier recorded finding), and `unknown_recorded_ids`. Positive controls carry stable IDs (`PC-0001`) across runs.
 - **`evidence_index`:** every evidence item with a reference such as `E-0001`.
 - **`validation`:** warnings recorded during finalization.
 

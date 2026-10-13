@@ -35,5 +35,7 @@
      "patterns": ["*.svg", "*.png", "*.jpg", "*.jpeg", "*.gif", "*.webp", "*.ttf", "*.otf", "*.woff", "*.woff2", "*.mp3", "*.mp4", "fonts/*", "images/*", "img/*", "assets/*"],
      "domains": ["ip-assets", "accessibility"]}
   ],
+  "source_code_domains": ["application-security", "authentication", "authorization", "data-protection", "privacy"],
+  "source_code_domains_note": "A source file can change how requests are authenticated and authorized and how personal data is handled, wherever it lives, so a source change always reassesses these domains (when applicable), in addition to any rule above.",
   "source_code_suffixes": [".py", ".js", ".mjs", ".cjs", ".ts", ".go", ".rb", ".java", ".kt", ".php", ".cs", ".rs", ".swift", ".scala", ".ex", ".exs", ".c", ".cc", ".cpp", ".h", ".m", ".dart", ".lua", ".pl", ".sh"]
 }
