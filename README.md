@@ -8,7 +8,7 @@ Flight Check asks one question:
 
 It examines security, privacy, legal/business risk, compliance readiness, accessibility, reliability, and production readiness. It reports what it found with file-and-line evidence, what it verified as working, and what it could not verify. It never confuses "we did not find a problem" with "there is no problem".
 
-> **Status: 1.0.0, not yet released.** Flight Check's blind evaluations are published: [Phase 5](docs/audits/2026-10-06-phase-5-blind-test.md), the [Phase 7 final report](docs/audits/2026-10-12-phase-7-final-report.md), the [release-candidate evaluation](docs/audits/2026-10-12-v1-release-evaluation.md), and the [sequence evaluation of audits over time](docs/audits/2026-10-13-v1.5-sequence-evaluation.md) on held-out test applications. Used the 1.0.0-rc.1 release candidate? See [docs/upgrading-from-rc.md](docs/upgrading-from-rc.md). Treat results as an aid to human judgment, not a substitute for it.
+> **Status: 1.0.0.** Flight Check's blind evaluations are published: [Phase 5](docs/audits/2026-10-06-phase-5-blind-test.md), the [Phase 7 final report](docs/audits/2026-10-12-phase-7-final-report.md), the [release-candidate evaluation](docs/audits/2026-10-12-v1-release-evaluation.md), and the [sequence evaluation of audits over time](docs/audits/2026-10-13-v1.5-sequence-evaluation.md) on held-out test applications. Used the 1.0.0-rc.1 release candidate? See [docs/upgrading-from-rc.md](docs/upgrading-from-rc.md). Treat results as an aid to human judgment, not a substitute for it.
 
 ## What Flight Check does
 
