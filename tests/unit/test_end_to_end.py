@@ -216,6 +216,30 @@ class EndToEndTests(unittest.TestCase):
         self.assertIn(base_q, kept["legal"]["questions"])
         self.assertEqual(len(kept["legal"]["questions"]), 2)
 
+    def test_verifier_refiles_a_finding_under_another_domain(self):
+        verification = {"verdicts": [
+            {"local_id": "appsec.F1", "verdict": "CONFIRMED", "domain": "data-protection",
+             "notes": "Re-filed: the harm is exposure of stored notes."},
+            {"local_id": "appsec.F2", "verdict": "CONFIRMED", "domain": "privacy", "notes": "Already in the right domain."},
+        ]}
+        tmp, run_dir, ledger_path, code, out = finalized_run(verification)
+        self.assertEqual(code, 0, out)
+        final = read_json(os.path.join(run_dir, "audit.final.json"))
+        moved = next(f for f in final["findings"] if f["local_id"] == "appsec.F1")
+        self.assertEqual((moved["domain"], moved["rule"]), ("data-protection", "data-protection.sql-injection"))
+        self.assertEqual(moved["verification"]["original_domain"], "application-security")
+        write_json(os.path.join(run_dir, "summary.json"), summary_for(final))
+        self.assertEqual(run_cli("render", run_dir)[0], 0)
+        self.assertIn("CONFIRMED (moved here from application-security)", read_text(os.path.join(run_dir, "report.md")))
+        same = next(f for f in final["findings"] if f["local_id"] == "appsec.F2")
+        self.assertEqual(same["domain"], "privacy")
+        self.assertNotIn("original_domain", same["verification"])
+        # an unknown domain id is refused before anything is written
+        bad = {"verdicts": [{"local_id": "appsec.F1", "verdict": "CONFIRMED", "domain": "made-up", "notes": "Not a domain id."}]}
+        tmp, run_dir, ledger_path, code, out = finalized_run(bad)
+        self.assertEqual(code, 1)
+        self.assertFalse(os.path.exists(os.path.join(run_dir, "audit.final.json")))
+
     def test_agent_field_must_match_file_name(self):
         part = helpers.all_controls_resolved(helpers.base_part())
         part["agent"] = "appsec-auditor"

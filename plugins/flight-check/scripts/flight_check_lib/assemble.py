@@ -310,6 +310,11 @@ def assemble(run_dir, overrides=None, carried=None):
         if v and v["verdict"] == "REJECTED":
             rejected.append(f)
             continue
+        if v and v.get("domain") and v["domain"] != f["domain"] and v["domain"] in catalog.domain_ids():
+            # The verifier sees every finding together and re-files one whose harm belongs to another domain.
+            f["verification"]["original_domain"] = f["domain"]
+            f["domain"] = v["domain"]
+            f["rule"] = v["domain"] + "." + f["rule"].split(".", 1)[-1]
         if v and v["verdict"] == "DOWNGRADED":
             original = {"severity": f["severity"], "confidence": f["confidence"]}
             if v.get("adjusted_severity"):

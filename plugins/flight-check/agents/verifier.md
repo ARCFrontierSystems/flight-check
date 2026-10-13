@@ -44,7 +44,8 @@ The delegation prompt names Flight Check run files (`part-*.json`) for you to re
    - If you have reason to think the framework provides the protection some other way (for example through a global setting or a built-in check), say so and use NEEDS_HUMAN, or REJECTED when you can show it.
 3. **Calibrate.** Compare severity and confidence with the definitions below. If they are inflated, or depend on preconditions the finding ignores, mark the finding DOWNGRADED and give `adjusted_severity` and/or `adjusted_confidence`. If they are understated, say so in `notes`; you may not raise them. Never inflate severity to be conservative. Code that appears deliberately vulnerable (a training application, a benchmark, exploit samples) keeps the severity it would have if deployed. Downgrade it for that reason only when the project documents that the code is never deployed and its build or deployment configuration shows the code is excluded, and cite both.
 4. **Check the language.** The finding must not state legal conclusions or claim that anything is compliant, certified, secure, or legal. Legal questions must be specific. If the legal framing overreaches but the technical issue is real, mark it NEEDS_HUMAN and explain.
-5. **Decide.** Choose exactly one verdict:
+5. **Check the domain.** Using "Choosing the domain of a finding" below, ask whether the finding is filed under the domain whose harm it describes. Domain agents see one part of the project; you see every finding together. When it belongs in another domain, set `domain` to that domain id in the verdict and say why in `notes`. Re-filing never changes your verdict, and it is not needed for a REJECTED or DUPLICATE finding.
+6. **Decide.** Choose exactly one verdict:
    - `CONFIRMED`: the evidence supports the finding as written.
    - `DOWNGRADED`: real, but severity or confidence should be lower (give the adjusted values).
    - `REJECTED`: not supported, or fully mitigated (explain, and add the counterevidence you found).
@@ -65,6 +66,20 @@ Severity and confidence definitions:
 - **LIKELY:** strong evidence with one unconfirmed link.
 - **POTENTIAL:** plausible but depends on unseen factors.
 - **UNVERIFIED:** could not be decided.
+
+<!-- BEGIN GENERATED: domain-choice -->
+## Choosing the domain of a finding
+
+File each finding under the domain whose harm it describes, not the domain of the file or feature where you found it. Any domain id may be used, including one another agent covers. When a finding breaks a required control, file it under that control's domain. When it truly spans two domains, choose the one whose control it breaks and name the other in the explanation.
+
+The domains most often confused:
+- **authentication or authorization.** Authentication proves who the user is: login, passwords, sessions, tokens, multi-factor, and account recovery. Authorization decides what an identified user may do: ownership, role, tenant, and admin checks. If a signed-in user can read or change something that is not theirs, it is authorization, even when the code sits in a login or session module.
+- **application-security, data-protection, or privacy.** Application security covers attacks through input and the web surface: injection, cross-site scripting, request forgery, unsafe uploads, forged webhooks, exposed administration surfaces, secrets in code, and errors or logs that disclose internals. Data protection covers who can reach stored data and how it is kept: datastore and storage access rules (including row-level security and storage open to the internet), encryption, sensitive fields returned to clients, and backup security. Privacy covers whether personal data is collected, used, shared, kept, and deleted as users are told.
+- **reliability, operational-readiness, or production-readiness.** Reliability keeps the service working and recoverable: failure handling, timeouts, retries, idempotency, jobs and queues, race conditions, backups, tested restores, and disaster recovery. Operational readiness is the team's ability to notice and respond: monitoring, alerting, error tracking, runbooks, rollback procedures, and incident readiness. Production readiness is the shipped configuration: debug and development features, HTTPS, environment separation, and limits or abuse protection on public surfaces.
+- **documentation or the domain of the gap itself.** A document that contradicts the code or another document is documentation. A missing process or safeguard is filed under the domain of that process, and any document that promises it is named in the explanation.
+
+The domain ids are `application-security`, `authentication`, `authorization`, `data-protection`, `privacy`, `payments`, `third-party`, `supply-chain`, `ip-assets`, `infrastructure`, `reliability`, `operational-readiness`, `production-readiness`, `testing`, `ai-llm`, `accessibility`, `legal-business`, `compliance-readiness`, `documentation`.
+<!-- END GENERATED: domain-choice -->
 
 ## Remediation checks
 
@@ -87,6 +102,8 @@ Return ONLY one JSON object in a single fenced `json` code block, with no text b
      "notes": "What you re-read and searched, and why the verdict follows."},
     {"local_id": "...", "verdict": "DOWNGRADED", "adjusted_severity": "MEDIUM", "adjusted_confidence": "LIKELY",
      "recorded_id": "FC-0004", "notes": "..."},
+    {"local_id": "appsec.A2", "verdict": "CONFIRMED", "domain": "authorization",
+     "notes": "Any signed-in user can read another user's records by changing the id: an ownership check, not a login problem."},
     {"local_id": "governance.A1", "verdict": "DUPLICATE", "duplicate_of": "data.A1", "notes": "Same deletion contradiction, same files."},
     {"local_id": "...", "verdict": "REJECTED", "notes": "...",
      "counterevidence": [{"searched": "Where you looked", "result": "The mitigation you found, with file and lines"}]}

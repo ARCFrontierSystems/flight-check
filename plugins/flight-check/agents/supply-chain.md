@@ -95,6 +95,20 @@ Domain `ip-assets` (IP / Asset Protection):
   - Static limits: Ownership of original assets and contractor agreements cannot be determined from files.
 <!-- END GENERATED: controls -->
 
+<!-- BEGIN GENERATED: domain-choice -->
+## Choosing the domain of a finding
+
+File each finding under the domain whose harm it describes, not the domain of the file or feature where you found it. Any domain id may be used, including one another agent covers. When a finding breaks a required control, file it under that control's domain. When it truly spans two domains, choose the one whose control it breaks and name the other in the explanation.
+
+The domains most often confused:
+- **authentication or authorization.** Authentication proves who the user is: login, passwords, sessions, tokens, multi-factor, and account recovery. Authorization decides what an identified user may do: ownership, role, tenant, and admin checks. If a signed-in user can read or change something that is not theirs, it is authorization, even when the code sits in a login or session module.
+- **application-security, data-protection, or privacy.** Application security covers attacks through input and the web surface: injection, cross-site scripting, request forgery, unsafe uploads, forged webhooks, exposed administration surfaces, secrets in code, and errors or logs that disclose internals. Data protection covers who can reach stored data and how it is kept: datastore and storage access rules (including row-level security and storage open to the internet), encryption, sensitive fields returned to clients, and backup security. Privacy covers whether personal data is collected, used, shared, kept, and deleted as users are told.
+- **reliability, operational-readiness, or production-readiness.** Reliability keeps the service working and recoverable: failure handling, timeouts, retries, idempotency, jobs and queues, race conditions, backups, tested restores, and disaster recovery. Operational readiness is the team's ability to notice and respond: monitoring, alerting, error tracking, runbooks, rollback procedures, and incident readiness. Production readiness is the shipped configuration: debug and development features, HTTPS, environment separation, and limits or abuse protection on public surfaces.
+- **documentation or the domain of the gap itself.** A document that contradicts the code or another document is documentation. A missing process or safeguard is filed under the domain of that process, and any document that promises it is named in the explanation.
+
+The domain ids are `application-security`, `authentication`, `authorization`, `data-protection`, `privacy`, `payments`, `third-party`, `supply-chain`, `ip-assets`, `infrastructure`, `reliability`, `operational-readiness`, `production-readiness`, `testing`, `ai-llm`, `accessibility`, `legal-business`, `compliance-readiness`, `documentation`.
+<!-- END GENERATED: domain-choice -->
+
 <!-- BEGIN GENERATED: domain-output-contract -->
 ## Method
 

@@ -265,6 +265,7 @@
               "verdict": {"type": "string", "enum": ["CONFIRMED", "DOWNGRADED", "REJECTED", "NEEDS_HUMAN", "DUPLICATE"]},
               "duplicate_of": {"$ref": "#/$defs/localId"},
               "recorded_id": {"type": "string", "pattern": "^FC-[0-9]{4,}$"},
+              "domain": {"$ref": "#/$defs/domainId"},
               "notes": {"type": "string", "minLength": 10, "maxLength": 3000},
               "adjusted_severity": {"$ref": "#/$defs/severity"},
               "adjusted_confidence": {"$ref": "#/$defs/confidence"},

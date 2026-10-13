@@ -103,7 +103,8 @@ def _finding_block(f):
         ("Blocks release", "Yes" if f["release_blocking_effective"] else "No"),
         ("Legal / business review", legal.get("classification", "Not indicated") + (" — status %s" % f["legal_status"] if f.get("legal_status") else "")),
         ("Human review", ("Recommended: " + ", ".join(hr.get("types") or [])) if hr.get("required") else "Not indicated"),
-        ("Verifier", f["verification"]["verifier_verdict"]),
+        ("Verifier", f["verification"]["verifier_verdict"] + (" (moved here from %s)" % f["verification"]["original_domain"]
+                                                             if f["verification"].get("original_domain") else "")),
         ("Evidence check", f.get("evidence_check", "NOT_APPLICABLE")),
         ("Rule", f["rule"]),
         ("First seen", f.get("first_seen_run", "")),
