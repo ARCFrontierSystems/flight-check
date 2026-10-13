@@ -74,10 +74,10 @@ Look at:
 - **Secrets:**
   - Credentials committed in source, configuration, or committed `.env` files, and private keys.
   - Secrets exposed to clients through public build-time variables (prefixes such as `NEXT_PUBLIC_`, `VITE_`, `REACT_APP_`, `EXPO_PUBLIC_`) or bundled config.
-  - Secrets in logs, error messages, or build artifacts.
+  - Secrets in error messages or build artifacts.
   - Git history and deployed artifacts are outside what you can read: record them as unverified unless imported evidence covers them.
 - **Administration:** admin authentication and authorization, privilege separation, dangerous operations without confirmation or audit logging, internal dashboards reachable publicly.
-- **Logging and errors:** credentials or personal data in logs, stack traces or internal details returned to clients, missing audit trails for sensitive actions.
+- **Logging and errors:** stack traces or internal details returned to clients, and missing audit trails for sensitive actions. Credentials, tokens, or personal data written to logs or error trackers are data protection findings under `DATA-SENSITIVE-HANDLING`, even when you find them here.
 
 ## False-positive traps
 
@@ -115,10 +115,10 @@ Domain `application-security` (Application Security):
   - Applies when: The project serves a web application or HTTP API.
   - VERIFIED when: Cookie-authenticated state changes are CSRF-protected, CORS allows only intended origins, and security headers are set.
   - Static limits: Headers added by proxies or hosting platforms may not be visible.
-- `APPSEC-ERROR-DISCLOSURE`: Errors and logs do not disclose secrets, stack traces, internal details, or personal data
-  - Applies when: The project runs as a service or application that logs or returns errors.
-  - VERIFIED when: Production error handlers return generic messages and logging excludes credentials and personal data.
-  - Static limits: Log contents at runtime are not observed.
+- `APPSEC-ERROR-DISCLOSURE`: Errors returned to users and clients do not disclose secrets, stack traces, or internal details
+  - Applies when: The project runs as a service or application that returns errors to users or clients.
+  - VERIFIED when: Production error handlers return generic messages without stack traces, queries, internal paths, or secrets.
+  - Static limits: Error responses at runtime are not observed.
 
 Domain `authentication` (Authentication):
 - `AUTHN-ENFORCED` (release-critical): Protected routes, APIs, and jobs require authentication enforced on the server
@@ -160,7 +160,7 @@ File each finding under the domain whose harm it describes, not the domain of th
 
 The domains most often confused:
 - **authentication or authorization.** Authentication proves who the user is: login, passwords, sessions, tokens, multi-factor, and account recovery. Authorization decides what an identified user may do: ownership, role, tenant, and admin checks. If a signed-in user can read or change something that is not theirs, it is authorization, even when the code sits in a login or session module.
-- **application-security, data-protection, or privacy.** Application security covers attacks through input and the web surface: injection, cross-site scripting, request forgery, unsafe uploads, forged webhooks, exposed administration surfaces, secrets in code, and errors or logs that disclose internals. Data protection covers who can reach stored data and how it is kept: datastore and storage access rules (including row-level security and storage open to the internet), encryption, sensitive fields returned to clients, and backup security. Privacy covers whether personal data is collected, used, shared, kept, and deleted as users are told.
+- **application-security, data-protection, or privacy.** Application security covers attacks through input and the web surface: injection, cross-site scripting, request forgery, unsafe uploads, forged webhooks, exposed administration surfaces, secrets in code, and error responses that show users stack traces or internal details. Data protection covers who can reach stored data and how it is kept: datastore and storage access rules (including row-level security and storage open to the internet), encryption, sensitive fields returned to clients or written to logs and error trackers (credentials and tokens included), and backup security. Privacy covers whether personal data is collected, used, shared, kept, and deleted as users are told.
 - **reliability, operational-readiness, or production-readiness.** Reliability keeps the service working and recoverable: failure handling, timeouts, retries, idempotency, jobs and queues, race conditions, backups, tested restores, and disaster recovery. Operational readiness is the team's ability to notice and respond: monitoring, alerting, error tracking, runbooks, rollback procedures, and incident readiness. Production readiness is the shipped configuration: debug and development features, HTTPS, environment separation, and limits or abuse protection on public surfaces.
 - **documentation or the domain of the gap itself.** A document that contradicts the code or another document is documentation. A missing process or safeguard is filed under the domain of that process, and any document that promises it is named in the explanation.
 
