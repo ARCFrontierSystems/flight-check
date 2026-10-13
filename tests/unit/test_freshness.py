@@ -128,8 +128,10 @@ class ChangeDetectionTests(ProjectTestCase):
         with open(os.path.join(self.root, "node_modules", "x", "i.js"), "w") as fh:
             fh.write("x")
         os.symlink("/etc", os.path.join(self.root, "etc-link"))
+        with open(os.path.join(self.root, ".git"), "w") as fh:
+            fh.write("gitdir: /elsewhere/worktrees/x\n")  # a git worktree's .git is a file
         files, _ = freshness.scan(self.root)
-        self.assertFalse(any(p.startswith((".flight-check/", "node_modules/", "etc-link")) for p in files))
+        self.assertFalse(any(p.startswith((".flight-check/", "node_modules/", "etc-link", ".git")) for p in files))
         self.assertIn("src/store.py", files)
 
     def test_evidence_states_and_rules(self):
@@ -283,6 +285,16 @@ class ReviewFixTests(ProjectTestCase):
         self.assertIn("src/coverage/claims.py", files)
         self.assertIn("tools/build/release.sh", files)
         self.assertNotIn("build/out.js", files)
+
+    def test_baseline_paths_the_scan_skips_are_not_changes(self):
+        path = os.path.join(self.sd, "manifest.json")
+        with open(path) as fh:
+            manifest = json.load(fh)
+        manifest["files"].update({".git": "0" * 64, "node_modules/x/i.js": "1" * 64, "build/out.js": "2" * 64})
+        with open(path, "w") as fh:
+            json.dump(manifest, fh)
+        out = self.changes()
+        self.assertEqual((out["changed_files"], out["widened"]), (0, False))
 
     def test_dot_slash_evidence_paths_are_normalized(self):
         self.assertEqual(freshness.normalize_path("./src//store.py"), "src/store.py")
