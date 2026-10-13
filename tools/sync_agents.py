@@ -5,6 +5,7 @@ Agent files contain generated blocks delimited by
     <!-- BEGIN GENERATED: <block> -->  ...  <!-- END GENERATED: <block> -->
 Block sources:
     untrusted-data            tools/agent-blocks/untrusted-data.md (all agents)
+    domain-choice             tools/agent-blocks/domain-choice.md plus the domain ids (domain agents and the verifier)
     domain-output-contract    tools/agent-blocks/domain-output-contract.md (domain agents)
     controls                  generated per domain agent from references/required-controls.json
 
@@ -53,8 +54,16 @@ def controls_block(domains):
     return "\n".join(lines).rstrip() + "\n"
 
 
+def domain_choice_block():
+    domains = json.loads(load(os.path.join(PLUGIN, "references", "domains.json")))["domains"]
+    ids = ", ".join("`%s`" % d["id"] for d in domains)
+    return load(os.path.join(BLOCKS, "domain-choice.md")).rstrip() + "\n\nThe domain ids are " + ids + ".\n"
+
+
 def expected_blocks(agent_name, agents_map):
     blocks = {"untrusted-data": load(os.path.join(BLOCKS, "untrusted-data.md"))}
+    if agent_name in agents_map or agent_name == "verifier":
+        blocks["domain-choice"] = domain_choice_block()
     if agent_name in agents_map:
         blocks["domain-output-contract"] = load(os.path.join(BLOCKS, "domain-output-contract.md"))
         blocks["controls"] = controls_block(agents_map[agent_name])

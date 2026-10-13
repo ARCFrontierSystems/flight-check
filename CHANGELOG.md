@@ -5,6 +5,7 @@ All notable changes are recorded here. Versions follow [Semantic Versioning](htt
 ## [Unreleased]
 
 - **Fixes are checked by breaking them.** After `/flight-check:fix` or `/flight-check:remediate` fixes a problem and adds a test, it undoes each part of the fix in turn and runs the tests, which must fail every time. A break that survives with every test green shows that the tests miss the real path (for example, they call a function directly but never the line that wires it in), so a test that covers it is added. The fix is restored after each break, and the result is reported in plain words and recorded with the fix.
+- **Findings land in the right area more often.** Every checking agent and the verifier now share one guide for choosing a finding's area by the harm it describes, not by the file it was found in, with the pairs most often confused (authentication or authorization; application security, data protection, or privacy; reliability, operational readiness, or production readiness; documentation or the gap itself). The verifier, which sees all findings together, can move a finding to another area with a new optional `domain` field in its verdict. The move changes the finding's `rule` prefix, is recorded as `verification.original_domain`, and is shown in the report.
 
 ## [1.0.1] — 2026-10-13
 
