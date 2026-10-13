@@ -29,7 +29,9 @@ from flight_check_lib import VERSION, catalog, constants, render_md  # noqa: E40
 
 # Skills Claude may start on its own: status only reads; fix asks the user once before changing anything and starts
 # no paid audit; legal-packet builds a document and records only what the user answers, each record confirmed. Audits, remediation with re-audit, packets, watch, and the user's decisions stay manual.
-MODEL_INVOCABLE_SKILLS = {"status", "fix", "legal-packet"}
+MODEL_INVOCABLE_SKILLS = {"status", "fix", "legal-packet", "start"}
+# The only file writes a skill may pre-approve: the audit's own run directory, never project files.
+RUN_DIR_WRITES = {"audit": {"Edit(./.flight-check/runs/**)"}}
 SKILL_KEYS = {"name", "description", "when_to_use", "argument-hint", "arguments", "disable-model-invocation",
               "user-invocable", "allowed-tools", "disallowed-tools", "model", "effort", "license", "metadata", "compatibility"}
 AGENT_KEYS = {"name", "description", "tools", "disallowedTools", "model", "effort", "maxTurns", "omitClaudeMd", "skills", "color"}
@@ -119,7 +121,10 @@ def check_frontmatter_and_bodies():
         check_body(path, body)
         allowed = meta.get("allowed-tools", "")
         for tool in [t.strip() for t in re.split(r",(?![^()]*\))", allowed) if t.strip()]:
-            if tool.startswith("Bash(") and "${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py" not in tool:
+            if tool.split("(")[0] in ("Edit", "Write", "MultiEdit", "NotebookEdit") and tool not in RUN_DIR_WRITES.get(name, ()):
+                err("frontmatter", "%s: allowed-tools may not pre-approve file writes other than the audit's run directory, "
+                    "found %r" % (rel(path), tool))
+            elif tool.startswith("Bash(") and "${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py" not in tool:
                 err("frontmatter", "%s: allowed-tools may pre-approve only Flight Check's own script, found %r" % (rel(path), tool))
             elif tool in ("Bash", "Bash(*)", "WebFetch", "WebSearch") or tool.startswith("mcp__"):
                 err("frontmatter", "%s: allowed-tools must not pre-approve %r" % (rel(path), tool))
