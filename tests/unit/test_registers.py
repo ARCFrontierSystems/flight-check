@@ -188,7 +188,7 @@ class CliTests(unittest.TestCase):
                             "--source", "user", "--note", "sent to counsel", "--now", T4)
         self.assertEqual(code, 0, out)
         last = state.load(self.tmp).events[-1]
-        self.assertEqual((last["record"], last["change"]), ("FC-0002", {"legal": ["OPEN", "LEGAL_REVIEW_REQUESTED"]}))
+        self.assertEqual((last["record"], last["change"]), ("LR-0001", {"status": ["NEEDS_REVIEW", "AWAITING_COUNSEL"]}))
         self.assertEqual(run_cli("state", "check", "--state-dir", self.tmp)[0], 0)
 
     def test_bad_input_is_refused_without_writing(self):

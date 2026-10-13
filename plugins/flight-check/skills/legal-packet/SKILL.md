@@ -33,7 +33,8 @@ Run Flight Check's script only as a single plain command that starts exactly wit
 2. **Select findings.** Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py findings <run_dir> --legal --detail`.
    - With explicit IDs, use those. Each must carry a legal or business classification; if one does not, explain that the packet is only for findings that warrant legal or business review.
    - Otherwise (or with `all`), use every finding whose classification is not `INFORMATIONAL`.
-   - If none qualify, tell the user that no findings currently warrant an Attorney Review Packet, and stop.
+   - Legal questions the user recorded without a finding are legal review items. If the user asked for unresolved legal items, or for everything, run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py legal list --root <root>` and include each open item that has no finding (its `trigger` does not start with `finding`) in `item_ids`.
+   - If nothing qualifies, tell the user: "Based on the project evidence currently available, no specific legal-review issue has been identified." Add that this is not a guarantee that no legal issues exist, and stop. Never build an empty packet.
    - When several findings qualify, combine them into one packet.
 
 3. **Write `<run_dir>/packet-request.json`:**
@@ -46,6 +47,7 @@ Run Flight Check's script only as a single plain command that starts exactly wit
   "executive_summary": "...",
   "overall_summary": "...",
   "finding_ids": ["<ID>", "<ID>"],
+  "item_ids": ["<LR-ID, only for legal review items without a finding; omit otherwise>"],
   "per_finding": {
     "<ID>": {
       "technical_context": "<optional: how the affected feature works, from the finding's explanation>",

@@ -25,23 +25,24 @@ For `status`, or no arguments, run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight
 
 ## Legal review status
 
-The lifecycle is `OPEN` → `LEGAL_REVIEW_REQUESTED` → `COUNSEL_REVIEWED` → `DECISION_RECEIVED` → `IMPLEMENTATION_REQUIRED` → `IMPLEMENTED` → `VERIFIED` → `CLOSED`.
+Each legal or business question is a legal review item (`LR-0001`). Findings with a legal or business classification get one automatically; the user can refer to it by the finding ID or the item ID. Statuses: `NEEDS_REVIEW` → `AWAITING_COUNSEL` (or `AWAITING_BUSINESS_DECISION`) → `REVIEWED` → `ACTION_REQUIRED` → `RESOLVED`, or `NOT_APPLICABLE`.
 
 Map what the user tells you to a status:
-- "sent to counsel" or "shared the packet" → `LEGAL_REVIEW_REQUESTED`
-- "counsel looked at it" → `COUNSEL_REVIEWED`
-- "counsel said / decided ..." → `DECISION_RECEIVED`
-- "we need to change X" → `IMPLEMENTATION_REQUIRED`
-- "we changed it" → `IMPLEMENTED`
-
-`VERIFIED` is set only after a Flight Check re-audit confirms the change; tell the user to run `/flight-check:audit`.
+- "sent to counsel" or "shared the packet" → `AWAITING_COUNSEL`
+- "this is ours to decide" → `AWAITING_BUSINESS_DECISION`
+- "counsel looked at it", "counsel said / decided ..." → `REVIEWED`
+- "we need to change X" → `ACTION_REQUIRED`
+- "it's settled" or "we changed it" → `RESOLVED`; when it involved a code or policy change, suggest `/flight-check:audit` to check it
+- "this doesn't apply to us" → `NOT_APPLICABLE`
 
 Run:
-`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger legal --ledger <ledger> --id <ID> --status <STATUS> --source user --note "<the user's own words>"`
+`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py legal update --root <root> --id <FC-xxxx or LR-xxxx> --status <STATUS> --note "<the user's own words>"`
 
-- For `COUNSEL_REVIEWED` and `DECISION_RECEIVED`, the note must record what the user reported, attributed to them (for example `User reports counsel advised: ...`). Never paraphrase it into a stronger or different conclusion, and never invent one. If the user has not said what counsel decided, ask.
-- Moving backwards needs `--reason`.
-- After a decision that requires changes, offer to record `IMPLEMENTATION_REQUIRED`. Point out that `/flight-check:remediate` can help with technical changes in the user's own project.
+- For `REVIEWED`, `RESOLVED`, and `NOT_APPLICABLE`, the note must record what the user reported, attributed to them (for example `User reports counsel advised: ...`). Never paraphrase it into a stronger or different conclusion, and never invent one. If the user has not said what counsel decided, ask.
+- Flight Check never sets these statuses itself; only the user's report does.
+- To record a legal question that no finding raised, use `legal add --root <root> --title ... --category ... --description ... --trigger "<what raised it>" [--question "..."]`.
+- After a decision that requires changes, offer to record `ACTION_REQUIRED`. Point out that `/flight-check:remediate` can help with technical changes in the user's own project.
+- The 1.0 command `ledger legal` with the old status names still works; it records the matching new status.
 
 ## Accept a risk
 

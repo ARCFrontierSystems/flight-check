@@ -167,19 +167,23 @@ class LedgerTests(unittest.TestCase):
         self.assertEqual(a["findings"][0]["status"], "OPEN")
 
     def test_legal_status_rules(self):
+        from flight_check_lib import legal, state
         led = ledger.new_ledger("t")
-        ledger.merge(led, audit_with([helpers.deletion_finding()], "20261001T000000Z"), helpers.NOW, TODAY)
-        with self.assertRaises(ledger.LedgerError):
-            ledger.set_legal_status(led, "FC-0001", "DECISION_RECEIVED", "counsel said fine", "flight-check", helpers.NOW)
-        with self.assertRaises(ledger.LedgerError):
-            ledger.set_legal_status(led, "FC-0001", "COUNSEL_REVIEWED", "", "user", helpers.NOW)
-        ledger.set_legal_status(led, "FC-0001", "LEGAL_REVIEW_REQUESTED", "sent packet", "user", helpers.NOW)
-        ledger.set_legal_status(led, "FC-0001", "DECISION_RECEIVED", "User reports counsel advised implementing hard deletion within 30 days.", "user", helpers.NOW)
-        with self.assertRaises(ledger.LedgerError):
-            ledger.set_legal_status(led, "FC-0001", "OPEN", "", "user", helpers.NOW)
-        entry = ledger.find_entry(led, "FC-0001")[1]
-        self.assertEqual(entry["legal"]["status"], "DECISION_RECEIVED")
-        self.assertEqual(entry["legal"]["history"][-1]["source"], "user")
+        audit = audit_with([helpers.deletion_finding()], "20261001T000000Z")
+        ledger.merge(led, audit, helpers.NOW, TODAY)
+        proj, regs = state.new_project(state.new_identity(None, "t", helpers.NOW)), state.new_registers()
+        legal.sync_findings(regs, proj, led, audit["findings"], helpers.NOW, "20261001T000000Z")
+        self.assertEqual(audit["findings"][0]["legal_status"], "NEEDS_REVIEW")
+        reviewed = constants.V1_LEGAL_TO_ITEM["DECISION_RECEIVED"]
+        with self.assertRaises(legal.LegalError):
+            legal.set_status(regs, proj, led, "FC-0001", reviewed, "flight-check", helpers.NOW, "counsel said fine")
+        with self.assertRaises(legal.LegalError):
+            legal.set_status(regs, proj, led, "FC-0001", reviewed, "user", helpers.NOW, "")
+        legal.set_status(regs, proj, led, "FC-0001", "AWAITING_COUNSEL", "user", helpers.NOW, "sent packet")
+        item, old = legal.set_status(regs, proj, led, "FC-0001", reviewed, "user", helpers.NOW,
+                                     "User reports counsel advised implementing hard deletion within 30 days.")
+        self.assertEqual((old, item["status"], item["history"][-1]["source"]), ("AWAITING_COUNSEL", "REVIEWED", "user"))
+        self.assertEqual(ledger.find_entry(led, "FC-0001")[1]["legal"], {"classification": item["classification"], "item": item["id"]})
 
     def test_closing_open_finding_is_refused(self):
         led = ledger.new_ledger("t")

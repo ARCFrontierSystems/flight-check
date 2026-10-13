@@ -26,7 +26,7 @@ ACCEPTANCE_FIELDS = ("risk", "reason", "owner", "date", "scope", "compensating_c
 
 def new_ledger(project_name=None):
     led = {
-        "schema_version": constants.SCHEMA_VERSION,
+        "schema_version": constants.LEDGER_SCHEMA_VERSION,
         "next_id": 1,
         "entries": {},
         "control_acceptances": {},
@@ -243,18 +243,16 @@ def merge(led, audit, now_iso, today):
         e = entries[entry_fp]
         legal = f.get("legal")
         if legal:
+            # The review status lives in the linked legal review item (legal.sync_findings), not here.
             if "legal" not in e:
-                e["legal"] = {"classification": legal["classification"], "status": "OPEN",
-                              "history": [_event(now_iso, "OPEN", "flight-check", "classified %s" % legal["classification"], run_id)]}
-            elif e["legal"]["classification"] != legal["classification"]:
-                e["legal"]["history"].append(_event(now_iso, e["legal"]["status"], "flight-check",
-                                                    "classification changed from %s to %s" % (e["legal"]["classification"], legal["classification"]), run_id))
+                e["legal"] = {"classification": legal["classification"]}
+            else:
                 e["legal"]["classification"] = legal["classification"]
         f["id"] = e["id"]
         f["fingerprint"] = entry_fp
         f["status"] = e["status"]
         f["first_seen_run"] = e["first_seen_run"]
-        f["legal_status"] = e["legal"]["status"] if "legal" in e else None
+        f["legal_status"] = (e.get("legal") or {}).get("status")  # 1.0 ledgers only; legal.sync_findings sets it otherwise
         if e["status"] == "ACCEPTED_RISK":
             f["accepted_risk"] = e["accepted_risk"]
 
@@ -342,32 +340,6 @@ def revoke_acceptance(led, ref, note, now_iso):
         if ref not in led["control_acceptances"]:
             raise LedgerError("control %s has no acceptance" % ref)
         del led["control_acceptances"][ref]
-
-
-def set_legal_status(led, finding_id, status, note, source, now_iso, reason=None):
-    if status not in constants.LEGAL_STATUSES:
-        raise LedgerError("unknown legal status %s (expected one of %s)" % (status, ", ".join(constants.LEGAL_STATUSES)))
-    if source not in ("user", "flight-check"):
-        raise LedgerError("source must be user or flight-check")
-    _, entry = find_entry(led, finding_id)
-    if "legal" not in entry:
-        raise LedgerError("%s has no legal classification; only legal/business findings are tracked for counsel review" % finding_id)
-    if status in constants.LEGAL_STATUSES_USER_ONLY:
-        if source != "user":
-            raise LedgerError("%s may only be recorded from information the user provides (source user)" % status)
-        if not (note or "").strip():
-            raise LedgerError("%s needs a note recording what the user reported (Flight Check never invents counsel's conclusions)" % status)
-    current = entry["legal"]["status"]
-    order = constants.LEGAL_STATUSES
-    if order.index(status) < order.index(current) and not (reason or "").strip():
-        raise LedgerError("moving legal status backwards from %s to %s needs a reason" % (current, status))
-    if status in ("VERIFIED", "CLOSED") and current not in ("IMPLEMENTED", "VERIFIED", "DECISION_RECEIVED") and not (reason or "").strip():
-        raise LedgerError("closing legal review from %s needs a reason (for example: counsel advised no change)" % current)
-    text = note or ""
-    if reason:
-        text = (text + " | reason: " + reason).strip(" |")
-    entry["legal"]["status"] = status
-    entry["legal"]["history"].append(_event(now_iso, status, source, text or None))
 
 
 def record_remediation(led, finding_id, note, files, now_iso, source="flight-check"):

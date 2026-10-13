@@ -13,6 +13,7 @@ KINDS = {
     "requirement": {"key": "requirements", "prefix": "REQ"},
     "decision": {"key": "decisions", "prefix": "DEC"},
     "risk": {"key": "risks", "prefix": "RISK"},
+    "legal": {"key": "legal", "prefix": "LR"},
 }
 
 # Who may move a record into each status. "evidence" means only a finalized audit (see apply_assessment).
@@ -24,10 +25,15 @@ TRANSITIONS = {
     "risk": {"OPEN": {"user", "flight-check"}, "REOPENED": {"user", "flight-check"}, "UNDER_REVIEW": {"user"},
              "MITIGATION_PLANNED": {"user"}, "ACCEPTED": {"user"}, "MITIGATED": {"user", "evidence"},
              "RESOLVED": {"user", "evidence"}},
+    # Flight Check never marks a legal question reviewed, resolved, or not applicable.
+    "legal": {"NEEDS_REVIEW": {"user", "flight-check"}, "AWAITING_BUSINESS_DECISION": {"user"},
+              "AWAITING_COUNSEL": {"user"}, "ACTION_REQUIRED": {"user"}, "REVIEWED": {"user"}, "RESOLVED": {"user"},
+              "NOT_APPLICABLE": {"user"}},
 }
 INITIAL = {"requirement": {"user": "ACCEPTED", "flight-check": "PROPOSED"},
            "decision": {"user": "ACCEPTED", "flight-check": "PROPOSED"},
-           "risk": {"user": "OPEN", "flight-check": "OPEN"}}
+           "risk": {"user": "OPEN", "flight-check": "OPEN"},
+           "legal": {"user": "NEEDS_REVIEW", "flight-check": "NEEDS_REVIEW"}}
 
 LINK_PATTERNS = {"findings": r"FC-[0-9]{4,}", "requirements": r"REQ-[0-9]{4,}", "decisions": r"DEC-[0-9]{4,}",
                  "risks": r"RISK-[0-9]{4,}", "legal": r"LR-[0-9]{4,}", "profile": r"PF-[0-9]{4,}"}
@@ -110,10 +116,13 @@ FIELDS = {
                  "optional": ("rationale", "alternatives", "owner", "date", "review_triggers", "assertions")},
     "risk": {"required": ("title", "description", "domain", "severity"),
              "optional": ("confidence", "impact", "likelihood", "owner", "mitigation_plan", "next_review")},
+    "legal": {"required": ("title", "category", "description", "trigger"),
+              "optional": ("classification", "confidence", "jurisdiction", "jurisdiction_unknown", "questions", "owner",
+                           "review_date", "resolution_notes", "references")},
 }
 LIMITS = {"title": 300, "description": 4000, "context": 4000, "decision": 4000, "rationale": 4000, "alternatives": 4000,
           "owner": 200, "impact": 2000, "likelihood": 1000, "mitigation_plan": 4000, "applicability": 300,
-          "next_review": 300}
+          "next_review": 300, "category": 120, "trigger": 1000, "jurisdiction": 300, "resolution_notes": 4000}
 
 
 def _apply_fields(kind, rec, fields):
@@ -122,8 +131,10 @@ def _apply_fields(kind, rec, fields):
             continue
         if name not in FIELDS[kind]["required"] + FIELDS[kind]["optional"]:
             raise RegisterError("%s records have no field %s" % (kind, name))
-        if isinstance(value, list):
-            rec[name] = [_clean(v, 500) for v in value]
+        if isinstance(value, bool):
+            rec[name] = value
+        elif isinstance(value, list):
+            rec[name] = [_clean(v, 1000 if name == "questions" else 500) for v in value][:20]
         elif name in LIMITS:
             rec[name] = _clean(value, LIMITS[name])
         else:
@@ -146,6 +157,8 @@ def add(kind, project, registers, led, fields, source, now_iso, links=None, by=N
         rec["verification"] = {"state": "unverified"}
     if kind == "risk":
         rec["first_observed"] = now_iso
+    if kind == "legal" and not fields.get("jurisdiction"):
+        rec["jurisdiction_unknown"] = True
     _apply_fields(kind, rec, fields)
     if links:
         link_map, controls = parse_links(links, project, registers, led)
@@ -170,6 +183,8 @@ def update(project, registers, led, record_id, source, now_iso, status=None, fie
             raise RegisterError("use `risk accept` with a complete acceptance record to accept a risk")
         if status in ("MITIGATED", "RESOLVED") and source == "user" and not (note and len(note.strip()) >= 5):
             raise RegisterError("say what resolved or mitigated %s (--note)" % record_id)
+        if kind == "legal" and status in ("REVIEWED", "NOT_APPLICABLE") and not (note and len(note.strip()) >= 5):
+            raise RegisterError("record what you were told or decided for %s (--note); Flight Check never fills this in" % record_id)
         if kind == "decision" and status == "SUPERSEDED":
             if not superseded_by:
                 raise RegisterError("give --superseded-by DEC-xxxx")
@@ -221,7 +236,7 @@ def active_assertions(registers):
 def reverse_links(registers, record_id):
     """Records that link to record_id (links are stored on one side only)."""
     out = []
-    for spec in list(KINDS.values()) + [{"key": "legal"}]:
+    for spec in KINDS.values():
         for rec in registers.get(spec["key"]) or []:
             if any(record_id in values for values in (rec.get("links") or {}).values()):
                 out.append(rec["id"])
@@ -300,5 +315,8 @@ def summary_row(kind, rec):
         row.update(severity=rec["severity"], domain=rec["domain"], accepted=bool(rec.get("acceptance")))
     elif kind == "decision":
         row.update(superseded_by=rec.get("superseded_by"), assertions=len(rec.get("assertions") or []))
+    elif kind == "legal":
+        row.update(category=rec["category"], classification=rec.get("classification"), trigger=rec["trigger"],
+                   jurisdiction=rec.get("jurisdiction") or "unknown", questions=len(rec.get("questions") or []))
     row["links"] = rec.get("links") or {}
     return row

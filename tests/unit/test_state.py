@@ -12,7 +12,7 @@ from unittest import mock
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import helpers  # noqa: E402
-from flight_check_lib import cli, ledger, lockfile, state  # noqa: E402
+from flight_check_lib import cli, constants, ledger, lockfile, state  # noqa: E402
 
 T1, T2, T3 = "2026-10-13T10:00:00Z", "2026-10-13T11:00:00Z", "2026-10-13T12:00:00Z"
 
@@ -111,7 +111,7 @@ class InitAndLoadTests(StateTestCase):
 
 
 class MigrationTests(StateTestCase):
-    def test_v1_ledger_migrates_without_being_changed(self):
+    def test_v1_ledger_migrates_with_legal_items_and_a_backup(self):
         os.makedirs(self.sd)
         src = os.path.join(helpers.REPO, ".flight-check", "ledger.json")
         shutil.copy(src, os.path.join(self.sd, "ledger.json"))
@@ -122,13 +122,27 @@ class MigrationTests(StateTestCase):
         code, out = self.init()
         self.assertEqual(code, 0, out)
         self.assertTrue(out["migrated_from_1_0"])
-        self.assertEqual(read(os.path.join(self.sd, "ledger.json")), before)
+        old = json.loads(before)
         st = self.load()
-        self.assertEqual(st.project["identity"]["name"], json.loads(before)["project"]["name"])
+        self.assertEqual(st.ledger["schema_version"], "2.0")
+        self.assertEqual(sorted(e["id"] for e in st.ledger["entries"].values()), sorted(e["id"] for e in old["entries"].values()))
+        self.assertEqual(st.project["identity"]["name"], old["project"]["name"])
         self.assertIn("1.0 ledger with %d finding" % len(st.ledger["entries"]), st.events[0]["reason"])
+        self.assertEqual(st.events[1]["change"], {"ledger_schema": ["1.0", "2.0"]})
+        # Every 1.0 legal status became a legal item with its history, linked from the finding.
+        with_legal = {e["id"]: e["legal"] for e in old["entries"].values() if e.get("legal")}
+        self.assertEqual(len(st.registers["legal"]), len(with_legal))
+        items = {i["id"]: i for i in st.registers["legal"]}
+        for e in st.ledger["entries"].values():
+            if e["id"] in with_legal:
+                item = items[e["legal"]["item"]]
+                self.assertEqual(item["status"], constants.V1_LEGAL_TO_ITEM[with_legal[e["id"]]["status"]])
+                self.assertEqual(len(item["history"]), len(with_legal[e["id"]]["history"]) + 1)
+                self.assertNotIn("status", e["legal"])
         backups = state.list_backups(self.sd)
         self.assertEqual(len(backups), 1)
         self.assertEqual(read(os.path.join(backups[0]["backup"], "ledger.json")), before)
+        self.assertEqual(run_cli("state", "check", "--root", self.root)[0], 0)
 
     def test_first_v1_ledger_command_migrates_and_logs(self):
         os.makedirs(self.sd)
@@ -158,11 +172,14 @@ class FinalizeIntegrationTests(unittest.TestCase):
             code, out = run_cli("finalize", run_dir, "--root", helpers.FIXTURE_ROOT, "--ledger", led, "--now", now)
             self.assertEqual(code, 0, out)
         st = state.load(tmp)
-        self.assertEqual([e["command"] for e in st.events], ["finalize", "finalize", "finalize"])  # init, run 1, run 2
-        self.assertEqual(st.events[1]["change"]["gate"][0], None)
-        self.assertEqual(st.events[2]["change"]["gate"][0], st.events[1]["change"]["gate"][1])
+        runs = [e for e in st.events if "gate" in e["change"]]
+        self.assertEqual(st.events[0]["record"], "state")  # state created by the first finalize
+        self.assertEqual(len(runs), 2)
+        self.assertEqual(runs[0]["change"]["gate"][0], None)
+        self.assertEqual(runs[1]["change"]["gate"][0], runs[0]["change"]["gate"][1])
         stamps = st.project["readiness"]
-        self.assertEqual([s["revision"] for s in stamps], [2, 3])
+        self.assertEqual(len(stamps), 2)
+        self.assertLess(stamps[0]["revision"], stamps[1]["revision"])
         self.assertEqual(stamps[-1]["revision"], st.project["revision"])
         self.assertEqual(stamps[-1]["decision"], out["gate"])
 
@@ -172,6 +189,7 @@ class FinalizeIntegrationTests(unittest.TestCase):
         led = os.path.join(tmp, "ledger.json")
         run1 = write_run(tmp, "20261013T100000Z")
         self.assertEqual(run_cli("finalize", run1, "--root", helpers.FIXTURE_ROOT, "--ledger", led, "--now", T1)[0], 0)
+        revision = state.load(tmp).project["revision"]
         run2 = write_run(tmp, "20261013T110000Z")
         with open(os.path.join(run2, "run-ref.json"), "w") as fh:
             json.dump({"project_id": "f" * 32, "revision": 1, "run_id": "20261013T110000Z"}, fh)
@@ -179,7 +197,7 @@ class FinalizeIntegrationTests(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("will not be merged", out["error"])
         self.assertFalse(os.path.exists(os.path.join(run2, "audit.final.json")))
-        self.assertEqual(state.load(tmp).project["revision"], 2)
+        self.assertEqual(state.load(tmp).project["revision"], revision)
 
     def test_init_run_records_the_project(self):
         tmp = tempfile.mkdtemp(prefix="flight-check-state-")

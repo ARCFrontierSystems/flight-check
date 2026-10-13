@@ -31,7 +31,7 @@ Top-level keys:
   - `status` (ledger status), `release_blocking_effective`.
   - `evidence[]`, each item with `check` (OK, QUOTE_MISMATCH, ...), and `evidence_check` (PASSED, FAILED, PARTIAL, NOT_APPLICABLE).
   - `counterevidence[]`, `affected_components[]`, `explanation`, `impact`, `remediation`.
-  - `legal` (classification, questions, decisions) and `legal_status`.
+  - `legal` (classification, questions, decisions) and `legal_status`: from version 1.5, the status of the finding's legal review item (`NEEDS_REVIEW`, `AWAITING_BUSINESS_DECISION`, `AWAITING_COUNSEL`, `REVIEWED`, `ACTION_REQUIRED`, `RESOLVED`, `NOT_APPLICABLE`), or null when the finding has no item (no legal classification, or INFORMATIONAL). Version 1.0 used the older ledger statuses (`OPEN`, `LEGAL_REVIEW_REQUESTED`, ...).
   - `human_review`, and `verification` (the verifier's verdict and notes).
 - **`rejected_findings`, `duplicate_findings`:** kept for transparency; they do not affect the gate.
 - **`positive_controls`, `unconfirmed_positive_controls`, `unverified_areas`.**
