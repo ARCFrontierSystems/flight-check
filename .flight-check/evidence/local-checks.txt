@@ -1,5 +1,5 @@
 Local check results for this repository
-Generated: 2026-10-12T22:20:19Z on commit 29c948d218cd991592c337eb416256b2f458fa0d
+Generated: 2026-10-13T05:10:44Z on commit 8d559726abf8baa5c2b4bee7b445a1870ca74ffc
 Environment: Python 3.11.15 and Python 3.9.23, 2.1.296 (Claude Code)
 
 == python3 -m unittest discover -s tests/unit -p 'test_*.py' -v
@@ -20,8 +20,49 @@ test_business_decision_without_questions_says_so (test_end_to_end.PacketQuestion
 test_request_can_choose_and_order_audit_questions (test_end_to_end.PacketQuestionTests.test_request_can_choose_and_order_audit_questions) ... ok
 test_request_cannot_select_missing_or_repeated_questions (test_end_to_end.PacketQuestionTests.test_request_cannot_select_missing_or_repeated_questions) ... ok
 test_language_tag_is_validated (test_end_to_end.PdfLanguageTests.test_language_tag_is_validated) ... ok
+test_background_agent_transcript_yields_its_final_reply (test_end_to_end.SaveReplyTests.test_background_agent_transcript_yields_its_final_reply) ... ok
 test_large_reply_saved_by_claude_code_is_copied_exactly (test_end_to_end.SaveReplyTests.test_large_reply_saved_by_claude_code_is_copied_exactly) ... ok
 test_secrets_in_agent_output_never_reach_json_or_ledger (test_end_to_end.SecretMaskingTests.test_secrets_in_agent_output_never_reach_json_or_ledger) ... ok
+test_changed_cited_source_file (test_freshness.ChangeDetectionTests.test_changed_cited_source_file) ... ok
+test_decision_triggers_and_requirement_staleness (test_freshness.ChangeDetectionTests.test_decision_triggers_and_requirement_staleness) ... ok
+test_evidence_states_and_rules (test_freshness.ChangeDetectionTests.test_evidence_states_and_rules) ... ok
+test_finalize_records_hashes_and_stable_positive_controls (test_freshness.ChangeDetectionTests.test_finalize_records_hashes_and_stable_positive_controls) ... ok
+test_no_change (test_freshness.ChangeDetectionTests.test_no_change) ... ok
+test_removed_file_makes_evidence_missing (test_freshness.ChangeDetectionTests.test_removed_file_makes_evidence_missing) ... ok
+test_scan_skips_vcs_state_dependencies_and_symlinks (test_freshness.ChangeDetectionTests.test_scan_skips_vcs_state_dependencies_and_symlinks) ... ok
+test_source_change_reassesses_access_control_and_data_domains (test_freshness.ChangeDetectionTests.test_source_change_reassesses_access_control_and_data_domains) ... ok
+test_unexplained_file_and_missing_manifest_widen (test_freshness.ChangeDetectionTests.test_unexplained_file_and_missing_manifest_widen) ... ok
+test_false_positive_is_visible_and_critical_still_blocks (test_freshness.GateInputTests.test_false_positive_is_visible_and_critical_still_blocks) ... ok
+test_records_feed_the_gate (test_freshness.GateInputTests.test_records_feed_the_gate) ... ok
+test_a_judged_match_does_not_inherit_an_acceptance_for_something_milder (test_freshness.GateReviewFixTests.test_a_judged_match_does_not_inherit_an_acceptance_for_something_milder) ... ok
+test_dismissal_during_a_run_does_not_change_that_run (test_freshness.GateReviewFixTests.test_dismissal_during_a_run_does_not_change_that_run) ... ok
+test_flight_check_never_reverts_user_decisions (test_freshness.GateReviewFixTests.test_flight_check_never_reverts_user_decisions) ... ok
+test_open_findings_in_a_domain_reported_not_applicable_still_count (test_freshness.GateReviewFixTests.test_open_findings_in_a_domain_reported_not_applicable_still_count) ... ok
+test_register_acceptance_timing_and_dates (test_freshness.GateReviewFixTests.test_register_acceptance_timing_and_dates) ... ok
+test_requirement_not_verified_while_a_linked_finding_is_triaged_and_remediation_allowed (test_freshness.GateReviewFixTests.test_requirement_not_verified_while_a_linked_finding_is_triaged_and_remediation_allowed) ... ok
+test_carried_controls_are_rechecked_and_never_newly_verify (test_freshness.IncrementalTests.test_carried_controls_are_rechecked_and_never_newly_verify) ... ok
+test_change_during_run_is_not_carried_forward (test_freshness.IncrementalTests.test_change_during_run_is_not_carried_forward) ... ok
+test_inventory_no_does_not_drop_a_carried_domain (test_freshness.IncrementalTests.test_inventory_no_does_not_drop_a_carried_domain) ... ok
+test_nothing_changed_starts_no_run (test_freshness.IncrementalTests.test_nothing_changed_starts_no_run) ... ok
+test_unaffected_domain_is_carried_forward_and_still_counts (test_freshness.IncrementalTests.test_unaffected_domain_is_carried_forward_and_still_counts) ... ok
+test_user_triage_statuses (test_freshness.LifecycleTests.test_user_triage_statuses) ... ok
+test_verifier_recorded_id_reaches_the_ledger_through_a_duplicate (test_freshness.RecordedIdentityFinalizeTests.test_verifier_recorded_id_reaches_the_ledger_through_a_duplicate) ... ok
+test_identity_judgment_is_only_a_possible_regression_and_never_beats_a_fingerprint (test_freshness.RecordedIdentityTests.test_identity_judgment_is_only_a_possible_regression_and_never_beats_a_fingerprint) ... ok
+test_recorded_id_keeps_history_across_rule_title_and_domain (test_freshness.RecordedIdentityTests.test_recorded_id_keeps_history_across_rule_title_and_domain) ... ok
+test_reworded_finding_without_identity_is_new (test_freshness.RecordedIdentityTests.test_reworded_finding_without_identity_is_new) ... ok
+test_a_change_no_applicable_domain_needs_runs_with_no_agent (test_freshness.ReviewFixTests.test_a_change_no_applicable_domain_needs_runs_with_no_agent) ... ok
+test_a_file_cited_only_by_a_record_without_a_domain_still_widens (test_freshness.ReviewFixTests.test_a_file_cited_only_by_a_record_without_a_domain_still_widens) ... ok
+test_carried_findings_seen_later_in_the_chain_still_count (test_freshness.ReviewFixTests.test_carried_findings_seen_later_in_the_chain_still_count) ... ok
+test_dot_slash_evidence_paths_are_normalized (test_freshness.ReviewFixTests.test_dot_slash_evidence_paths_are_normalized) ... ok
+test_expired_acceptance_means_the_decision_must_be_remade (test_freshness.ReviewFixTests.test_expired_acceptance_means_the_decision_must_be_remade) ... ok
+test_imported_evidence_outside_the_project_is_not_stored_as_a_path (test_freshness.ReviewFixTests.test_imported_evidence_outside_the_project_is_not_stored_as_a_path) ... ok
+test_rule_matching_ignores_case_and_nested_build_dirs_are_scanned (test_freshness.ReviewFixTests.test_rule_matching_ignores_case_and_nested_build_dirs_are_scanned) ... ok
+test_corrupt_or_linked_file_list_widens (test_hardening.BrokenInputTests.test_corrupt_or_linked_file_list_widens) ... ok
+test_malformed_scope_stops_finalize_and_writes_nothing (test_hardening.BrokenInputTests.test_malformed_scope_stops_finalize_and_writes_nothing) ... ok
+test_stopped_scan_widens (test_hardening.BrokenInputTests.test_stopped_scan_widens) ... ok
+test_tampered_scope_cannot_carry_an_affected_domain (test_hardening.BrokenInputTests.test_tampered_scope_cannot_carry_an_affected_domain) ... ok
+test_large_files_compare_by_size_alike_everywhere (test_hardening.LargeFileTests.test_large_files_compare_by_size_alike_everywhere) ... ok
+test_baseline_records_change_reassess_report (test_integration.WorkflowTests.test_baseline_records_change_reassess_report) ... ok
 test_duplicates_in_one_run_get_distinct_fingerprints (test_ledger_gate.FingerprintTests.test_duplicates_in_one_run_get_distinct_fingerprints) ... ok
 test_stable_across_line_shift (test_ledger_gate.FingerprintTests.test_stable_across_line_shift) ... ok
 test_acceptance_recorded_during_the_run_does_not_count (test_ledger_gate.GateTests.test_acceptance_recorded_during_the_run_does_not_count) ... ok
@@ -55,34 +96,98 @@ test_reworded_rule_on_the_same_line_keeps_id (test_ledger_gate.LedgerTests.test_
 test_run_cannot_be_merged_twice (test_ledger_gate.LedgerTests.test_run_cannot_be_merged_twice) ... ok
 test_same_finding_with_changed_quote_keeps_id (test_ledger_gate.LedgerTests.test_same_finding_with_changed_quote_keeps_id) ... ok
 test_stable_ids_and_regression (test_ledger_gate.LedgerTests.test_stable_ids_and_regression) ... ok
+test_finding_status_shows_in_reports_and_v1_command_maps (test_legal.CliAndPacketTests.test_finding_status_shows_in_reports_and_v1_command_maps) ... ok
+test_standalone_items_list_message_and_packet (test_legal.CliAndPacketTests.test_standalone_items_list_message_and_packet) ... ok
+test_an_item_flight_check_opens_is_attributed_to_it (test_legal.SyncTests.test_an_item_flight_check_opens_is_attributed_to_it) ... ok
+test_legal_findings_open_items_and_informational_ones_do_not (test_legal.SyncTests.test_legal_findings_open_items_and_informational_ones_do_not) ... ok
+test_only_the_user_closes_legal_questions (test_legal.SyncTests.test_only_the_user_closes_legal_questions) ... ok
+test_reclassification_new_questions_and_regression (test_legal.SyncTests.test_reclassification_new_questions_and_regression) ... ok
+test_regression_without_a_legal_block_still_reopens_the_item (test_legal.SyncTests.test_regression_without_a_legal_block_still_reopens_the_item) ... ok
 test_balanced_deterministic_subset_with_valid_manifest (test_owasp_subset.OwaspSubsetTests.test_balanced_deterministic_subset_with_valid_manifest) ... {
- "app": "/tmp/tmp2khktjt1/fixture/app",
- "manifest": "/tmp/tmp2khktjt1/fixture/ground-truth/manifest.json",
- "real_cases": 22,
- "false_positive_cases": 22
-}
-{
- "app": "/tmp/tmperqvidsr/fixture/app",
- "manifest": "/tmp/tmperqvidsr/fixture/ground-truth/manifest.json",
- "real_cases": 22,
- "false_positive_cases": 22
-}
-ok
 test_deidentified_copy_hides_the_benchmark_and_keeps_answers_aligned (test_owasp_subset.OwaspSubsetTests.test_deidentified_copy_hides_the_benchmark_and_keeps_answers_aligned) ... {
- "app": "/tmp/tmp227h_zen/fixture/app",
- "manifest": "/tmp/tmp227h_zen/fixture/ground-truth/manifest.json",
- "real_cases": 11,
- "false_positive_cases": 11
-}
-ok
 test_deidentify_refuses_without_the_license (test_owasp_subset.OwaspSubsetTests.test_deidentify_refuses_without_the_license) ... ok
 test_refuses_to_write_inside_this_repository (test_owasp_subset.OwaspSubsetTests.test_refuses_to_write_inside_this_repository) ... ok
+test_classifications_and_missing_absence_evidence (test_profile.ApplicabilityTests.test_classifications_and_missing_absence_evidence) ... ok
+test_overrides_never_hide_evidence (test_profile.ApplicabilityTests.test_overrides_never_hide_evidence) ... ok
+test_overrides_in_coverage (test_profile.AssembleOverrideTests.test_overrides_in_coverage) ... ok
+test_profile_and_applicability_commands (test_profile.CliTests.test_profile_and_applicability_commands) ... ok
+test_user_commands_need_existing_state (test_profile.CliTests.test_user_commands_need_existing_state) ... ok
+test_correction_contradicted_by_evidence_is_flagged_not_resolved (test_profile.CorrectionTests.test_correction_contradicted_by_evidence_is_flagged_not_resolved) ... ok
+test_corrections_carry_over_to_a_new_observation (test_profile.CorrectionTests.test_corrections_carry_over_to_a_new_observation) ... ok
+test_declarations_sit_beside_observations (test_profile.CorrectionTests.test_declarations_sit_beside_observations) ... ok
+test_replace_needs_a_value_and_unknown_fact_is_refused (test_profile.CorrectionTests.test_replace_needs_a_value_and_unknown_fact_is_refused) ... ok
+test_inventory_becomes_evidence_backed_facts (test_profile.MergeTests.test_inventory_becomes_evidence_backed_facts) ... ok
+test_out_of_root_evidence_is_dropped (test_profile.MergeTests.test_out_of_root_evidence_is_dropped) ... ok
+test_repeat_change_and_disappearance (test_profile.MergeTests.test_repeat_change_and_disappearance) ... ok
+test_packet_output_is_limited (test_profile.PacketOutTests.test_packet_output_is_limited) ... ok
+test_a_correction_survives_an_aspect_dropping_out_and_coming_back (test_profile.ReviewFixTests.test_a_correction_survives_an_aspect_dropping_out_and_coming_back) ... ok
+test_an_assessed_domain_is_never_stored_not_applicable_on_the_inventory_alone (test_profile.ReviewFixTests.test_an_assessed_domain_is_never_stored_not_applicable_on_the_inventory_alone) ... ok
+test_corrections_and_withdrawals_reach_the_current_fact (test_profile.ReviewFixTests.test_corrections_and_withdrawals_reach_the_current_fact) ... ok
+test_declare_normalizes_labels (test_profile.ReviewFixTests.test_declare_normalizes_labels) ... ok
+test_rewording_never_grows_the_profile_without_bound (test_profile.ReviewFixTests.test_rewording_never_grows_the_profile_without_bound) ... ok
+test_accepted_risk_is_not_auto_mitigated (test_registers.AssessmentTests.test_accepted_risk_is_not_auto_mitigated) ... ok
+test_requirement_verified_only_by_evidence_and_risks_follow_findings (test_registers.AssessmentTests.test_requirement_verified_only_by_evidence_and_risks_follow_findings) ... ok
+test_bad_input_is_refused_without_writing (test_registers.CliTests.test_bad_input_is_refused_without_writing) ... usage: flight-check risk add [-h] [--root ROOT] [--state-dir STATE_DIR]
+test_full_cycle (test_registers.CliTests.test_full_cycle) ... ok
+test_links_must_point_at_real_records (test_registers.RecordRuleTests.test_links_must_point_at_real_records) ... ok
+test_risk_acceptance_keeps_severity_and_needs_a_full_record (test_registers.RecordRuleTests.test_risk_acceptance_keeps_severity_and_needs_a_full_record) ... ok
+test_text_is_masked (test_registers.RecordRuleTests.test_text_is_masked) ... ok
+test_user_records_versus_flight_check_suggestions (test_registers.RecordRuleTests.test_user_records_versus_flight_check_suggestions) ... ok
+test_who_may_change_what (test_registers.RecordRuleTests.test_who_may_change_what) ... ok
 test_domain_mismatch_is_not_a_match (test_scorer.ScorerTests.test_domain_mismatch_is_not_a_match) ... ok
 test_grouped_finding_covers_several_issues_by_evidence (test_scorer.ScorerTests.test_grouped_finding_covers_several_issues_by_evidence) ... ok
 test_manifest_validation (test_scorer.ScorerTests.test_manifest_validation) ... ok
 test_matching_decoys_unlisted_and_metrics (test_scorer.ScorerTests.test_matching_decoys_unlisted_and_metrics) ... ok
 test_primary_location_outranks_a_larger_alternate_overlap (test_scorer.ScorerTests.test_primary_location_outranks_a_larger_alternate_overlap) ... ok
 test_stability_summary_across_runs (test_scorer.ScorerTests.test_stability_summary_across_runs) ... ok
+test_backup_and_restore_keep_the_log (test_state.ExportImportBackupTests.test_backup_and_restore_keep_the_log) ... ok
+test_export_import_round_trip (test_state.ExportImportBackupTests.test_export_import_round_trip) ... ok
+test_import_from_another_project_needs_adopt (test_state.ExportImportBackupTests.test_import_from_another_project_needs_adopt) ... ok
+test_restore_refuses_paths_outside_backups_and_damaged_backups (test_state.ExportImportBackupTests.test_restore_refuses_paths_outside_backups_and_damaged_backups) ... ok
+test_tampered_export_is_rejected (test_state.ExportImportBackupTests.test_tampered_export_is_rejected) ... ok
+test_finalize_logs_runs_and_stamps_readiness (test_state.FinalizeIntegrationTests.test_finalize_logs_runs_and_stamps_readiness) ... ok
+test_init_run_records_the_project (test_state.FinalizeIntegrationTests.test_init_run_records_the_project) ... ok
+test_run_from_another_project_is_refused (test_state.FinalizeIntegrationTests.test_run_from_another_project_is_refused) ... ok
+test_init_creates_valid_state_with_identity_and_log (test_state.InitAndLoadTests.test_init_creates_valid_state_with_identity_and_log) ... ok
+test_monorepo_apps_get_separate_identities (test_state.InitAndLoadTests.test_monorepo_apps_get_separate_identities) ... ok
+test_project_without_git (test_state.InitAndLoadTests.test_project_without_git) ... ok
+test_repository_url_cleaning (test_state.InitAndLoadTests.test_repository_url_cleaning) ... ok
+test_clean_state_checks_ok (test_state.IntegrityTests.test_clean_state_checks_ok) ... ok
+test_corrupt_and_malicious_files (test_state.IntegrityTests.test_corrupt_and_malicious_files) ... ok
+test_edited_history_is_detected (test_state.IntegrityTests.test_edited_history_is_detected) ... ok
+test_generated_fact_cannot_claim_to_be_declared (test_state.IntegrityTests.test_generated_fact_cannot_claim_to_be_declared) ... ok
+test_removed_event_breaks_the_chain (test_state.IntegrityTests.test_removed_event_breaks_the_chain) ... ok
+test_revision_out_of_step_with_log (test_state.IntegrityTests.test_revision_out_of_step_with_log) ... ok
+test_symlinked_state_directory_is_refused (test_state.IntegrityTests.test_symlinked_state_directory_is_refused) ... ok
+test_symlinked_state_files_are_refused (test_state.IntegrityTests.test_symlinked_state_files_are_refused) ... ok
+test_moving_the_whole_repository_keeps_identity (test_state.IsolationTests.test_moving_the_whole_repository_keeps_identity) ... ok
+test_state_copied_to_another_app_is_refused_until_adopted (test_state.IsolationTests.test_state_copied_to_another_app_is_refused_until_adopted) ... ok
+test_concurrent_writer_waits_then_fails_clearly (test_state.LockTests.test_concurrent_writer_waits_then_fails_clearly) ... ok
+test_first_v1_ledger_command_migrates_and_logs (test_state.MigrationTests.test_first_v1_ledger_command_migrates_and_logs) ... ok
+test_v1_ledger_migrates_with_legal_items_and_a_backup (test_state.MigrationTests.test_v1_ledger_migrates_with_legal_items_and_a_backup) ... ok
+test_interrupted_after_logging_is_completed (test_state.RecoveryTests.test_interrupted_after_logging_is_completed) ... ok
+test_interrupted_before_logging_is_rolled_back (test_state.RecoveryTests.test_interrupted_before_logging_is_rolled_back) ... ok
+test_nothing_is_written_when_the_command_fails (test_state.RecoveryTests.test_nothing_is_written_when_the_command_fails) ... ok
+test_partial_log_line_is_rolled_back (test_state.RecoveryTests.test_partial_log_line_is_rolled_back) ... ok
+test_duplicate_positive_controls_keep_one_id (test_state_hardening.CompatibilityTests.test_duplicate_positive_controls_keep_one_id) ... ok
+test_ledger_legal_needs_a_reason_to_move_back_or_close_early (test_state_hardening.CompatibilityTests.test_ledger_legal_needs_a_reason_to_move_back_or_close_early) ... ok
+test_same_project_through_a_symlinked_path (test_state_hardening.CompatibilityTests.test_same_project_through_a_symlinked_path) ... ok
+test_v1_migration_maps_implemented_skips_untouched_informational_and_truncates_notes (test_state_hardening.CompatibilityTests.test_v1_migration_maps_implemented_skips_untouched_informational_and_truncates_notes) ... ok
+test_new_project_is_not_logged_as_a_migration (test_state_hardening.FirstAuditTests.test_new_project_is_not_logged_as_a_migration) ... ok
+test_damaged_backups_are_refused_without_a_traceback (test_state_hardening.ImportRestoreTests.test_damaged_backups_are_refused_without_a_traceback) ... ok
+test_edited_summary_fields_are_refused (test_state_hardening.ImportRestoreTests.test_edited_summary_fields_are_refused) ... ok
+test_restore_never_reuses_ids_and_adopt_restores_a_foreign_backup (test_state_hardening.ImportRestoreTests.test_restore_never_reuses_ids_and_adopt_restores_a_foreign_backup) ... ok
+test_backups_are_never_written_through_a_link (test_state_hardening.LockAndLinkTests.test_backups_are_never_written_through_a_link) ... ok
+test_dangling_lock_link_fails_fast (test_state_hardening.LockAndLinkTests.test_dangling_lock_link_fails_fast) ... ok
+test_matching_seq_with_a_different_head_is_rolled_back (test_state_hardening.RecoverTests.test_matching_seq_with_a_different_head_is_rolled_back) ... ok
+test_planted_journal_cannot_reach_files_outside_the_state (test_state_hardening.RecoverTests.test_planted_journal_cannot_reach_files_outside_the_state) ... ok
+test_builtin_validator_agrees_with_reference (test_state_schema.StateSchemaTests.test_builtin_validator_agrees_with_reference) ... ok
+test_invalid_examples_are_rejected (test_state_schema.StateSchemaTests.test_invalid_examples_are_rejected) ... ok
+test_valid_examples (test_state_schema.StateSchemaTests.test_valid_examples) ... ok
+test_contradiction_links_finding_and_flags_decision (test_status.DecisionConsistencyTests.test_contradiction_links_finding_and_flags_decision) ... ok
+test_every_view_renders_and_writes (test_status.StatusTests.test_every_view_renders_and_writes) ... ok
+test_no_legal_issues_message_and_no_state (test_status.StatusTests.test_no_legal_issues_message_and_no_state) ... ok
+test_status_answers_from_records (test_status.StatusTests.test_status_answers_from_records) ... ok
 test_gap_heavy_quote_is_not_accepted (test_textsafety_evidence.EvidenceCheckTests.test_gap_heavy_quote_is_not_accepted) ... ok
 test_gaps_for_redaction_and_ellipsis (test_textsafety_evidence.EvidenceCheckTests.test_gaps_for_redaction_and_ellipsis) ... ok
 test_html_escaped_quote_is_decoded_once_and_restored (test_textsafety_evidence.EvidenceCheckTests.test_html_escaped_quote_is_decoded_once_and_restored) ... ok
@@ -98,6 +203,7 @@ test_markdown_neutralizes_links_images_and_html (test_textsafety_evidence.TextSa
 test_paths_are_not_redacted_but_random_tokens_are (test_textsafety_evidence.TextSafetyTests.test_paths_are_not_redacted_but_random_tokens_are) ... ok
 test_placeholders_are_not_redacted (test_textsafety_evidence.TextSafetyTests.test_placeholders_are_not_redacted) ... ok
 test_redacts_known_secret_formats (test_textsafety_evidence.TextSafetyTests.test_redacts_known_secret_formats) ... ok
+test_run_ids_and_backup_names_are_not_redacted (test_textsafety_evidence.TextSafetyTests.test_run_ids_and_backup_names_are_not_redacted) ... ok
 test_sanitize_removes_bidi_zero_width_ansi_and_controls (test_textsafety_evidence.TextSafetyTests.test_sanitize_removes_bidi_zero_width_ansi_and_controls) ... ok
 test_other_agents_and_not_met_stay_cautious (test_validation.ControlMergeTests.test_other_agents_and_not_met_stay_cautious) ... ok
 test_repeat_pass_evidence_verifies_a_control (test_validation.ControlMergeTests.test_repeat_pass_evidence_verifies_a_control) ... ok
@@ -121,35 +227,18 @@ test_vague_title_rejected (test_validation.PartValidationTests.test_vague_title_
 test_valid_part_passes (test_validation.PartValidationTests.test_valid_part_passes) ... ok
 test_violation_and_enforceability_conclusions_rejected (test_validation.PartValidationTests.test_violation_and_enforceability_conclusions_rejected) ... ok
 test_agreement_on_valid_and_invalid_documents (test_validation.SchemaAgreementTests.test_agreement_on_valid_and_invalid_documents) ... ok
-
-----------------------------------------------------------------------
-Ran 100 tests in 0.617s
-
+Ran 224 tests in 6.089s
 OK
 
 == python3.9 -m unittest discover -s tests/unit -p 'test_*.py'
-Ran 100 tests in 0.670s
-
-OK (skipped=1)
+Ran 224 tests in 8.703s
+OK (skipped=2)
 
 == python3 tools/sync_agents.py --check
-exit 0
+agents in sync
 
 == python3 tools/lint_plugin.py (with the private denylist)
-note: private denylist applied (5 terms) to 96 files
 lint passed
 
 == claude plugin validate --strict plugins/flight-check
-Validating plugin manifest: /home/user/project-guardian/plugins/flight-check/.claude-plugin/plugin.json
-
-i Advice (does not change the verdict):
-
-  > /home/user/project-guardian/plugins/flight-check/README.md: This README has no line that installs "flight-check" from a marketplace. Add the install line, which works in one step on Claude Code 2.1.275 or later. Validate the folder that holds its marketplace.json to have <owner>/<repo> filled in, and the name its marketplace lists it under.
-      /plugin install flight-check --marketplace <owner>/<repo>
-
-√ Validation passed
-
-== claude plugin validate --strict .
-Validating marketplace manifest: /home/user/project-guardian/.claude-plugin/marketplace.json
-
 √ Validation passed

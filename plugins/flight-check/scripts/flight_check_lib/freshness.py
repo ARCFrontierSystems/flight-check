@@ -48,6 +48,8 @@ def scan(root, max_files=MAX_FILES):
         dirnames[:] = sorted(d for d in dirnames if d not in SKIP_DIRS and not (top and d in SKIP_TOP_DIRS)
                              and not os.path.islink(os.path.join(dirpath, d)))
         for name in sorted(filenames):
+            if name in (".git", ".hg"):
+                continue  # a worktree or submodule keeps a .git file that points at the repository: not project content
             full = os.path.join(dirpath, name)
             try:
                 st = os.lstat(full)
@@ -68,6 +70,14 @@ def scan(root, max_files=MAX_FILES):
                 notes.insert(0, "stopped after %d files; changes beyond that are not detected, so reassessment is widened" % max_files)
                 return files, notes
     return files, notes
+
+
+def scanned_path(rel):
+    """Whether scan() looks at this relative path at all."""
+    parts = rel.split("/")
+    if parts[-1] in (".git", ".hg") or any(p in SKIP_DIRS for p in parts[:-1]):
+        return False
+    return not (len(parts) > 1 and parts[0] in SKIP_TOP_DIRS)
 
 
 def write_manifest(state_dir, root, run_id, now_iso, scanned=None):
@@ -215,7 +225,8 @@ def changes(root, st, max_files=MAX_FILES, scanned=None):
         reasons.append("%d file(s) over %d bytes are compared by size only" % (big, constants.MAX_HASHED_FILE_BYTES))
     widen = any("stopped after" in n for n in scan_notes)
     if manifest:
-        base = manifest["files"]
+        # A baseline from a version with other scan rules may list paths this scan skips; they are not changes.
+        base = {p: d for p, d in manifest["files"].items() if scanned_path(p)}
         baseline = {"run_id": manifest.get("run_id"), "at": manifest.get("created_at"), "kind": "manifest"}
         if manifest.get("partial"):
             widen = True
