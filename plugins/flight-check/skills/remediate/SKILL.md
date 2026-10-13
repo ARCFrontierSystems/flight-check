@@ -45,10 +45,10 @@ If the invoking message already explicitly authorizes the listed findings (for e
 
 For each approved finding:
 1. **Fix the root cause.** Fix the cause, not only the cited lines. Search for the same pattern elsewhere in the affected code and fix those instances too, listing them.
-2. **Add or update a regression test** where practical, following the project's existing test conventions. It should fail on the old behavior and pass on the new.
+2. **Add or update a regression test** where practical, following the project's existing test conventions. It should fail on the old behavior and pass on the new. Then **prove the test guards the fix,** when the project has tests and the user agreed to run them: break the fix on purpose, one part at a time (undo each check, condition, or line the fix added, or restore the old code path), and run the relevant tests after each break. At least one test must fail every time. Restore the fix right away, and re-read the file to confirm it matches the fixed version before the next break. If a break survives with every test green, the tests do not exercise the real path (for example, they call the function directly but never the route or wiring that uses it): add or change a test that does, and break again. Never leave a break in place, never commit while one is applied, and touch only the files the fix changed. Report the result in plain words, for example "I undid each part of the fix in turn, and all 4 breaks were caught by a test", or name the break that survived and the test you added for it.
 3. **Run the project's test suite**, or the relevant subset, if the user agrees, and report the result honestly. If tests fail, fix your change or tell the user. Never weaken or skip tests to get a pass.
 4. **Record the remediation:**
-   `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger remediate --ledger <ledger> --id <ID> --note "<what changed>" --file <path> [--file <path> ...]`
+   `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger remediate --ledger <ledger> --id <ID> --note "<what changed, and how many breaks the tests caught>" --file <path> [--file <path> ...]`
 
 ## 4. Re-audit
 
