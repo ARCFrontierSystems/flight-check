@@ -280,3 +280,73 @@ class CliTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ReviewFixTests(unittest.TestCase):
+    """Profile and applicability defects found by the V1.5 review (Phase 10)."""
+
+    def lang(self, value):
+        inv = helpers.base_inventory()
+        inv["items"][0] = dict(inv["items"][0], value=value)
+        return inv
+
+    def test_rewording_never_grows_the_profile_without_bound(self):
+        p = project()
+        for n in range(30):
+            profile.merge(p, self.lang("Python variant %d" % n), ROOT, "2026-10-13T10:%02d:00Z" % n, "r%d" % n)
+        past = [f for f in p["profile"]["facts"] if f["aspect"] == "language" and f["status"] != "current"]
+        self.assertEqual(len(past), profile.KEEP_PAST_FACTS)
+        self.assertEqual(valid(p), [])
+
+    def test_a_correction_survives_an_aspect_dropping_out_and_coming_back(self):
+        p = project()
+        profile.merge(p, self.lang("Python"), ROOT, T1, "r1")
+        fid = fact(p, "language")[0]["id"]
+        profile.correct(p, fid, "not_used", "the Python code is a test fixture only", T1)
+        inv = helpers.base_inventory()
+        inv["items"] = []
+        profile.merge(p, inv, ROOT, T2, "r2")  # the aspect goes historical
+        profile.merge(p, self.lang("Python 3.12"), ROOT, T3, "r3")  # and is observed again, reworded
+        current = fact(p, "language")[0]
+        self.assertTrue(any(c["active"] for c in current["corrections"]))
+        self.assertTrue(current["contradiction"])
+
+    def test_corrections_and_withdrawals_reach_the_current_fact(self):
+        p = project()
+        profile.merge(p, self.lang("Python"), ROOT, T1, "r1")
+        old = fact(p, "language")[0]["id"]
+        profile.merge(p, self.lang("Python with sqlite3"), ROOT, T2, "r2")
+        profile.correct(p, old, "not_used", "fixture only", T3)  # names the superseded fact
+        current = fact(p, "language")[0]
+        self.assertTrue(any(c["active"] for c in current["corrections"]))
+        profile.withdraw_corrections(p, old, "it is used after all", T3)
+        self.assertFalse(any(c["active"] for f in p["profile"]["facts"] for c in f.get("corrections") or []))
+
+    def test_declare_normalizes_labels(self):
+        p = project()
+        a = profile.declare(p, "database", "PostgreSQL 16", "ops runbook", T1)
+        profile.declare(p, "Database", "PostgreSQL 17", "upgrade", T2)
+        self.assertNotEqual(a["aspect"], "database")
+        self.assertEqual(len([f for f in p["profile"]["facts"] if f["aspect"] == a["aspect"] and f["status"] == "current"]), 1)
+
+    def test_an_assessed_domain_is_never_stored_not_applicable_on_the_inventory_alone(self):
+        p = project()
+        profile.merge(p, helpers.base_inventory(), ROOT, T1, "r1", {"payments": "ASSESSED"})
+        entry = next(a for a in p["applicability"] if a["domain"] == "payments")
+        self.assertEqual(entry["classification"], "uncertain")
+
+
+class PacketOutTests(unittest.TestCase):
+    def test_packet_output_is_limited(self):
+        from flight_check_lib import cli
+        tmp = tempfile.mkdtemp(prefix="flight-check-packet-out-")
+        self.addCleanup(shutil.rmtree, tmp, True)
+        run_dir = os.path.join(tmp, "run")
+        os.makedirs(run_dir)
+        existing = os.path.join(tmp, "notes.pdf")
+        open(existing, "w").close()
+        self.assertIsNone(cli._packet_out_problem(os.path.join(run_dir, "p.pdf"), os.path.join(run_dir, "p.md"), run_dir))
+        self.assertIn(".pdf", cli._packet_out_problem(os.path.join(tmp, "README.md"), os.path.join(tmp, "README.md"), run_dir))
+        self.assertIn("already exists", cli._packet_out_problem(existing, os.path.join(tmp, "notes.md"), run_dir))
+        os.symlink(os.path.join(tmp, "elsewhere"), os.path.join(tmp, "link.pdf"))
+        self.assertIn("symbolic link", cli._packet_out_problem(os.path.join(tmp, "link.pdf"), os.path.join(tmp, "link.md"), run_dir))

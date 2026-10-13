@@ -69,7 +69,29 @@ def cmd_version(args):
     return 0
 
 
-def _incremental_scope(state_dir, root, scanned):
+def _decision_inputs_changed(st, today):
+    """What can change the ship decision without any file changing: records changed since the latest decision, and
+    acceptances whose review date has passed."""
+    out = []
+    stamps = st.project.get("readiness") or []
+    if stamps and stamps[-1]["revision"] != st.project["revision"]:
+        out.append("the project's records changed after the latest decision (revision %d, now %d)"
+                   % (stamps[-1]["revision"], st.project["revision"]))
+    led = st.ledger or {}
+    for e in (led.get("entries") or {}).values():
+        if e["status"] == "ACCEPTED_RISK" and ledger.acceptance_problems(e.get("accepted_risk"), today):
+            out.append("the acceptance of %s no longer counts" % e["id"])
+    for cid, acc in (led.get("control_acceptances") or {}).items():
+        if ledger.acceptance_problems(acc, today):
+            out.append("the acceptance of control %s no longer counts" % cid)
+    for risk in (st.registers or {}).get("risks", []):
+        review = (risk.get("acceptance") or {}).get("review_date")
+        if risk["status"] == "ACCEPTED" and review and review < today.isoformat():
+            out.append("the acceptance of %s is past its review date" % risk["id"])
+    return out[:20]
+
+
+def _incremental_scope(state_dir, root, scanned, today):
     """init-run --changed: which domains to reassess and which to carry forward, or a full scope with the reason."""
     full = {"mode": "full", "reassess_domains": catalog.domain_ids(), "carried_forward_domains": [],
             "agents": sorted({d["agent"] for d in catalog.domains()})}
@@ -80,7 +102,12 @@ def _incremental_scope(state_dir, root, scanned):
     if not st.initialized or st.problems:
         return dict(full, reasons=["there is no usable project state from an earlier audit, so every domain is assessed"])
     ch = freshness.changes(root, st, scanned=scanned)
+    inputs = _decision_inputs_changed(st, today)
+    if inputs and not ch["changed_files"]:
+        ch["reasons"].append("no file changed, but inputs to the ship decision did, so a new decision is needed: %s"
+                             % "; ".join(inputs))
     return {"mode": "changed", "baseline_run_id": ch["baseline"]["run_id"], "changed_files": ch["changed_files"],
+            "decision_inputs_changed": inputs,
             "files": ch["files"][:50], "widened": ch["widened"], "reasons": ch["reasons"],
             "reassess_domains": ch["reassess_domains"], "carried_forward_domains": ch["carried_forward_domains"],
             "carried_forward_from": ch["carried_forward_from"],
@@ -121,8 +148,9 @@ def cmd_init_run(args):
     if args.changed and not root:
         return _fail("--changed needs --root")
     scanned = freshness.scan(root) if root else None
-    scope = _incremental_scope(os.path.dirname(base), root, scanned) if args.changed else None
-    if scope and scope["mode"] == "changed" and not scope["changed_files"] and not scope["reassess_domains"]:
+    scope = _incremental_scope(os.path.dirname(base), root, scanned, now.date()) if args.changed else None
+    if scope and scope["mode"] == "changed" and not scope["changed_files"] and not scope["reassess_domains"] \
+            and not scope.get("decision_inputs_changed"):
         _print({"ok": True, "nothing_to_reassess": True, "scope": scope,
                 "message": "No file changed since run %s and every applicable domain was assessed then, so its "
                            "ship decision still describes these files. No run was started." % scope["baseline_run_id"]})
@@ -390,6 +418,11 @@ def cmd_ledger_revoke(args):
                          "ledger revoke", args.ref, reason=args.note)
 
 
+def _has_item(tx, finding_id):
+    entry = registers.entries_by_id(tx.ledger).get(finding_id)
+    return bool(entry and (entry.get("legal") or {}).get("item"))
+
+
 def cmd_ledger_legal(args):
     """1.0 command: maps the 1.0 legal statuses onto the finding's legal review item."""
     status = constants.V1_LEGAL_TO_ITEM[args.status]
@@ -398,6 +431,13 @@ def cmd_ledger_legal(args):
         with state.transaction(os.path.dirname(os.path.abspath(args.ledger)), args.source, "ledger legal",
                                _now(args).strftime("%Y-%m-%dT%H:%M:%SZ"), ledger_name=os.path.basename(args.ledger),
                                require_ledger=True) as tx:
+            current = legal.item_for_finding(tx.registers, tx.project, tx.ledger, args.id, tx.now_iso, create=False)["status"] \
+                if _has_item(tx, args.id) else "NEEDS_REVIEW"
+            flow = constants.LEGAL_ITEM_FLOW
+            backward = current in flow and status in flow and flow.index(status) < flow.index(current)
+            early_close = status == "RESOLVED" and current not in ("ACTION_REQUIRED", "REVIEWED", "RESOLVED")
+            if (backward or early_close) and not args.reason:
+                raise legal.LegalError("moving %s from %s to %s needs --reason (as in 1.0)" % (args.id, current, status))
             rec, old = legal.set_status(tx.registers, tx.project, tx.ledger, args.id, status, args.source, tx.now_iso, note)
             tx.event(rec["id"], {"status": [old, rec["status"]]}, note)
     except (InputError, ledger.LedgerError, state.StateError, legal.LegalError) as exc:
@@ -428,6 +468,20 @@ def cmd_packet(args):
         return _fail(str(exc))
 
 
+def _packet_out_problem(out, md_out, run_dir):
+    """packet is pre-approved, so where it writes is limited: a .pdf (and its .md beside it), never through a link,
+    and outside the run directory never over an existing file."""
+    if not out.lower().endswith(".pdf"):
+        return "--out must name a .pdf file"
+    inside = os.path.commonpath([run_dir, out]) == run_dir
+    for path in (out, md_out):
+        if os.path.islink(path) or os.path.islink(os.path.dirname(path)):
+            return "%s is or is inside a symbolic link; refusing to write through it" % path
+        if os.path.exists(path) and not (inside and os.path.isfile(path)):
+            return "%s already exists; choose a new file name (outside the run directory a packet never replaces a file)" % path
+    return None
+
+
 def _packet(args, tx):
     try:
         final = finalize.load_final(args.run_dir)
@@ -436,13 +490,17 @@ def _packet(args, tx):
         return _fail(str(exc))
     led = tx.ledger if tx else None
     now = _now(args)
+    final = dict(final, findings=_with_carried(final, args.run_dir))  # carried-forward findings can go to counsel too
     try:
         data, md_text, meta = packet.build(final, request, led, now, args.page_size, regs=tx.registers if tx else None)
     except packet.PacketError as exc:
         return _fail("packet request rejected", errors=str(exc).split("\n"))
     out = os.path.abspath(args.out)
-    write_bytes(out, data)
     md_out = os.path.splitext(out)[0] + ".md"
+    problem = _packet_out_problem(out, md_out, os.path.abspath(args.run_dir))
+    if problem:
+        return _fail(problem)
+    write_bytes(out, data)
     write_text(md_out, md_text)
     if tx is not None:
         stamp = now.strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -482,6 +540,34 @@ def cmd_runs(args):
     return 0
 
 
+def _with_carried(final, run_dir, summaries=False):
+    """This run's findings plus those it carried forward, each taken from the run that last observed it (a sibling
+    run directory), so skills that read a run see every finding its ship decision counted."""
+    findings = list(final["findings"])
+    base = os.path.dirname(os.path.abspath(run_dir))
+    cache = {}
+    for cf in final.get("carried_forward_findings") or []:
+        src = cache.get(cf["last_seen_run"])
+        if src is None:
+            path = os.path.join(base, cf["last_seen_run"])
+            try:
+                src = cache[cf["last_seen_run"]] = finalize.load_final(path) \
+                    if re.fullmatch(r"[0-9]{8}T[0-9]{6}Z(-[a-z0-9]{1,12})?", cf["last_seen_run"]) else {}
+            except InputError:
+                src = cache[cf["last_seen_run"]] = {}
+        match = next((f for f in src.get("findings") or [] if f["id"] == cf["id"]), None)
+        if match is not None:
+            findings.append(dict(match, status=cf["status"], carried_forward_from=cf["last_seen_run"]))
+        elif summaries:
+            # The run that observed it is not next to this one: list what this run recorded about it.
+            findings.append({"id": cf["id"], "title": cf["title"], "domain": cf["domain"], "rule": cf.get("rule", ""),
+                             "severity": cf["severity"], "effective_confidence": cf["effective_confidence"],
+                             "status": cf["status"], "release_blocking_effective": cf["release_blocking_effective"],
+                             "evidence": [], "affected_components": [], "remediation": "", "explanation": "", "impact": "",
+                             "carried_forward_from": cf["last_seen_run"]})
+    return findings
+
+
 def cmd_findings(args):
     try:
         final = finalize.load_final(args.run_dir)
@@ -489,7 +575,7 @@ def cmd_findings(args):
         return _fail(str(exc))
     wanted = set(args.ids.split(",")) if args.ids else None
     out = []
-    for f in final["findings"]:
+    for f in _with_carried(final, args.run_dir, summaries=True):
         if wanted is not None and f["id"] not in wanted:
             continue
         if args.legal and not f.get("legal"):
@@ -499,6 +585,8 @@ def cmd_findings(args):
                 "evidence": [{"path": ev.get("path"), "lines": "%s-%s" % (ev.get("start_line"), ev.get("end_line")) if ev.get("start_line") else None,
                               "kind": ev.get("kind"), "check": ev.get("check")} for ev in f["evidence"]],
                 "affected_components": f["affected_components"], "remediation": f["remediation"]}
+        if f.get("carried_forward_from"):
+            item["carried_forward_from"] = f["carried_forward_from"]
         if args.detail:
             item.update({"explanation": f["explanation"], "impact": f["impact"], "rule": f["rule"],
                          "quotes": [ev.get("quote") for ev in f["evidence"] if ev.get("quote")]})
@@ -592,7 +680,8 @@ def cmd_state_backups(args):
 
 @_state_cmd
 def cmd_state_restore(args):
-    return state.restore(_state_dir(args), args.source, root=args.root, now_iso=_stamp(args), by=args.by)
+    return state.restore(_state_dir(args), args.source, root=args.root, now_iso=_stamp(args), by=args.by,
+                         adopt_other=args.adopt)
 
 
 @_state_cmd
@@ -745,8 +834,10 @@ def _register_fields(kind, args):
 
 def _register_change(args, command, fn):
     actor = getattr(args, "source", None) or "user"
+    # A 1.0 project (a ledger but no 1.5 state yet) is migrated by its first recording command, as by finalize.
+    has_ledger = os.path.isfile(os.path.join(_state_dir(args), state.LEDGER))
     with state.transaction(_state_dir(args), actor, command, _stamp(args), root=args.root, by=args.by,
-                           initialize=False) as tx:
+                           initialize=has_ledger) as tx:
         try:
             record, change, reason, result = fn(tx)
         except (registers.RegisterError, legal.LegalError) as exc:
@@ -991,6 +1082,8 @@ def _add_state_parsers(sub):
     s = add("restore", cmd_state_restore, "restore project, registers, and ledger from a backup (keeps the history log)")
     s.add_argument("--from", dest="source", required=True, help="a directory under .flight-check/backups/")
     s.add_argument("--by", help="who asked for the restore")
+    s.add_argument("--adopt", action="store_true", help="restore a backup that belongs to another project (for example "
+                                                       "the one taken before importing another project's export)")
     s = add("export", cmd_state_export, "write the committed state files to one JSON bundle")
     s.add_argument("--out", required=True)
     s = add("import", cmd_state_import, "replace the state with an exported bundle (backs up first)")

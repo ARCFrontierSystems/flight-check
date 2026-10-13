@@ -62,7 +62,7 @@ Markdown is the default format; it is for reading, and its layout may change bet
 
 ## Ledger (`.flight-check/ledger.json`)
 
-- `entries`: keyed by fingerprint. Each entry has a stable `id`, `status`, `history[]`, optional `legal` (classification, status, history), `accepted_risk`, and `remediations[]`. From 1.5 (ledger schema 2.0) also `evidence_files`, and `confidence` and `release_blocking` as of the last observation, so an audit of changes only can count the finding without re-observing it.
+- `entries`: keyed by fingerprint. Each entry has a stable `id`, `status`, `history[]`, optional `legal`, `accepted_risk`, and `remediations[]`. In ledger schema 1.0, `legal` holds the classification, status, and history; in schema 2.0 (Flight Check 1.5) it holds the `classification` and the `item` (`LR-` ID) whose status and history are in `registers.json`. From 1.5 (ledger schema 2.0) also `evidence_files`, and `confidence` and `release_blocking` as of the last observation, so an audit of changes only can count the finding without re-observing it.
 - `control_acceptances`: risks accepted for UNVERIFIED controls.
 - `runs[]`: run IDs with their gate decisions.
 

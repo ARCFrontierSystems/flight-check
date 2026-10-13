@@ -129,7 +129,7 @@ def _load_json_file(path, definition):
 # --- identity -------------------------------------------------------------------------------------------------
 
 def _find_repo_root(root):
-    current = os.path.abspath(root)
+    current = os.path.realpath(root)
     while True:
         if os.path.lexists(os.path.join(current, ".git")):
             return current
@@ -207,8 +207,9 @@ def _read_repository(repo_root):
 
 
 def locate(root):
-    """Where the audit root sits: (relative root, vcs, repository) without running git."""
-    root = os.path.abspath(root)
+    """Where the audit root sits: (relative root, vcs, repository) without running git. Uses the real path, so the
+    same directory reached through a symbolic link is the same project."""
+    root = os.path.realpath(root)
     repo_root = _find_repo_root(root)
     if repo_root is None:
         return ".", "none", None
@@ -474,7 +475,10 @@ def _ensure_gitignore(state_dir):
             write_text(path, GITIGNORE)
 
 
-def _journal(st, names, new_head_seq):
+_STATE_FILE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,100}\.jsonl?$")
+
+
+def _journal(st, names, new_head_seq, new_head_hash):
     """Copy the files a command is about to replace into pending/, then write journal.json last."""
     pending = st.path(PENDING)
     os.makedirs(pending, mode=0o700)
@@ -486,7 +490,7 @@ def _journal(st, names, new_head_seq):
             existed.append(name)
     dump_json(os.path.join(pending, "journal.json"),
               {"files": list(names), "existed": existed, "head_seq": st.head["seq"] if st.head else 0,
-               "new_head_seq": new_head_seq})
+               "new_head_seq": new_head_seq, "new_head_hash": new_head_hash})
 
 
 def _finish(st):
@@ -507,20 +511,26 @@ def _write_history(path, events):
 def recover(state_dir):
     """Finish or roll back a command that was interrupted. Returns what was done."""
     state_dir = os.path.abspath(state_dir)
+    _check_state_dir(state_dir)
     pending = os.path.join(state_dir, PENDING)
     if not os.path.lexists(pending):
         return {"action": "none", "detail": "no interrupted command was found"}
     with lockfile.locked(state_dir):
+        if not os.path.lexists(pending):
+            return {"action": "none", "detail": "the command that was in progress has finished"}
+        if os.path.islink(pending) or not os.path.isdir(pending):
+            raise StateError("%s is not a directory Flight Check created; check it and remove it by hand" % pending)
         journal_path = os.path.join(pending, "journal.json")
-        if not os.path.isfile(journal_path):
+        if not os.path.lexists(journal_path):
             # Interrupted while journaling: no state file had been replaced yet.
             shutil.rmtree(pending)
             return {"action": "discarded", "detail": "the interrupted command had not changed any file"}
-        journal = load_json(journal_path)
+        journal = _checked_journal(state_dir, pending, journal_path)
         history = os.path.join(state_dir, HISTORY)
         events, _ = read_history(history, tolerate_partial_tail=True)
         head = events[-1]["seq"] if events else 0
-        if head == journal["new_head_seq"]:
+        finished = head == journal["new_head_seq"] and journal.get("new_head_hash") in (None, events[-1]["hash"] if events else None)
+        if finished:
             # Every file and every event was written; only removing the journal was left.
             _write_history(history, events)
             shutil.rmtree(pending)
@@ -538,10 +548,37 @@ def recover(state_dir):
                 % ", ".join(journal["files"])}
 
 
+def _checked_journal(state_dir, pending, journal_path):
+    """The journal of an interrupted command, after checking that it can only touch Flight Check's own files.
+    The state directory can be committed, so a planted journal must never reach a file anywhere else."""
+    _regular_or_missing(journal_path)
+    try:
+        journal = load_json(journal_path)
+    except InputError as exc:
+        raise StateError("the journal of the interrupted command is unreadable (%s); check %s by hand" % (exc, pending))
+    files, existed = (journal.get("files"), journal.get("existed")) if isinstance(journal, dict) else (None, None)
+    valid = (isinstance(files, list) and isinstance(existed, list) and isinstance(journal.get("new_head_seq"), int)
+             and all(isinstance(n, str) and _STATE_FILE.match(n) and os.path.basename(n) == n for n in files)
+             and all(isinstance(n, str) for n in existed) and set(existed) <= set(files)
+             and (journal.get("new_head_hash") is None or isinstance(journal.get("new_head_hash"), str)))
+    if not valid:
+        raise StateError("%s is not a valid Flight Check journal; nothing was changed. Check %s and remove it by hand"
+                         % (journal_path, pending))
+    for name in existed:
+        if not _regular_or_missing(os.path.join(pending, name)):
+            raise StateError("the journal lists %s, but its saved copy is missing from %s" % (name, pending))
+    for name in files:
+        _regular_or_missing(os.path.join(state_dir, name))
+    return journal
+
+
 def backup(st, reason, now_iso):
     """Copy the committed state files to backups/<time>-<reason>/. Flight Check never deletes backups."""
     slug = re.sub(r"[^a-z0-9]+", "-", reason.lower()).strip("-")[:40] or "backup"
     base = st.path(BACKUPS)
+    if os.path.islink(base) or (os.path.lexists(base) and not os.path.isdir(base)):
+        raise StateError("%s is not a directory Flight Check created (a symbolic link?); backups are never written "
+                         "through it" % base)
     os.makedirs(base, mode=0o700, exist_ok=True)
     name = "%s-%s" % (now_iso.replace("-", "").replace(":", ""), slug)
     target = os.path.join(base, name)
@@ -605,13 +642,13 @@ def _validate_before_write(tx):
             raise StateError("refusing to write an invalid ledger: %s" % "; ".join(errors[:5]))
 
 
-def _initialize(tx, root, project_name):
+def _initialize(tx, root, project_name, from_ledger):
     """Create project.json and registers.json, recording a migration when a 1.0 ledger already exists."""
     st = tx.st
     name = project_name or ((st.ledger or {}).get("project") or {}).get("name")
     tx.project = new_project(new_identity(root, name, tx.now_iso))
     tx.registers = new_registers()
-    if st.ledger is not None:
+    if from_ledger:
         where = backup(st, "migrate-from-1.0", tx.now_iso)
         findings = len(st.ledger["entries"])
         tx.events.insert(0, ("state", {"format": [None, "1.5"]},
@@ -656,6 +693,7 @@ def transaction(state_dir, actor, command, now_iso=None, root=None, run_id=None,
         problems = check_identity(st, root)
         if problems:
             raise StateError(problems[0])
+        ledger_on_disk = st.ledger is not None
         if st.ledger is None:
             if require_ledger:
                 raise StateError("ledger %s does not exist" % st.path(ledger_name))
@@ -665,7 +703,7 @@ def transaction(state_dir, actor, command, now_iso=None, root=None, run_id=None,
         if not st.initialized:
             if not initialize:
                 raise StateError("Flight Check state is not initialized in %s; run `state init`" % state_dir)
-            _initialize(tx, root, project_name)
+            _initialize(tx, root, project_name, ledger_on_disk)
         if tx.ledger is not None and tx.ledger.get("schema_version") == "1.0":
             _migrate_ledger(tx)
         yield tx
@@ -695,7 +733,7 @@ def _commit(tx):
         names.append(PROJECT)
     if tx.ledger is not None and tx.original[st.ledger_name] is None and st.ledger_name not in names:
         names.append(st.ledger_name)
-    _journal(st, names + [HISTORY], events[-1]["seq"])
+    _journal(st, names + [HISTORY], events[-1]["seq"], events[-1]["hash"])
     docs = {PROJECT: tx.project, REGISTERS: tx.registers, st.ledger_name: tx.ledger}
     for name in names:
         if docs.get(name) is not None:
@@ -739,7 +777,9 @@ def adopt(state_dir, root, reason, now_iso=None, by=None):
 
 
 def export_bundle(state_dir, out, now_iso=None):
-    st = load(state_dir)
+    _check_state_dir(os.path.abspath(state_dir))
+    with lockfile.locked(state_dir):  # one consistent snapshot, never one torn by a concurrent write
+        st = load(state_dir)
     if not st.initialized:
         raise StateError("no Flight Check state to export in %s" % st.state_dir)
     files = {PROJECT: st.project, REGISTERS: st.registers, LEDGER: st.ledger, HISTORY: st.events}
@@ -776,6 +816,10 @@ def _validate_bundle(bundle):
         prev = event["hash"]
     if files[PROJECT]["revision"] != (files[HISTORY][-1]["revision"] if files.get(HISTORY) else 0):
         raise StateError("the export's project revision does not match its history log")
+    # The top-level fields are not covered by the hashes, so they must agree with the hashed project file.
+    if bundle.get("project_id") != files[PROJECT]["identity"]["project_id"] or \
+            bundle.get("revision") != files[PROJECT]["revision"] or not isinstance(bundle.get("exported_at"), str):
+        raise StateError("the export's summary fields do not match its project file (damaged or edited)")
 
 
 def import_bundle(state_dir, source, root=None, adopt_other=False, now_iso=None, by=None):
@@ -792,9 +836,10 @@ def import_bundle(state_dir, source, root=None, adopt_other=False, now_iso=None,
     os.makedirs(state_dir, exist_ok=True)
     with lockfile.locked(state_dir):
         st = load(state_dir, root=root)
-        if st.initialized and st.project["identity"]["project_id"] != bundle["project_id"] and not adopt_other:
+        incoming = files[PROJECT]["identity"]["project_id"]
+        if st.initialized and st.project["identity"]["project_id"] != incoming and not adopt_other:
             raise StateError("the export belongs to project %s, but this state belongs to project %s; pass --adopt "
-                             "to replace it anyway" % (bundle["project_id"], st.project["identity"]["project_id"]))
+                             "to replace it anyway" % (incoming, st.project["identity"]["project_id"]))
         where = backup(st, "before-import", now_iso) if (st.initialized or st.ledger is not None) else None
         project = copy.deepcopy(files[PROJECT])
         registers = copy.deepcopy(files.get(REGISTERS)) or new_registers()
@@ -810,7 +855,7 @@ def import_bundle(state_dir, source, root=None, adopt_other=False, now_iso=None,
         tx = Transaction(st, "user", "state import", now_iso)
         tx.project, tx.registers, tx.ledger = project, registers, led
         _validate_before_write(tx)
-        _journal(st, [PROJECT, REGISTERS, st.ledger_name, HISTORY], ev["seq"])
+        _journal(st, [PROJECT, REGISTERS, st.ledger_name, HISTORY], ev["seq"], ev["hash"])
         dump_json(st.path(PROJECT), project)
         dump_json(st.path(REGISTERS), registers)
         if led is not None:
@@ -840,7 +885,19 @@ def list_backups(state_dir):
     return out
 
 
-def restore(state_dir, backup_dir, root=None, now_iso=None, by=None):
+def _keep_counters(tx, st):
+    """A restore never lowers an ID counter: IDs used since the backup appear in the history log (and perhaps in
+    packets already sent), so they are never given to a different record."""
+    for key, value in (st.registers or new_registers())["next_ids"].items():
+        tx.registers["next_ids"][key] = max(value, tx.registers["next_ids"].get(key, 1))
+    tx.project["profile"]["next_id"] = max(st.project["profile"]["next_id"], tx.project["profile"]["next_id"])
+    if tx.ledger is not None and st.ledger is not None and tx.ledger is not st.ledger:
+        for key in ("next_id", "next_pc_id"):
+            if key in st.ledger:
+                tx.ledger[key] = max(st.ledger[key], tx.ledger.get(key, 1))
+
+
+def restore(state_dir, backup_dir, root=None, now_iso=None, by=None, adopt_other=False):
     """Restore project, registers, and ledger from a backup. The history log is kept and records the restore."""
     state_dir = os.path.abspath(state_dir)
     now_iso = _now_iso(now_iso)
@@ -848,13 +905,25 @@ def restore(state_dir, backup_dir, root=None, now_iso=None, by=None):
     base = os.path.join(state_dir, BACKUPS)
     if os.path.commonpath([base, backup_dir]) != base or not os.path.isfile(os.path.join(backup_dir, "backup.json")):
         raise StateError("%s is not a Flight Check backup in %s" % (backup_dir, base))
-    meta = load_json(os.path.join(backup_dir, "backup.json"))
-    for fname, digest in (meta.get("files") or {}).items():
+    try:
+        meta = load_json(os.path.join(backup_dir, "backup.json"))
+    except InputError as exc:
+        raise StateError("the backup is damaged: %s" % exc)
+    listed = meta.get("files") if isinstance(meta, dict) else None
+    if not isinstance(listed, dict) or not all(isinstance(k, str) and _STATE_FILE.match(k) and isinstance(v, str)
+                                               for k, v in listed.items()):
+        raise StateError("the backup is damaged: backup.json does not list its files")
+    for fname, digest in listed.items():
         path = os.path.join(backup_dir, fname)
-        _regular_or_missing(path)
+        if not _regular_or_missing(path):
+            raise StateError("backup file %s is missing" % fname)
         with open(path, "rb") as fh:
             if _sha256(fh.read()) != digest:
                 raise StateError("backup file %s does not match its recorded hash" % fname)
+    unlisted = sorted(n for n in os.listdir(backup_dir) if n != "backup.json" and n not in listed)
+    if unlisted:
+        raise StateError("the backup has files its backup.json does not list (%s); it was changed after it was made"
+                         % ", ".join(unlisted))
     with lockfile.locked(state_dir):
         st = load(state_dir, root=root)
         if not st.initialized:
@@ -867,14 +936,16 @@ def restore(state_dir, backup_dir, root=None, now_iso=None, by=None):
         if restored_project is None:
             raise StateError("the backup has no project.json (it was taken before the state existed); restore its "
                              "ledger by hand if you need it")
-        if restored_project["identity"]["project_id"] != st.project["identity"]["project_id"]:
-            raise StateError("the backup belongs to another project")
+        if restored_project["identity"]["project_id"] != st.project["identity"]["project_id"] and not adopt_other:
+            raise StateError("the backup belongs to another project (for example it was taken before importing "
+                             "another project's export); pass --adopt to restore it anyway")
         where = backup(st, "before-restore", now_iso)
         tx = Transaction(st, "user", "state restore", now_iso, by=by)
         tx.project = restored_project
         tx.registers = restored_registers or new_registers()
         if restored_ledger is not None:
             tx.ledger = restored_ledger
+        _keep_counters(tx, st)
         tx.event("state", {"revision": [st.project["revision"], meta.get("revision")]},
                  "Restored from backup %s; the state before the restore is in %s."
                  % (os.path.basename(backup_dir), os.path.relpath(where, state_dir)))

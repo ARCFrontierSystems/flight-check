@@ -64,6 +64,24 @@ class SyncTests(unittest.TestCase):
         self.assertIn("came back", item["history"][-1]["note"])
         self.assertEqual(changes[0][1], {"status": ["RESOLVED", "NEEDS_REVIEW"]})
 
+    def test_regression_without_a_legal_block_still_reopens_the_item(self):
+        led, proj, regs, a, _ = setup_queue([helpers.deletion_finding()])
+        legal.set_status(regs, proj, led, "FC-0001", "RESOLVED", "user", T2, "Counsel advised; deletion now implemented.")
+        f = helpers.deletion_finding()
+        del f["legal"]
+        a2 = audit([f], "r2")
+        ledger.merge(led, a2, T3, None)
+        a2["findings"][0]["status"] = "REGRESSION"
+        legal.sync_findings(regs, proj, led, a2["findings"], T3, "r2")
+        self.assertEqual((regs["legal"][0]["status"], a2["findings"][0]["legal_status"]), ("NEEDS_REVIEW", "NEEDS_REVIEW"))
+
+    def test_an_item_flight_check_opens_is_attributed_to_it(self):
+        info = helpers.deletion_finding()
+        info["legal"] = {"classification": "INFORMATIONAL", "why_review": "context only"}
+        led, proj, regs, a, _ = setup_queue([info])
+        rec, _ = legal.set_status(regs, proj, led, "FC-0001", "NEEDS_REVIEW", "flight-check", T2, "flagged for review")
+        self.assertEqual((rec["source"], rec["history"][0]["source"]), ("flight-check", "flight-check"))
+
     def test_only_the_user_closes_legal_questions(self):
         led, proj, regs, _, _ = setup_queue([helpers.deletion_finding()])
         for status in ("REVIEWED", "RESOLVED", "NOT_APPLICABLE", "AWAITING_COUNSEL"):

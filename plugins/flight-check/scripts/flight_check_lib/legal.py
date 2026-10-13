@@ -19,7 +19,7 @@ def _history_from_v1(events):
     out = []
     for h in events or []:
         ev = {"at": h["at"], "status": constants.V1_LEGAL_TO_ITEM.get(h["status"], "NEEDS_REVIEW"), "source": h["source"],
-              "note": ("1.0 status %s" % h["status"]) + ((": " + h["note"]) if h.get("note") else "")}
+              "note": (("1.0 status %s" % h["status"]) + ((": " + h["note"]) if h.get("note") else ""))[:4000]}
         if h.get("run_id"):
             ev["run_id"] = h["run_id"]
         out.append(ev)
@@ -54,6 +54,10 @@ def migrate_ledger(led, regs, project, now_iso):
         legal = entry.get("legal")
         if not legal or "status" not in legal:
             continue
+        if legal.get("classification") == "INFORMATIONAL" and legal["status"] == "OPEN":
+            # 1.0 gave every legal block a status; an untouched INFORMATIONAL one is context, not a question to queue.
+            entry["legal"] = {"classification": "INFORMATIONAL"}
+            continue
         status = constants.V1_LEGAL_TO_ITEM[legal["status"]]
         item = _new_item_from_entry(regs, project, led, entry, now_iso, status, history=_history_from_v1(legal.get("history")))
         moved.append(item["id"])
@@ -70,12 +74,24 @@ def sync_findings(regs, project, led, findings, now_iso, run_id, root=None):
     for f in findings:
         legal = f.get("legal")
         f["legal_status"] = None
-        if not legal:
-            continue
         entry = entries.get(f["id"])
         if entry is None:
             continue
         item = items.get((entry.get("legal") or {}).get("item"))
+        if not legal:
+            # This run's agent left out the classification, but the finding already has a queue item: keep it
+            # current, and reopen it if the finding came back.
+            if item is not None:
+                if f.get("status") == "REGRESSION" and item["status"] in ("REVIEWED", "RESOLVED", "NOT_APPLICABLE"):
+                    old = item["status"]
+                    item["status"] = "NEEDS_REVIEW"
+                    note = "Reopened: finding %s regressed in run %s." % (f["id"], run_id)
+                    item["history"].append({"at": now_iso, "status": "NEEDS_REVIEW", "source": "flight-check",
+                                            "note": note, "run_id": run_id})
+                    item["updated_at"] = now_iso
+                    changes.append((item["id"], {"status": [old, "NEEDS_REVIEW"]}, note))
+                f["legal_status"] = item["status"]
+            continue
         if item is None:
             if legal["classification"] == "INFORMATIONAL":
                 continue
@@ -109,7 +125,7 @@ def sync_findings(regs, project, led, findings, now_iso, run_id, root=None):
     return changes
 
 
-def item_for_finding(regs, project, led, finding_id, now_iso, create=False):
+def item_for_finding(regs, project, led, finding_id, now_iso, create=False, source="user"):
     entry = registers.entries_by_id(led).get(finding_id)
     if entry is None:
         raise LegalError("no finding %s in the ledger" % finding_id)
@@ -120,13 +136,13 @@ def item_for_finding(regs, project, led, finding_id, now_iso, create=False):
         return registers.find(regs, item_id)[1]
     if not create:
         raise LegalError("%s has no legal review item yet" % finding_id)
-    return _new_item_from_entry(regs, project, led, entry, now_iso, "NEEDS_REVIEW", source="user")
+    return _new_item_from_entry(regs, project, led, entry, now_iso, "NEEDS_REVIEW", source=source)
 
 
 def set_status(regs, project, led, ref, status, source, now_iso, note=None, by=None):
     """Change a legal item's status. ref is an LR- id or the FC- id of a finding with a legal classification."""
     if ref.startswith("FC-"):
-        item = item_for_finding(regs, project, led, ref, now_iso, create=True)
+        item = item_for_finding(regs, project, led, ref, now_iso, create=True, source=source)
     else:
         item = registers.find(regs, ref)[1]
     try:

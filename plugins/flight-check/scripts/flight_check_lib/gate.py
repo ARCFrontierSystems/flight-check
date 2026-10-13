@@ -85,11 +85,26 @@ def _acceptance_timing_problem(acc, started):
 _OPEN_RISK = ("OPEN", "REOPENED", "UNDER_REVIEW", "MITIGATION_PLANNED")
 
 
-def _register_inputs(registers):
-    """Gate inputs from the project's records (1.5): (kind, id, effect, explanation)."""
+def _register_acceptance_problem(acc, today, started):
+    acc = acc or {}
+    if today is not None:
+        if acc.get("date") and acc["date"] > today.isoformat():
+            return "is dated in the future"
+        if acc.get("review_date") and acc["review_date"] < today.isoformat():
+            return "is past its review date %s" % acc["review_date"]
+    if started and acc.get("recorded_at") and acc["recorded_at"] >= started:
+        return "was recorded at %s, after this run started (%s); it counts from the next run" % (acc["recorded_at"], started)
+    return None
+
+
+def _register_inputs(registers, gate_findings=None, today=None, started=None):
+    """Gate inputs from the project's records (1.5): (kind, id, effect, explanation). gate_findings maps the IDs of
+    this run's gate findings to their severity: a risk counts through its findings only when one of them is in the
+    gate at least as severe as the risk."""
     out = []
     if not registers:
         return out
+    gate_findings = gate_findings or {}
     for rec in registers.get("requirements", []):
         if rec["criticality"] == "release-critical" and rec["status"] in ("ACCEPTED", "IMPLEMENTED", "VERIFIED"):
             current = rec["status"] == "VERIFIED" and (rec.get("verification") or {}).get("state") == "current"
@@ -103,14 +118,23 @@ def _register_inputs(registers):
             out.append(("legal", item["id"], "blocking",
                         "Legal review item %s (%s) needs action before release, as recorded by the owner." % (item["id"], item["title"])))
     for risk in registers.get("risks", []):
-        if (risk.get("links") or {}).get("findings"):
-            continue  # represented by its findings
-        if risk["status"] in _OPEN_RISK:
+        status = risk["status"]
+        if status == "ACCEPTED":
+            problem = _register_acceptance_problem(risk.get("acceptance"), today, started)
+            if problem:
+                out.append(("risk", risk["id"], "not_counted", "Acceptance of %s %s." % (risk["id"], problem)))
+                status = "OPEN"
+        linked = (risk.get("links") or {}).get("findings") or []
+        rank = constants.SEVERITY_RANK.get(risk["severity"], 0)
+        represented = any(f in gate_findings and constants.SEVERITY_RANK[gate_findings[f]] <= rank for f in linked)
+        if represented and not (status == "ACCEPTED" and risk["severity"] == "CRITICAL"):
+            continue  # its findings carry it into the decision
+        if status in _OPEN_RISK:
             if risk["severity"] == "CRITICAL":
                 out.append(("risk", risk["id"], "critical", "Open CRITICAL risk %s (%s) in the risk register." % (risk["id"], risk["title"])))
             elif risk["severity"] == "HIGH":
                 out.append(("risk", risk["id"], "blocking", "Open HIGH risk %s (%s) in the risk register." % (risk["id"], risk["title"])))
-        elif risk["status"] == "ACCEPTED":
+        elif status == "ACCEPTED":
             if risk["severity"] == "CRITICAL":
                 out.append(("risk", risk["id"], "accepted_critical",
                             "Accepted CRITICAL risk %s still blocks release; accepting it records the decision but never lifts the block." % risk["id"]))
@@ -119,12 +143,27 @@ def _register_inputs(registers):
     return out
 
 
+def _dismissal_time(entry, status):
+    """When the user marked the finding false positive or superseded (the latest such history event)."""
+    if not entry or status not in constants.DISMISSED_STATUSES:
+        return None
+    times = [ev.get("at") for ev in entry.get("history") or [] if ev.get("status") == status and ev.get("source") == "user"]
+    return max(t for t in times if t) if any(times) else None
+
+
 def decide(audit, ledger, today, lifecycle=None, registers=None):
     lifecycle = lifecycle or {}
     started = run_started_at(audit.get("run"))
     open_findings, accepted_findings, accepted_critical, not_counted, dismissed = [], [], [], [], []
     carried_findings = audit.get("carried_forward_findings") or []
+    entries = {e["id"]: e for e in ((ledger or {}).get("entries") or {}).values()}
     for f in audit["findings"] + carried_findings:
+        mark = _dismissal_time(entries.get(f["id"]), f.get("status"))
+        if f.get("status") in constants.DISMISSED_STATUSES and started and mark and mark >= started:
+            not_counted.append("%s was marked %s at %s, after this run started; it counts from the next run."
+                               % (f["id"], f["status"].replace("_", " ").lower(), mark))
+            open_findings.append(f)
+            continue
         if f.get("status") in constants.DISMISSED_STATUSES:
             # The owner marked it a false positive or superseded, yet this run still reports it. That counts like an
             # acceptance: visible, never READY without qualification, and a CRITICAL one still blocks.
@@ -178,7 +217,9 @@ def decide(audit, ledger, today, lifecycle=None, registers=None):
 
     blocking = [f["id"] for f in open_findings if release_blocking_effective(f)]
     accepted_risks = []
-    for item in _register_inputs(registers):
+    gate_findings = {f["id"]: f["severity"] for f in open_findings + accepted_findings}
+    register_inputs = _register_inputs(registers, gate_findings, today, started)
+    for item in register_inputs:
         kind, rid, effect, text = item
         if effect == "critical":
             critical.append(rid)
@@ -191,6 +232,8 @@ def decide(audit, ledger, today, lifecycle=None, registers=None):
             blocking.append(rid)
         elif effect == "accepted":
             accepted_risks.append(rid)
+        elif effect == "not_counted":
+            not_counted.append(text)
 
     reasons = []
     if critical:
@@ -229,12 +272,16 @@ def decide(audit, ledger, today, lifecycle=None, registers=None):
         reasons.append("No open release-blocking findings, no unverified release-critical controls, and every domain was "
                        "assessed%s or shown not applicable." % (" in this run, carried forward from an earlier assessment that "
                                                                "no change affects," if carried_domains else ""))
+    unassessed = [f["id"] for f in carried_findings if f.get("basis") == "not_applicable"]
+    if unassessed:
+        reasons.append("Open finding(s) in a domain reported not applicable in this run still count, because the "
+                       "earlier evidence was never resolved: %s." % ", ".join(unassessed))
     if carried_domains:
         reasons.append("Carried forward, not reassessed in this run (no change since the last run affects them): %s. "
                        "Their earlier results count, re-checked only against the hashes of the files they cited%s." % (
                            ", ".join(carried_domains),
                            "; carried-forward findings: " + ", ".join(f["id"] for f in carried_findings) if carried_findings else ""))
-    for item in _register_inputs(registers):
+    for item in register_inputs:
         if item[2] in ("critical", "blocking", "accepted_critical"):
             reasons.append(item[3])
 

@@ -2,6 +2,7 @@
 
 import contextlib
 import os
+import stat
 import time
 
 LOCK_NAME = "state.lock"
@@ -33,10 +34,17 @@ def locked(directory, wait=None):
             fd = os.open(lock, os.O_CREAT | os.O_EXCL | os.O_WRONLY, 0o600)
         except FileExistsError:
             try:
-                if time.time() - os.path.getmtime(lock) > STALE_SECONDS:
-                    os.unlink(lock)
-                    continue
+                info = os.lstat(lock)
             except FileNotFoundError:
+                continue  # released between the two calls: try again at once
+            if not stat.S_ISREG(info.st_mode):
+                raise LockError("%s is not a regular file (a symbolic link or something else was put there); "
+                                "remove it after checking that no Flight Check command is running" % lock)
+            if time.time() - info.st_mtime > STALE_SECONDS:
+                try:
+                    os.unlink(lock)
+                except FileNotFoundError:
+                    pass
                 continue
             if time.monotonic() >= deadline:
                 raise LockError("Flight Check state in %s is in use by another Flight Check command (lock file %s); "

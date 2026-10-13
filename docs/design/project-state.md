@@ -300,8 +300,8 @@ Every decision is stamped `{"decision", "at", "run_id", "revision", "commit"}`. 
 |---|---|
 | `OPEN` | `NEEDS_REVIEW` |
 | `LEGAL_REVIEW_REQUESTED` | `AWAITING_COUNSEL` |
-| `COUNSEL_REVIEWED`, `DECISION_RECEIVED` | `REVIEWED` |
-| `IMPLEMENTATION_REQUIRED`, `IMPLEMENTED` | `ACTION_REQUIRED` |
+| `COUNSEL_REVIEWED`, `DECISION_RECEIVED`, `IMPLEMENTED` | `REVIEWED` |
+| `IMPLEMENTATION_REQUIRED` | `ACTION_REQUIRED` |
 | `VERIFIED`, `CLOSED` | `RESOLVED` |
 
 The 1.0 command `ledger legal` keeps working and updates the linked item.

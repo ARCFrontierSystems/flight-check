@@ -228,7 +228,13 @@ def assemble(run_dir, overrides=None, carried=None):
         inventory_no = bool(app and app["applicable"] == "no"
                             and any(ev.get("kind") == "absence" for ev in app.get("evidence") or []))
         uncertain = not app or app["applicable"] == "unknown" or (app["applicable"] == "no" and not inventory_no)
-        if inventory_no and not (override and override["classification"] == "applicable"):
+        if carried and d in carried["domains"] and inventory_no:
+            # Nothing the domain's earlier results rest on changed, so a sudden "not applicable" from the inventory is
+            # not evidence enough to drop those results: carry them forward and say so.
+            warnings.append("The inventory now marks %s not applicable, but nothing its earlier results rest on changed; "
+                            "it is carried forward. Reassess it with a full audit if the project really dropped it." % d)
+        if inventory_no and not (override and override["classification"] == "applicable") \
+                and not (carried and d in carried["domains"]):
             coverage[d] = {
                 "domain": d, "status": "NOT_APPLICABLE",
                 "rationale": "Inventory: %s" % app["rationale"],

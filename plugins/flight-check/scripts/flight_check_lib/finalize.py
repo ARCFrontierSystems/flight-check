@@ -64,22 +64,37 @@ def _scope(run_dir):
     return doc
 
 
+_STILL_OPEN = ("OPEN", "REGRESSION", "REMEDIATED", "UNDER_REVIEW", "REMEDIATION_PLANNED", "ACCEPTED_RISK")
+
+
 def _carried_findings(audit, entries, files):
-    """Findings in carried-forward domains that counted at those domains' last assessment, as gate inputs."""
-    origins = {c["domain"]: c["carried_forward"] for c in audit["coverage"] if c["status"] == constants.CARRIED_FORWARD}
+    """Gate inputs this run did not observe but must not drop: findings in carried-forward domains that counted at
+    those domains' last assessment, and open findings in a domain this run reports not applicable (an owner override
+    or an inventory answer narrows attention; it never hides recorded evidence)."""
+    coverage = {c["domain"]: c for c in audit["coverage"]}
     seen = {f["id"] for f in audit["findings"]}
     out = []
     for fid, e in sorted(entries.items()):
-        origin = origins.get(e["domain"])
-        if not origin or fid in seen or e["last_seen_run"] != origin["run_id"]:
+        cov = coverage.get(e["domain"])
+        if not cov or fid in seen:
             continue
-        if e["status"] in constants.RESOLVED_STATUSES or e["status"] == "NOT_REPRODUCED":
+        if cov["status"] == constants.CARRIED_FORWARD:
+            # Seen at the domain's last assessment or later (an agent of another domain may have re-reported it in a
+            # run that carried this domain). Run IDs start with their UTC time, so they sort in time order.
+            if e["last_seen_run"] < cov["carried_forward"]["run_id"]:
+                continue
+            if e["status"] in constants.RESOLVED_STATUSES or e["status"] == "NOT_REPRODUCED":
+                continue
+            basis = "carried_forward"
+        elif cov["status"] == "NOT_APPLICABLE" and e["status"] in _STILL_OPEN:
+            basis = "not_applicable"
+        else:
             continue
         ev = freshness.evidence_state(e.get("evidence_files") or {}, files)
         item = {"id": fid, "domain": e["domain"], "rule": e["rule"], "title": e["title"], "severity": e["severity"],
                 "status": e["status"], "confidence": e.get("confidence", "UNVERIFIED"),
                 "release_blocking": e.get("release_blocking", e["severity"] != "INFORMATIONAL"),
-                "last_seen_run": e["last_seen_run"], "evidence_state": ev}
+                "last_seen_run": e["last_seen_run"], "evidence_state": ev, "basis": basis}
         if ev in (freshness.STALE, freshness.MISSING):
             item["evidence_check"] = "FAILED"
         if e.get("accepted_risk"):
@@ -164,6 +179,7 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         return decision
 
     run_id = audit["run"]["run_id"]
+    contradictions = []
     if ledger_path:
         state_dir = os.path.dirname(os.path.abspath(ledger_path))
         with state.transaction(state_dir, "flight-check", "finalize", now, root=root, run_id=run_id,
@@ -210,7 +226,10 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
                 elif (assessed.get(d) or {}).get("assessed_run_id"):
                     rec.update(assessed_run_id=assessed[d]["assessed_run_id"], assessed_at=assessed[d]["assessed_at"])
                 assessed[d] = rec
-            profile_changes = profile.merge(tx.project, audit["inventory"], root, now, run_id)
+            profile_changes = profile.merge(tx.project, audit["inventory"], root, now, run_id,
+                                            {c["domain"]: c["status"] for c in audit["coverage"]})
+            contradictions = [{"kind": "profile" if c[0] == "contradiction" else "applicability", "id": c[1], "subject": c[2]}
+                              for c in profile_changes if c[0] in ("contradiction", "override_contradiction")]
             legal_changes = legal.sync_findings(tx.registers, tx.project, led, audit["findings"], now, run_id, root)
             decision_changes, unknown = registers.apply_decision_conflicts(tx.registers, audit["findings"], now, run_id)
             warnings.extend("decision_ids: %s, which is not a recorded decision; the link was dropped" % u for u in unknown)
@@ -234,7 +253,13 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
                     tx.event("domain:" + change[1], {"applicability": change[2]}, "Evaluated by the inventory in run %s." % run_id)
                 elif change[0] == "override_contradiction":
                     tx.event("domain:" + change[1], {"contradiction": [False, True]},
-                             "The owner's override (%s) contradicts the evidence in run %s; the evidence is used." % (change[2], run_id))
+                             "The owner's override (%s) contradicts the evidence in run %s; %s." % (
+                                 change[2], run_id, "the domain stays in scope, as the owner declared" if change[2] == "applicable"
+                                 else "the evidence is used"))
+                elif change[0] == "pruned":
+                    tx.event("state", {"profile_facts_dropped": [change[2], None]},
+                             "Dropped %d older observation(s) of %s from project.json (%s); at most %d are kept per aspect."
+                             % (len(change[2]), change[1], ", ".join(change[2]), profile.KEEP_PAST_FACTS))
                 elif change[0] == "contradiction":
                     tx.event(change[1], {"contradiction": [False, True]},
                              "The latest observation of %s contradicts an active correction." % change[2])
@@ -264,6 +289,7 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         "unverified_areas": audit["unverified_areas"],
         "remediation_checks": audit["remediation_checks"],
         "regressions": lifecycle.get("regressions", []),
+        "possible_regressions": lifecycle.get("possible_regressions", []),
         "not_reproduced": lifecycle.get("not_reproduced", []),
         "remediated_pending": lifecycle.get("remediated_pending", []),
         "carried_forward_findings": audit.get("carried_forward_findings", []),
@@ -297,6 +323,7 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         "evidence_failures": [f["id"] for f in final["findings"] if f.get("evidence_check") == "FAILED"],
         "lifecycle": final["lifecycle"],
         "carried_forward_domains": decision.get("carried_forward_domains", []),
+        "contradictions": contradictions,
         "carried_forward_findings": [{"id": f["id"], "severity": f["severity"], "status": f["status"], "domain": f["domain"],
                                       "title": f["title"]} for f in final["carried_forward_findings"]],
         "warnings": warnings,

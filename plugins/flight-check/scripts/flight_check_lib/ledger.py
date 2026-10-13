@@ -246,6 +246,14 @@ def merge(led, audit, now_iso, today):
                 e["regression"] = {"original_resolution": prev, "reappeared_run": run_id, "reappeared_at": now_iso,
                                    "match": kind}
                 changes["regressions" if kind == "exact" else "possible_regressions"].append(e["id"])
+            elif prev in ("ACCEPTED_RISK", "FALSE_POSITIVE", "SUPERSEDED") and match_kind[i] != "exact" and \
+                    (constants.SEVERITY_RANK[f["severity"]] < constants.SEVERITY_RANK[e["severity"]] or f["domain"] != e["domain"]):
+                # The user's decision covered the earlier observation; this one was matched by judgment or wording and is
+                # more severe or in another domain, so the decision does not carry over to it.
+                new, note = "OPEN", ("%s covered a %s finding in %s; this observation (%s in %s) was matched by "
+                                     "judgment, so that decision no longer applies" % (
+                                         prev.replace("_", " ").lower(), e["severity"], e["domain"], f["severity"], f["domain"]))
+                changes["reopened"].append(e["id"])
             elif prev == "FALSE_POSITIVE":
                 changes["false_positive_reobserved"].append(e["id"])
             elif prev == "SUPERSEDED":
@@ -373,7 +381,10 @@ def merge_positive_controls(led, positives, run_id, now_iso, evidence_files, ass
     for p in positives:
         path = (p.get("evidence") or [{}])[0].get("path", "")
         key = "%s|%s|%s" % (p["domain"], path, " ".join(sorted(_title_words(p["title"]))))
-        match = key if key in pcs and key not in seen else None
+        if key in seen:
+            p["id"] = pcs[key]["id"]  # the same positive control reported twice in this run (another pass or agent)
+            continue
+        match = key if key in pcs else None
         if match is None:
             for k, pc in pcs.items():
                 if k not in seen and pc["domain"] == p["domain"] and pc.get("path", "") == path and \
@@ -436,8 +447,9 @@ def revoke_acceptance(led, ref, note, now_iso):
 
 def record_remediation(led, finding_id, note, files, now_iso, source="flight-check"):
     _, entry = find_entry(led, finding_id)
-    if entry["status"] not in ("OPEN", "REGRESSION", "NOT_REPRODUCED"):
-        raise LedgerError("%s is %s; only OPEN, REGRESSION, or NOT_REPRODUCED findings can be marked remediated" % (finding_id, entry["status"]))
+    allowed = ("OPEN", "REGRESSION", "NOT_REPRODUCED", "UNDER_REVIEW", "REMEDIATION_PLANNED")
+    if entry["status"] not in allowed:
+        raise LedgerError("%s is %s; only %s findings can be marked remediated" % (finding_id, entry["status"], ", ".join(allowed)))
     entry.setdefault("remediations", []).append({"at": now_iso, "note": note, "files": list(files or []), "source": source})
     entry["status"] = "REMEDIATED"
     entry["history"].append(_event(now_iso, "REMEDIATED", source, "remediation recorded; pending verification by re-audit: %s" % note))

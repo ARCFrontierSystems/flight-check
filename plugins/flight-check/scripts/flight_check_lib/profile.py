@@ -45,9 +45,13 @@ def evidence_refs(items, root, now_iso, run_id, cache=None):
         if kind == "absence":
             ref["searched"] = textsafety.redact(ev.get("searched") or "")[0][:1000]
         elif ev.get("path"):
-            path = ev["path"]
+            from .freshness import normalize_path
+            path = normalize_path(ev["path"])
             if kind == "user-provided":
-                ref["path"] = path
+                # Imported evidence can live outside the project; only a path inside it is stored.
+                _, problem = evidence_mod.resolve_within(root, path) if root else (None, "NO_ROOT")
+                if not problem and not os.path.isabs(path):
+                    ref["path"] = path
             else:
                 _, problem = evidence_mod.resolve_within(root, path) if root else (None, "NO_ROOT")
                 if problem == "OUT_OF_ROOT":
@@ -114,8 +118,18 @@ def _new_fact(project, aspect, value, origin, source, presence, refs, now_iso, r
     return fact
 
 
-def merge(project, inventory, root, now_iso, run_id):
-    """Fold one finalized run's inventory into the profile and applicability. Returns a list of changes."""
+KEEP_PAST_FACTS = 5  # past observations kept per aspect; older ones are summarized in the history log and dropped
+
+
+def _latest_past(facts, aspect):
+    past = [f for f in facts if f["aspect"] == aspect and f["source"] == "flight-check" and f["status"] != "current"]
+    return max(past, key=lambda f: (f["last_observed"], f["id"])) if past else None
+
+
+def merge(project, inventory, root, now_iso, run_id, coverage=None):
+    """Fold one finalized run's inventory into the profile and applicability. Returns a list of changes.
+    coverage maps domains to this run's coverage status: a domain an agent assessed (or carried forward) is never
+    stored as not applicable on the inventory's word alone."""
     changes = []
     cache = {}
     facts = project["profile"]["facts"]
@@ -134,16 +148,27 @@ def merge(project, inventory, root, now_iso, run_id):
         if old and _norm(old["value"]) == _norm(value) and old.get("presence") == presence:
             old.update(last_observed=now_iso, run_id=run_id, evidence=refs, origin=origin)
         else:
-            fact = _new_fact(project, aspect, value, origin, "flight-check", presence, refs, now_iso, run_id,
-                             "observed by the inventory agent")
-            if old:
-                old["status"] = "superseded"
-                old["history"].append(_event(now_iso, "superseded", "flight-check", "replaced by %s" % fact["id"], run_id))
-                # Corrections are about the aspect, so they carry over to the new observation.
-                fact["corrections"] = [dict(c) for c in old.get("corrections") or [] if c["active"]]
-                changes.append(("superseded", old["id"], fact["id"]))
+            past = _latest_past(facts, aspect) if not old else None
+            if past and _norm(past["value"]) == _norm(value) and past.get("presence") == presence:
+                # Seen again as it was before: the earlier fact becomes current again, with its corrections.
+                past.update(status="current", last_observed=now_iso, run_id=run_id, evidence=refs, origin=origin)
+                past["history"].append(_event(now_iso, "current", "flight-check", "observed again", run_id))
+                changes.append(("observed_again", past["id"], aspect))
+                fact = past
             else:
-                changes.append(("new", fact["id"], aspect))
+                fact = _new_fact(project, aspect, value, origin, "flight-check", presence, refs, now_iso, run_id,
+                                 "observed by the inventory agent")
+                # Corrections are about the aspect, so they carry over to the new observation, also from an
+                # observation that had dropped out of the inventory for a while.
+                source_fact = old or past
+                if source_fact:
+                    fact["corrections"] = [dict(c) for c in source_fact.get("corrections") or [] if c["active"]]
+                if old:
+                    old["status"] = "superseded"
+                    old["history"].append(_event(now_iso, "superseded", "flight-check", "replaced by %s" % fact["id"], run_id))
+                    changes.append(("superseded", old["id"], fact["id"]))
+                else:
+                    changes.append(("new", fact["id"], aspect))
             old = fact
         flagged = _contradicts(old)
         if flagged and not old.get("contradiction"):
@@ -157,14 +182,34 @@ def merge(project, inventory, root, now_iso, run_id):
             fact["history"].append(_event(now_iso, "historical", "flight-check",
                                           "not reported by the latest inventory", run_id))
             changes.append(("historical", fact["id"], aspect))
-    changes.extend(_merge_applicability(project, inventory, root, now_iso, run_id, cache))
+    changes.extend(_prune_past_facts(project))
+    changes.extend(_merge_applicability(project, inventory, root, now_iso, run_id, cache, coverage or {}))
+    return changes
+
+
+def _prune_past_facts(project):
+    """Keep at most KEEP_PAST_FACTS past observations per aspect, so reworded inventories cannot grow the profile
+    without bound. A fact with an active correction is always kept. The finalize event records what was dropped."""
+    changes, drop = [], set()
+    by_aspect = {}
+    for f in project["profile"]["facts"]:
+        if f["source"] == "flight-check" and f["status"] != "current":
+            by_aspect.setdefault(f["aspect"], []).append(f)
+    for aspect, past in by_aspect.items():
+        past.sort(key=lambda f: (f["last_observed"], f["id"]), reverse=True)
+        extra = [f for f in past[KEEP_PAST_FACTS:] if not any(c["active"] for c in f.get("corrections") or [])]
+        if extra:
+            drop.update(f["id"] for f in extra)
+            changes.append(("pruned", aspect, [f["id"] for f in extra]))
+    if drop:
+        project["profile"]["facts"] = [f for f in project["profile"]["facts"] if f["id"] not in drop]
     return changes
 
 
 _CLASS = {"yes": "applicable", "no": "not_applicable", "unknown": "uncertain"}
 
 
-def _merge_applicability(project, inventory, root, now_iso, run_id, cache):
+def _merge_applicability(project, inventory, root, now_iso, run_id, cache, coverage):
     changes = []
     entries = {a["domain"]: a for a in project["applicability"]}
     for app in inventory.get("applicability") or []:
@@ -176,6 +221,11 @@ def _merge_applicability(project, inventory, root, now_iso, run_id, cache):
             classification = "uncertain"
             reasoning = ("Marked not applicable without evidence of what was searched, so treated as uncertain. "
                          + reasoning)[:2000]
+        elif classification == "not_applicable" and coverage.get(domain) in ("ASSESSED", constants.CARRIED_FORWARD):
+            classification = "uncertain"
+            reasoning = ("The inventory found no sign of this domain, but this run %s it, so it is treated as "
+                         "uncertain. " % ("assessed" if coverage[domain] == "ASSESSED" else "carried forward an "
+                                          "earlier assessment of") + reasoning)[:2000]
         old = entries.get(domain)
         entry = {"domain": domain, "classification": classification, "reasoning": reasoning, "evidence": refs,
                  "evaluated_at": now_iso, "run_id": run_id,
@@ -222,8 +272,18 @@ def _find_fact(project, fact_id):
     raise ProfileError("no profile fact %s" % fact_id)
 
 
+def _current_for(project, fact):
+    """A correction is about an aspect: act on the aspect's current observation, whichever of its facts was named."""
+    if fact["status"] == "current" or fact["source"] != "flight-check":
+        return fact
+    for f in project["profile"]["facts"]:
+        if f["aspect"] == fact["aspect"] and f["source"] == "flight-check" and f["status"] == "current":
+            return f
+    return fact
+
+
 def correct(project, fact_id, assertion, reason, now_iso, value=None, by=None):
-    fact = _find_fact(project, fact_id)
+    fact = _current_for(project, _find_fact(project, fact_id))
     if fact["source"] != "flight-check":
         raise ProfileError("%s is your own declaration; declare a new value instead of correcting it" % fact_id)
     if assertion == "replace" and not value:
@@ -240,20 +300,24 @@ def correct(project, fact_id, assertion, reason, now_iso, value=None, by=None):
 
 
 def withdraw_corrections(project, fact_id, reason, now_iso, by=None):
-    fact = _find_fact(project, fact_id)
-    active = [c for c in fact.get("corrections") or [] if c["active"]]
-    if not active:
+    named = _find_fact(project, fact_id)
+    holders = [f for f in project["profile"]["facts"] if f["aspect"] == named["aspect"] and f["source"] == named["source"]
+               and any(c["active"] for c in f.get("corrections") or [])]
+    if not holders:
         raise ProfileError("%s has no active correction" % fact_id)
-    for c in active:
-        c["active"] = False
-    fact["history"].append(_event(now_iso, fact["status"], "user", "corrections withdrawn: %s" % reason, by=by))
-    fact["contradiction"] = False
-    return fact
+    for fact in holders:  # every observation of the aspect that carries a copy
+        for c in fact["corrections"]:
+            c["active"] = False
+        fact["history"].append(_event(now_iso, fact["status"], "user", "corrections withdrawn: %s" % reason, by=by))
+        fact["contradiction"] = False
+    return _current_for(project, named)
 
 
 def declare(project, aspect, value, reason, now_iso, by=None):
     """Record what the user states about the project. It sits beside observations and never replaces them."""
-    key = aspect if re.fullmatch(r"[a-z][a-z0-9-]*(\.[a-z0-9-]+)*", aspect) else aspect_key(aspect)
+    vocabulary = {a["key"] for a in catalog.profile_aspects()}
+    key = aspect if (aspect in vocabulary or aspect.startswith("other.")) and \
+        re.fullmatch(r"[a-z][a-z0-9-]*(\.[a-z0-9-]+)*", aspect) else aspect_key(aspect)
     for f in project["profile"]["facts"]:
         if f["aspect"] == key and f["source"] == "user" and f["status"] == "current":
             f["status"] = "superseded"

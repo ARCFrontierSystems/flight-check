@@ -131,7 +131,8 @@ def _finding_parts(f, extra, item):
     if extra.get("questions"):
         omitted = len(questions) - len(extra["questions"])
         questions = [questions[n - 1] for n in extra["questions"]]
-    status = f.get("legal_status") or (item or {}).get("status") or "NEEDS_REVIEW"
+    status = (item or {}).get("status") or f.get("legal_status") or "NEEDS_REVIEW"
+    status = constants.V1_LEGAL_TO_ITEM.get(status, status)  # a run finalized by 1.0 stores 1.0 status names
     context = [f["explanation"], "Potential impact: " + f["impact"]]
     if extra.get("technical_context"):
         context.append(extra["technical_context"])

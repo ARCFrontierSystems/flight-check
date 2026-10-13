@@ -73,8 +73,15 @@ def build_status(st, root, now_iso):
                  for d in regs.get("decisions", []) if d["status"] in ("NEEDS_REVIEW", "PROPOSED")]
     items = [{"id": i["id"], "title": i["title"], "status": i["status"], "classification": i.get("classification")}
              for i in legal.open_items(regs)] if regs else []
+    attention = [{"kind": "profile", "id": f["id"], "aspect": f["aspect"], "value": f["value"],
+                  "correction": next((c for c in reversed(f.get("corrections") or []) if c["active"]), {}).get("assertion")}
+                 for f in facts if f.get("contradiction")]
+    attention += [{"kind": "applicability", "id": "domain:" + a["domain"], "evidence": a["classification"],
+                   "override": (a.get("override") or {}).get("classification")}
+                  for a in p["applicability"] if a.get("contradiction")]
     out = {
         "project": {"name": p["identity"]["name"], "project_id": p["identity"]["project_id"], "revision": p["revision"]},
+        "contradictions": attention,
         "profile": {"known": known[:15], "known_total": len(known), "unknown_aspects": unknown},
         "applicability": apps,
         "readiness": _readiness(st, ch),
@@ -107,6 +114,8 @@ def _next_steps(s):
                      "/flight-check:track to accept a risk).")
     if s["legal"]["open"]:
         steps.append("Review the open legal questions; /flight-check:legal-packet prepares a packet for counsel.")
+    if s.get("contradictions"):
+        steps.append("Review the corrections and overrides that new evidence contradicts (/flight-check:track).")
     if s["decisions"]["needs_attention"] or s["decisions"]["triggered_by_changes"]:
         steps.append("Review the decisions marked for review (/flight-check:track).")
     if any(r["criticality"] == "release-critical" for r in s["requirements"]):
@@ -121,7 +130,8 @@ def build(view, st, root, now_iso, record_id=None):
         p = st.project
         data = {"facts": [{k: f.get(k) for k in ("id", "aspect", "value", "origin", "source", "presence", "last_observed")}
                           | {"evidence": [r.get("path") or ("searched: " + r.get("searched", "")) for r in f["evidence"]],
-                             "corrected": any(c["active"] for c in f.get("corrections") or [])}
+                             "corrected": any(c["active"] for c in f.get("corrections") or []),
+                             "contradiction": bool(f.get("contradiction"))}
                           for f in p["profile"]["facts"] if f["status"] == "current"],
                 "applicability": [{"domain": a["domain"], "classification": a["classification"], "effective": profile.effective(a),
                                    "override": (a.get("override") or {}).get("classification"), "reasoning": a["reasoning"]}
@@ -219,6 +229,15 @@ def render_status(doc):
         out += ["- **%s** [%s, %s] %s" % (x["id"], x["severity"], x["status"], md(x["title"])) for x in s["risks"]]
     if f["accepted"]:
         out += ["", "Accepted risks: %s" % ", ".join(f["accepted"])]
+    if s.get("contradictions"):
+        out += ["", "## Your corrections contradicted by new evidence"]
+        for c in s["contradictions"]:
+            if c["kind"] == "profile":
+                out.append("- **%s** %s: you recorded \"%s\", but the latest audit observed %s" % (
+                    c["id"], md(c["aspect"]), c.get("correction") or "a correction", md(c["value"])))
+            else:
+                out.append("- **%s**: you declared it %s, but the evidence says %s" % (
+                    md(c["id"]), (c.get("override") or "").replace("_", " "), c["evidence"].replace("_", " ")))
     out += ["", "## Requirements not verified"]
     out += _lines(s["requirements"], lambda x: "- **%s** (%s, %s) %s" % (x["id"], x["criticality"], x["status"], md(x["title"])),
                   "- None.")
@@ -260,7 +279,8 @@ def render_markdown(doc):
                                            (": " + md(ev["note"])) if ev.get("note") else ""))
     elif doc["view"] == "profile":
         out += _table(d["facts"], [("ID", lambda f: f["id"]), ("Aspect", lambda f: f["aspect"]), ("Value", lambda f: f["value"]),
-                                   ("Origin", lambda f: f["origin"] + (" (corrected)" if f["corrected"] else "")),
+                                   ("Origin", lambda f: f["origin"] + (" (corrected)" if f["corrected"] else "")
+                                    + (", contradicted by new evidence" if f["contradiction"] else "")),
                                    ("Evidence", lambda f: ", ".join(f["evidence"][:3]))])
         out += ["", "## Applicability", ""]
         out += _table(d["applicability"], [("Domain", lambda a: a["domain"]), ("Evidence says", lambda a: a["classification"]),
