@@ -272,8 +272,12 @@ def assemble(run_dir, overrides=None, carried=None):
 
     kept, rejected, duplicates = [], [], []
     dup_map = {lid: v["duplicate_of"] for lid, v in verdicts.items() if v["verdict"] == "DUPLICATE" and v.get("duplicate_of") in by_id}
+    # The verifier's identity judgment across audits; a duplicate's passes to the finding it was merged into.
+    recorded = {lid: v["recorded_id"] for lid, v in verdicts.items() if v.get("recorded_id") and v["verdict"] != "DUPLICATE"}
     for lid, target in dup_map.items():
         dup, keep = by_id[lid], by_id[target]
+        if verdicts[lid].get("recorded_id"):
+            recorded.setdefault(target, verdicts[lid]["recorded_id"])
         keep.setdefault("also_reported_by", []).append({"local_id": lid, "domain": dup["domain"], "title": dup["title"]})
         if dup.get("legal") and not keep.get("legal"):
             keep["legal"] = dup["legal"]
@@ -295,6 +299,8 @@ def assemble(run_dir, overrides=None, carried=None):
         f["verification"] = {"verifier_verdict": v["verdict"] if v else "NOT_REVIEWED", "notes": v["notes"] if v else ""}
         if v and v.get("counterevidence"):
             f["counterevidence"] = f["counterevidence"] + v["counterevidence"]
+        if recorded.get(f["local_id"]) and not (v and v["verdict"] == "REJECTED"):
+            f["recorded_id"] = recorded[f["local_id"]]
         if v and v["verdict"] == "REJECTED":
             rejected.append(f)
             continue

@@ -145,6 +145,7 @@ If `inventory.json` is invalid, re-run the inventory agent once with the errors.
 If any part file contains findings, or there are pending fixes, launch `flight-check:verifier` with:
 
 > Run directory: `<run_dir>`. Audit root: `<absolute root>`. Read these Flight Check part files and give a verdict for every finding: `<list of part-*.json paths>`. Identify findings as `<agent>.<local_id>`. Return only the JSON object described in your instructions.
+> Recorded findings from earlier audits (to identify the same problems; not a checklist): `<init-run's project_records.recorded_findings as JSON, or "none">`
 
 When there are pending fixes, add:
 

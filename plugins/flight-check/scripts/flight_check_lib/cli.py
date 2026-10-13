@@ -97,7 +97,10 @@ def _project_records(state_dir):
         return None
     if not st.initialized or st.problems:
         return None
+    recorded = sorted(((st.ledger or {}).get("entries") or {}).values(), key=lambda e: e["id"], reverse=True)[:200]
     return {"decision_assertions": registers.active_assertions(st.registers)[:40],
+            "recorded_findings": [{"id": e["id"], "domain": e["domain"], "rule": e["rule"], "title": e["title"][:160],
+                                   "file": ledger._entry_path(e), "status": e["status"]} for e in recorded],
             "applicability_overrides": {a["domain"]: {"classification": a["override"]["classification"],
                                                       "reason": a["override"]["reason"]}
                                         for a in st.project["applicability"] if a.get("override")}}

@@ -152,7 +152,8 @@ def merge(led, audit, now_iso, today):
     fps = fingerprint.assign(findings)
     matched = set()
     changes = {"new": [], "regressions": [], "possible_regressions": [], "reopened": [], "expired_acceptances": [],
-               "false_positive_reobserved": [], "superseded_reobserved": []}
+               "false_positive_reobserved": [], "superseded_reobserved": [], "recorded_matches": [],
+               "unknown_recorded_ids": []}
 
     # Pass 1: exact fingerprints, including ones recorded earlier as alternates. These go first so that
     # a looser match below can never take an entry that another finding matches exactly.
@@ -163,6 +164,24 @@ def merge(led, audit, now_iso, today):
         if entry_fp is not None and entry_fp not in matched:
             assigned[i] = entry_fp
             matched.add(entry_fp)
+    # Pass 1b: the verifier read this finding and an earlier recorded one and judged them the same problem
+    # (recorded_id), which survives reworded rules, titles, and domains. A judgment, not a fingerprint: a
+    # regression found this way is reported as possible.
+    by_id = {e["id"]: fp for fp, e in entries.items()}
+    for i, f in enumerate(findings):
+        rid = f.get("recorded_id")
+        if assigned[i] is not None or not rid:
+            continue
+        entry_fp = by_id.get(rid)
+        if entry_fp is None:
+            changes["unknown_recorded_ids"].append(rid)
+        elif entry_fp not in matched:
+            assigned[i] = entry_fp
+            match_kind[i] = "possible"
+            matched.add(entry_fp)
+            changes["recorded_matches"].append(rid)
+            if fps[i] != entry_fp and fps[i] not in entries[entry_fp].setdefault("alt_fingerprints", []):
+                entries[entry_fp]["alt_fingerprints"].append(fps[i])
     # Pass 2, only when exactly one unmatched entry qualifies:
     #   (a) the same rule and file (the quoted code changed);
     #   (b) the same domain, file, and quoted anchor line, under a reworded rule or title. Agents name
@@ -246,6 +265,7 @@ def merge(led, audit, now_iso, today):
                 e["status"] = new
                 e["history"].append(_event(now_iso, new, "flight-check", note, run_id))
             e["last_seen_run"] = run_id
+            e["domain"] = f["domain"]
             e["title"] = f["title"]
             e["severity"] = f["severity"]
             e["match_key"] = key
