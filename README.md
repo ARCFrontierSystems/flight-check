@@ -33,7 +33,7 @@ It examines security, privacy, legal/business risk, compliance readiness, access
 - **Release check for CI.** `release-check` passes only when the latest ship decision is ready and still describes the files being released, so a release or deploy workflow can depend on it. It reads only the committed records, so it needs no Claude and costs nothing to run. See "Release check" in [docs/usage.md](docs/usage.md).
 - **Tells you how to get to READY.** When the decision is not READY, `/flight-check:status` lists each blocker with its next step: the vulnerability-scanner command for your project's ecosystems, the control to re-check with `/flight-check:audit --recheck`, or the finding to fix or the risk to accept.
 - **Findings in GitHub code scanning.** `sarif` exports the findings that count against release as SARIF, so they appear in the repository's Security tab and on pull requests. It reads only the committed records.
-- **Usage estimate first.** Each audit states a rough usage range before any agent starts.
+- **Light on usage.** After the first audit, an audit re-checks only what changed. `--quick` gives a cheap spot check of the security-critical areas for everyday use. Each audit states its estimated cost first and asks before going over your spending limit ($5 by default). Agents use the models Flight Check's accuracy was measured with, never more expensive ones unless you choose `--models thorough`.
 - **Answers questions about the project.** `/flight-check:status` answers questions such as "what does my project still need?" from the records, and `report` gives each register and view in Markdown or JSON.
 
 ## What Flight Check is not

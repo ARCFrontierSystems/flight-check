@@ -91,6 +91,9 @@ def main(argv=None):
     p.add_argument("--decisions", help="owner decisions to record before the audit (JSON)")
     p.add_argument("--state-from", help="directory holding the project state saved by an earlier run (its out/state)")
     p.add_argument("--changed", action="store_true", help="audit only what changed since the state's last run")
+    p.add_argument("--full", action="store_true", help="check everything even when state from an earlier run exists")
+    p.add_argument("--quick", action="store_true", help="a quick check of the security-critical areas (records nothing)")
+    p.add_argument("--models", choices=("economy", "balanced", "thorough"), help="model tier for the audit's agents")
     args = p.parse_args(argv)
 
     app = os.path.abspath(args.app)
@@ -125,7 +128,7 @@ def main(argv=None):
     # The ledger is written by the script, so the session itself may write only run directories.
     settings = {"permissions": {
         "allow": ["Edit(/%s/.flight-check/runs/**)" % target]
-        + ["Bash(python3 %s %s *)" % (script, sub) for sub in ("init-run", "validate", "save-reply", "finalize", "render")],
+        + ["Bash(python3 %s %s *)" % (script, sub) for sub in ("init-run", "validate", "save-reply", "finalize", "render", "report")],
         "deny": ["Edit(/%s/.flight-check/ledger.json)" % target, "Bash(python3 %s ledger *)" % script],
     }}
     settings_path = os.path.join(work, "settings.json")
@@ -138,6 +141,11 @@ def main(argv=None):
         prompt += " --passes %d" % args.passes
     if args.changed:
         prompt += " --changed"
+    for flag in ("full", "quick"):
+        if getattr(args, flag):
+            prompt += " --" + flag
+    if args.models:
+        prompt += " --models " + args.models
     # Stream every event to a log so a failed run can be diagnosed (which tool call was denied, and why).
     cmd = ["claude", "-p", prompt, "--plugin-dir", PLUGIN, "--tools", "Read,Write,Agent,Bash,Glob,Grep",
            "--permission-mode", "dontAsk", "--settings", settings_path, "--strict-mcp-config",

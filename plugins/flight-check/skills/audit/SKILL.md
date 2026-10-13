@@ -1,8 +1,9 @@
 ---
 name: audit
 description: Evidence-first ship-readiness audit: security, privacy, legal/business, compliance readiness, accessibility, reliability, production readiness. Deterministic ship gate and report.
-argument-hint: "[path] [--untrusted] [--out DIR] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2] [--changed] [--recheck ID,...]"
+argument-hint: "[path] [--quick | --full] [--untrusted] [--out DIR] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2] [--recheck ID,...] [--models economy|balanced|thorough]"
 disable-model-invocation: true
+model: sonnet
 allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py save-reply *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py finalize *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py report *)
 disallowed-tools: WebFetch, WebSearch, Edit, NotebookEdit, Skill
 ---
@@ -34,7 +35,10 @@ Arguments: `$ARGUMENTS`
 - `--context FILE`: user-written project context: jurisdictions and markets, audience (including minors), regulated data, business model, deployment.
 - `--evidence FILE ...`: imported evidence such as vulnerability-scanner JSON, CI test results, restore-test records, accessibility test reports, or pentest reports.
 - `--domains a,b`: restrict the audit to these domains. The ship gate then treats the others as NOT ASSESSED and fails safe.
-- `--changed`: reassess only what changed since the last finalized audit. Flight Check compares file hashes with that audit, reassesses every domain a change can affect, and carries the other domains' results forward, labelled "carried forward, not reassessed". When it cannot trace a change, it reassesses everything. Do not combine with `--domains`.
+- **By default, only what changed is reassessed** once the project has been audited: Flight Check compares file hashes with the last finalized audit, reassesses every domain a change can affect, and carries the other domains' results forward, labelled "carried forward, not reassessed". When it cannot trace a change, or there is no earlier audit, it checks everything. `--changed` is accepted and means the same.
+- `--full`: check everything, even what did not change.
+- `--quick`: a quick check of the security-critical areas (the ones changed since the last audit, or the core ones for a project never audited), with one pass and a reading budget per agent. Much cheaper, but it is a spot check: it records nothing and gives no release decision.
+- `--models economy|balanced|thorough`: the model tier for this run (default: the project's setting, normally `balanced`, the models Flight Check's accuracy was measured with). `economy` is cheaper, but how much it misses has not been measured yet; `thorough` uses the most capable models at several times the usage.
 - `--recheck ID,...`: re-examine these controls, for example release-critical controls the last decision could not verify (`/flight-check:status` lists them). Implies `--changed`: Flight Check also reassesses the domains these controls belong to, and carries the rest forward as usual. Usually combined with `--evidence` or `--context` that shows where each control is met.
 - `--passes N` (1 to 3, default 1): run each domain agent N times independently and combine the results. This finds more issues and makes results steadier from run to run, and costs roughly N times as much for the domain audits.
 
@@ -50,11 +54,21 @@ Arguments: `$ARGUMENTS`
 
 ## 1. Start the run
 
-Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run --base <run base> --root <root>`, adding `--changed` when it was requested `--recheck <IDs>` (comma-separated, as given) when that was requested, and `--passes N` when N is above 1. It prints `run_id`, `run_dir`, `started_at`, and `commit`. Use `run_dir` and the absolute audit root exactly as given, character for character, in every file path you write and every prompt you send; never shorten or retype them from memory. Paths outside the audit root are refused.
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run --base <run base> --root <root>`, adding:
+- `--changed`, unless the user asked for `--full`, `--domains`, or `--quick`;
+- `--quick` when it was requested;
+- `--recheck <IDs>` (comma-separated, as given) when that was requested;
+- `--passes N` when N is above 1, and `--models <tier>` when a tier was requested.
+
+ It prints `run_id`, `run_dir`, `started_at`, and `commit`. Use `run_dir` and the absolute audit root exactly as given, character for character, in every file path you write and every prompt you send; never shorten or retype them from memory. Paths outside the audit root are refused.
 
 If `python3` is unavailable or the command fails, follow "If the script cannot run" at the end.
 
-**Usage estimate.** The output has `estimate.summary`, a rough range of the usage this audit will take. Tell the user before launching any agent. It covers the domain agents, the inventory, and the verifier; handler reviewers on projects with many entry points can add to it.
+**Usage estimate and spending limit.** The output has `estimate.summary`, a rough range of the usage this run will take; tell the user in one sentence before launching any agent. If `over_budget` is true, the estimate is above the user's spending limit (`spending_limit_usd`): before launching anything, ask once (use AskUserQuestion when available) whether to go ahead anyway, take one of `cheaper_options` (each says what it changes and its estimate; starting over with the option's `add` flag), or stop. If the user stops, nothing else happens. The user can change the limit or the model tier at any time by asking (`/flight-check:status` records it).
+
+**Models.** When the output's `models` is set, launch each agent with the Agent tool's `model` parameter: `models.inventory` for the inventory agent, `models.domain` for every domain agent and handler reviewer, and `models.verifier` for the verifier. When `models` is null, launch agents without a `model` parameter; each agent then uses the model Flight Check measured.
+
+**Quick check.** With `--quick`, the output has `quick` instead of `scope`. If it says `nothing_to_check`, no run was started: tell the user its message and stop. Otherwise follow "Quick check" at the end of this skill instead of steps 2 to 8.
 
 **Project records.** When the project has Flight Check state, the output also has `project_records`: `decision_assertions` (statements from decisions the owner accepted, to be checked against the code) and `applicability_overrides` (domains the owner declared applicable or not applicable). Use them in step 3.
 
@@ -85,11 +99,15 @@ Write `<run_dir>/run.json`:
 
 ## 2. Inventory
 
-Launch the `flight-check:inventory` agent with the Agent tool, using this prompt:
+If `scope.inventory_reused_from` is set, `<run_dir>/inventory.json` already holds the inventory of that run (nothing it describes has changed since): skip the inventory agent and use that file.
+
+Otherwise, launch the `flight-check:inventory` agent with the Agent tool, using this prompt:
 
 > Audit root: `<absolute root>`. Scope: `<scope or "entire project">`. Inventory this project and decide domain applicability. Return only the JSON object described in your instructions.
 
 Extract the JSON object from its reply and write it unchanged to `<run_dir>/inventory.json`. **Saving replies:** whenever the Agent tool gives a file for an agent's output (a background agent's output file, or a file it saved because the output was too large), never retype the reply. Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py save-reply <run_dir> --from <that file> --as inventory.json` (or `--as part-<agent>.json`, `--as verification.json`), which finds the agent's final reply in the file and copies its JSON exactly. Write a reply yourself only when there is no such file. This applies to every agent reply in this skill. Agent replies can arrive with `<`, `>`, and `&` HTML-escaped (for example `&lt;`); save them exactly as received and do not un-escape them. Flight Check's evidence check accounts for that escaping.
+
+**Keep the bookkeeping light.** Every turn of this conversation re-reads everything in it, so: do not restate, summarize, or quote agent replies; never read part files back (the `validate` output says what is wrong); when several agents have finished, save their replies in one message with one `save-reply` call per agent; and do not reply to an agent's completion with anything but saving its reply.
 
 ## 3. Domain audits (in parallel)
 
@@ -209,6 +227,17 @@ Then run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py report --view un
 6. **The scope reminder,** in one sentence: this reflects only what Flight Check could examine; it is not a certification or legal advice.
 
 If this audit concerned untrusted code, recommend a fresh session before acting on the findings: the project's content is in this conversation's context, and the tool restrictions of this skill end when the user sends the next message.
+
+## Quick check
+
+A quick check finds the most common serious problems in the security-critical areas for a fraction of an audit's usage. It records nothing: no findings, no ship decision.
+
+1. **Inventory.** If `quick.inventory_reused_from` is set, `<run_dir>/inventory.json` is already there; otherwise run step 2.
+2. **Agents.** Write `run.json` as in step 1. Launch only the agents in `quick.agents`, once each (no repeat passes, no handler reviewers), each with only its domains that are in `quick.domains`, with the delegation prompt from step 3 and the `models` rule above, plus this line:
+   > Quick check: spend at most about 25 tool calls. Look first at what changed (`<quick.basis>`) and at the highest-risk code in your domains: entry points, authentication and permission checks, database and file access, secrets, and dependencies. The rule to examine every item is relaxed for this run: sample, and say in each coverage rationale what you did not read. Report every control you did not establish as UNVERIFIED.
+3. **Validate and verify** as in steps 4 and 5.
+4. **Check the evidence:** `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py finalize <run_dir> --root <absolute root> --no-ledger`. This checks every quote against the files without recording anything. Skip steps 7 and 8.
+5. **Report, in plain English** (see "How to talk to the user"): what the quick check looked at (`quick.basis` and the areas), then each finding that passed the evidence check, by title and file, with what to do; refer to them by title and file, not by their provisional IDs. Offer once to fix what Claude can (`/flight-check:fix`). Say that this was a spot check of some areas, not a release decision, and that a full check (`/flight-check:audit`) states its cost before it starts.
 
 ## If the script cannot run
 

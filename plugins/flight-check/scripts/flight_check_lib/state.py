@@ -46,6 +46,7 @@ reports/
 manifest.json
 watch.json
 reminders.json
+settings.json
 *.lock
 """
 

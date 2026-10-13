@@ -1,13 +1,14 @@
 """Command-line interface. Every command prints JSON (or text for `gate`) and exits non-zero on failure."""
 
 import argparse
+import fnmatch
 import datetime
 import json
 import os
 import re
 import sys
 
-from . import VERSION, catalog, constants, estimate, finalize, freshness, gate, ledger, legal, lockfile, minischema, packet, profile, registers, release, render_md, sarif, state, status, unblock, validate, watch
+from . import VERSION, catalog, constants, estimate, finalize, freshness, gate, ledger, legal, lockfile, minischema, packet, profile, registers, release, render_md, sarif, settings, state, status, unblock, validate, watch
 from .jsonio import InputError, dump_json, load_json, write_bytes, write_text
 
 
@@ -115,6 +116,120 @@ def _with_recheck(scope, controls):
     return scope
 
 
+# Areas a quick check looks at: where a mistake most often becomes a security incident.
+QUICK_DOMAINS = ("application-security", "authentication", "authorization", "data-protection", "privacy", "payments",
+                 "supply-chain", "ai-llm")
+QUICK_FIRST_LOOK = ("application-security", "authentication", "authorization", "data-protection", "privacy", "supply-chain")
+# Files whose change can change what the inventory describes (stack, dependencies, deployment); any of them, or any
+# added or deleted file, means the inventory is taken again.
+STRUCTURAL = ("package.json", "package-lock.json", "pnpm-lock.yaml", "yarn.lock", "requirements*.txt", "pyproject.toml",
+              "poetry.lock", "Pipfile*", "setup.py", "setup.cfg", "go.mod", "go.sum", "Cargo.toml", "Cargo.lock", "Gemfile*",
+              "composer.json", "composer.lock", "*.csproj", "*.sln", "pom.xml", "build.gradle*", "settings.gradle*",
+              "Dockerfile*", "docker-compose*", "compose.y*ml", "*.tf", "*.tfvars", "vercel.json", "netlify.toml",
+              "fly.toml", "render.yaml", "app.yaml", "serverless.y*ml", "*.config.js", "*.config.ts", "*.config.mjs",
+              "*.config.cjs", ".env.example", "Procfile", "manage.py", "wsgi.py", "asgi.py")
+STRUCTURAL_DIRS = (".github/", ".gitlab-ci", ".circleci/", "k8s/", "kubernetes/", "helm/", "infra/", "terraform/", "deploy/")
+
+
+def _inventory_paths(node, out=None):
+    """Every file the inventory names (evidence paths, entry points, and other file lists)."""
+    out = set() if out is None else out
+    if isinstance(node, dict):
+        for k, v in node.items():
+            if k == "path" and isinstance(v, str):
+                out.add(v[2:] if v.startswith("./") else v)
+            elif "file" in k and isinstance(v, list):
+                out.update((x[2:] if x.startswith("./") else x) for x in v if isinstance(x, str))
+            else:
+                _inventory_paths(v, out)
+    elif isinstance(node, list):
+        for v in node:
+            _inventory_paths(v, out)
+    return out
+
+
+def _load_inventory(run_dir):
+    path = os.path.join(run_dir, "inventory.json")
+    try:
+        inv = load_json(path) if os.path.isfile(path) and not os.path.islink(path) else None
+    except InputError:
+        return None
+    return inv if isinstance(inv, dict) else None
+
+
+def _reusable_inventory(base, scope):
+    """The baseline run's inventory, when the changes since then cannot have changed what it describes: only modified
+    files (none added or deleted), none of them structural, and none of them cited by the inventory itself."""
+    if not scope or scope.get("mode") != "changed" or not scope.get("baseline_run_id"):
+        return None
+    files = scope.get("files") or []
+    if scope["changed_files"] > len(files) or any(f["change"] != "modified" for f in files):
+        return None
+    for f in files:
+        name = f["path"].rsplit("/", 1)[-1]
+        if any(fnmatch.fnmatch(name, p) for p in STRUCTURAL) or f["path"].startswith(STRUCTURAL_DIRS):
+            return None
+    inv = _load_inventory(os.path.join(base, scope["baseline_run_id"]))
+    if inv is None or {f["path"] for f in files} & _inventory_paths(inv):
+        return None
+    return inv
+
+
+def _quick_scope(state_dir, root, scanned):
+    """--quick: the security-critical areas that changed since the last audit, or, for a project never audited, the
+    core security areas. Records nothing."""
+    try:
+        st = state.load(state_dir, root=root, strict=False)
+    except (state.StateError, InputError):
+        st = None
+    domains, basis = list(QUICK_FIRST_LOOK), "a first look at the core security areas"
+    if st is not None and st.initialized and not st.problems and (st.project.get("readiness") or []):
+        ch = freshness.changes(root, st, scanned=scanned)
+        baseline = ch["baseline"].get("run_id")
+        if not ch["changed_files"]:
+            return {"mode": "quick", "domains": [], "agents": [], "basis": "nothing changed since run %s" % baseline}
+        na = {a["domain"] for a in st.project.get("applicability") or [] if profile.effective(a) == "not_applicable"}
+        domains = [d for d in ch["reassess_domains"] if d in QUICK_DOMAINS and d not in na]
+        basis = "the %d file(s) changed since run %s" % (ch["changed_files"], baseline)
+    agents = sorted({d["agent"] for d in catalog.domains() if d["id"] in domains})
+    return {"mode": "quick", "domains": domains, "agents": agents, "basis": basis}
+
+
+def _latest_inventory(base):
+    try:
+        names = sorted(os.listdir(base), reverse=True)
+    except OSError:
+        return None, None
+    for name in names:
+        inv = _load_inventory(os.path.join(base, name))
+        if inv is not None and os.path.isfile(os.path.join(base, name, "audit.final.json")):
+            return name, inv
+    return None, None
+
+
+def _budget(root, args, n_files, scope, quick):
+    """The usage estimate for the chosen tier, and cheaper options when it exceeds the user's spending limit."""
+    prefs = settings.load(root)
+    tier = args.models or prefs["models"]
+    agents = len(quick["agents"]) if quick else (len(scope["agents"]) if scope and scope["mode"] == "changed" else None)
+    passes = 1 if quick else args.passes
+    est = estimate.estimate(n_files, agents, passes, tier, bool(quick))
+    limit = prefs["max_audit_usd"]
+    out = {"estimate": est, "tier": tier, "models": settings.AGENT_MODELS[tier], "spending_limit_usd": limit,
+           "over_budget": bool(limit and est["usd_high"] > limit)}
+    if out["over_budget"]:
+        options = []
+        if passes > 1:
+            options.append(("one pass instead of %d" % passes, "--passes 1", estimate.estimate(n_files, agents, 1, tier)))
+        if tier != "economy":
+            options.append(("smaller, cheaper models", "--models economy", estimate.estimate(n_files, agents, passes, "economy", bool(quick))))
+        if not quick:
+            options.append(("a quick check of the security-critical areas only (no release decision)", "--quick",
+                            estimate.estimate(n_files, 3, 1, tier, True)))
+        out["cheaper_options"] = [{"what": w, "add": a, "usd_low": e["usd_low"], "usd_high": e["usd_high"]} for w, a, e in options]
+    return out
+
+
 def _project_records(state_dir):
     """What the audit skill passes to agents from the project's records: accepted decisions' assertions to check, and
     the owner's applicability overrides. Empty when there is no usable state."""
@@ -155,8 +270,22 @@ def cmd_init_run(args):
             return _fail("--recheck: unknown control ID(s): %s" % ", ".join(unknown))
         if not root:
             return _fail("--recheck needs --root")
+    if args.quick and not root:
+        return _fail("--quick needs --root")
     scanned = freshness.scan(root) if root else None
-    scope = _incremental_scope(os.path.dirname(base), root, scanned, now.date()) if args.changed or recheck else None
+    quick = _quick_scope(os.path.dirname(base), root, scanned) if args.quick else None
+    if quick is not None and not quick["agents"]:
+        _print({"ok": True, "nothing_to_check": True, "quick": quick,
+                "message": "Nothing for a quick check to look at: %s, and none of it touches the security-critical "
+                           "areas. No run was started and nothing was spent." % quick["basis"]})
+        return 0
+    if quick is not None and not args.suffix:
+        run_id += "-quick"
+        run_dir = os.path.join(base, run_id)
+        if os.path.exists(run_dir):
+            return _fail("run directory already exists: %s" % run_dir)
+    scope = _incremental_scope(os.path.dirname(base), root, scanned, now.date()) \
+        if (args.changed or recheck) and quick is None else None
     if scope and recheck:
         scope = _with_recheck(scope, recheck)
     if scope and scope["mode"] == "changed" and not scope["changed_files"] and not scope["reassess_domains"] \
@@ -177,6 +306,16 @@ def cmd_init_run(args):
             dump_json(os.path.join(run_dir, "inventory.json"), load_json(src))
         except InputError as exc:
             return _fail("cannot reuse inventory: %s" % exc)
+    elif quick is not None:
+        source, inv = _latest_inventory(base)
+        if inv is not None:
+            dump_json(os.path.join(run_dir, "inventory.json"), inv)
+            quick["inventory_reused_from"] = source
+    elif scope:
+        inv = _reusable_inventory(base, scope)
+        if inv is not None:
+            dump_json(os.path.join(run_dir, "inventory.json"), inv)
+            scope["inventory_reused_from"] = scope["baseline_run_id"]
     try:
         ref = state.run_ref(os.path.dirname(base))
     except (state.StateError, InputError):
@@ -196,8 +335,8 @@ def cmd_init_run(args):
     _print({"ok": True, "run_id": run_id, "run_dir": run_dir, "started_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "commit": _read_git_commit(os.path.abspath(args.root)) if args.root else None,
             "flight_check_version": VERSION, **({"scope": scope} if scope else {}),
-            **({"estimate": estimate.estimate(len(scanned[0]), len(scope["agents"]) if scope and scope["mode"] == "changed" else None,
-                                              args.passes)} if scanned is not None else {}),
+            **({"quick": quick} if quick else {}),
+            **(_budget(root, args, len(scanned[0]), scope, quick) if scanned is not None else {}),
             **({"project_records": records} if records else {})})
     return 0
 
@@ -548,7 +687,8 @@ def cmd_runs(args):
                 except (InputError, KeyError):
                     entry["error"] = "unreadable audit.final.json"
             runs.append(entry)
-    latest = next((r for r in reversed(runs) if r["finalized"]), None)
+    # Quick checks record nothing, so their provisional finding IDs never stand for the project's findings.
+    latest = next((r for r in reversed(runs) if r["finalized"] and not r["run_id"].endswith("-quick")), None)
     _print({"ok": True, "runs": runs, "latest_finalized": latest["run_dir"] if latest else None})
     return 0
 
@@ -1105,6 +1245,25 @@ def cmd_watch(args):
     return 0
 
 
+def cmd_settings(args):
+    """Show or change this project's local preferences: the spending limit and the model tier."""
+    root = os.path.abspath(args.root)
+    try:
+        prefs = settings.save(root, args.max_audit_usd, args.models) if (args.max_audit_usd is not None or args.models) \
+            else settings.load(root)
+    except (InputError, state.StateError, OSError) as exc:
+        return _fail(str(exc))
+    limit = prefs["max_audit_usd"]
+    tier_words = {"economy": "smaller, cheaper models (how much they miss has not been measured yet)",
+                  "balanced": "the models Flight Check's accuracy was measured with (the default)",
+                  "thorough": "the most capable models (several times the usage)"}
+    _print({"ok": True, "settings": prefs,
+            "message": "%s Agents use %s. These settings stay on this machine." % (
+                ("Flight Check asks before any audit estimated to cost more than $%.2f." % limit) if limit
+                else "Flight Check never asks about cost before an audit.", tier_words[prefs["models"]])})
+    return 0
+
+
 def cmd_later(args):
     """Reminders the user asked for: come back to an item later without losing it."""
     root = os.path.abspath(args.root)
@@ -1228,6 +1387,8 @@ def build_parser():
     s.add_argument("--suffix")
     s.add_argument("--inventory-from", help="copy inventory.json from this earlier run directory (targeted re-audits)")
     s.add_argument("--passes", type=int, choices=(1, 2, 3), default=1, help="passes the audit will run (for the usage estimate)")
+    s.add_argument("--quick", action="store_true", help="a quick check of the security-critical areas; records nothing")
+    s.add_argument("--models", choices=settings.TIERS, help="model tier for this run (default: the project's setting)")
     s.add_argument("--recheck", help="comma-separated control IDs to re-examine; implies --changed and reassesses their domains")
     s.add_argument("--changed", action="store_true",
                    help="reassess only the domains that changes since the last finalized run can affect; carry the rest forward")
@@ -1322,6 +1483,12 @@ def build_parser():
     s.add_argument("--root", required=True)
     s.add_argument("--now")
     s.set_defaults(func=cmd_watch)
+
+    s = sub.add_parser("settings", help="show or change the spending limit and model tier for this project (kept on this machine)")
+    s.add_argument("--root", required=True)
+    s.add_argument("--max-audit-usd", type=float, help="ask before audits estimated above this many US dollars; 0 never asks")
+    s.add_argument("--models", choices=settings.TIERS)
+    s.set_defaults(func=cmd_settings)
 
     s = sub.add_parser("later", help="remind me later about an item, list reminders, or mark one done (kept on this machine)")
     s.add_argument("--root", required=True)
