@@ -178,12 +178,42 @@ REPLY_NAME = re.compile(r"(inventory|verification|summary|part-[a-z0-9-]{2,40})\
 MAX_REPLY_BYTES = 5 * 1024 * 1024
 
 
+def _transcript_reply(raw):
+    """The final reply in an agent transcript (JSON Lines, one event per line, as in a background agent's output
+    file): the text blocks of the last assistant message that has text. None when raw is not such a transcript."""
+    final_id, texts, seen = None, [], False
+    for line in raw.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+        try:
+            event = json.loads(line)
+        except ValueError:
+            return None
+        if not isinstance(event, dict):
+            return None
+        message = event.get("message")
+        if event.get("type") != "assistant" or not isinstance(message, dict) or not isinstance(message.get("content"), list):
+            continue
+        seen = True
+        parts = [b.get("text") for b in message["content"]
+                 if isinstance(b, dict) and b.get("type") == "text" and isinstance(b.get("text"), str)]
+        if not parts:
+            continue
+        if message.get("id") is None or message.get("id") != final_id:
+            final_id, texts = message.get("id"), []
+        texts.extend(parts)
+    return "\n".join(texts) if seen and texts else None
+
+
 def _reply_text(raw):
-    """Agent replies that Claude Code stored in a file are a JSON list of text blocks; otherwise plain text."""
+    """Agent replies that Claude Code stored in a file: a JSON list of text blocks, an agent transcript (JSON Lines),
+    or plain text."""
     try:
         data = json.loads(raw)
     except ValueError:
-        return raw
+        reply = _transcript_reply(raw)
+        return raw if reply is None else reply
     blocks = data if isinstance(data, list) else [data]
     texts = [b.get("text") for b in blocks if isinstance(b, dict) and isinstance(b.get("text"), str)]
     return "\n".join(texts) if texts else raw
