@@ -398,6 +398,7 @@
         "superseded_by": {"type": "string", "pattern": "^FC-[0-9]{4,}$"},
         "confidence": {"$ref": "#/$defs/confidence"},
         "release_blocking": {"type": "boolean"},
+        "start_line": {"type": "integer", "minimum": 1},
         "regression": {
           "type": "object",
           "required": ["original_resolution", "reappeared_run", "reappeared_at", "match"],

@@ -3,7 +3,7 @@
 import datetime
 import os
 
-from . import VERSION, assemble, catalog, constants, evidence, freshness, gate, ledger, legal, minischema, profile, registers, release, state, validate
+from . import VERSION, assemble, catalog, constants, evidence, fingerprint, freshness, gate, ledger, legal, minischema, profile, registers, release, state, validate
 from .jsonio import dump_json, load_json
 
 
@@ -62,6 +62,15 @@ def _scope(run_dir):
             not all(d in catalog.domain_ids() for d in doc["carried_forward_domains"]):
         raise state.StateError("%s is not a valid run scope" % path)
     return doc
+
+
+def _start_line(finding):
+    path = fingerprint.primary_path(finding)
+    for ev in finding.get("evidence", []):
+        if ev.get("kind") in constants.LOCATED_EVIDENCE_KINDS and isinstance(ev.get("start_line"), int) and ev["start_line"] >= 1 \
+                and fingerprint.normalize_path(ev.get("path") or "") == path:
+            return ev["start_line"]
+    return None
 
 
 _STILL_OPEN = ("OPEN", "REGRESSION", "REMEDIATED", "UNDER_REVIEW", "REMEDIATION_PLANNED", "ACCEPTED_RISK")
@@ -203,6 +212,11 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
                 # Kept so a later incremental run can count this finding without re-observing it.
                 entry["confidence"] = f["effective_confidence"]
                 entry["release_blocking"] = f["release_blocking_effective"]
+                line = _start_line(f)
+                if line:
+                    entry["start_line"] = line  # where the finding points in its file, for SARIF export
+                else:
+                    entry.pop("start_line", None)
             audit["carried_forward_findings"] = _carried_findings(audit, entries, scanned[0] if scanned else {})
             ledger.merge_positive_controls(led, audit["positive_controls"], run_id, now,
                                            lambda p: freshness.entry_evidence_files(p, root, hashes),

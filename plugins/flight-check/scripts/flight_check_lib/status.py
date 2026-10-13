@@ -4,11 +4,13 @@ Every view is built from the recorded state, the ledger, and (when the audit roo
 here infers, guesses, or changes anything: a question the records cannot answer is reported as unknown.
 """
 
-from . import constants, freshness, legal, profile, registers
+import datetime
+
+from . import constants, freshness, legal, profile, registers, unblock
 from .render_md import md
 
 REPORT_VERSION = "1.0"
-VIEWS = ("status", "profile", "requirements", "decisions", "risks", "legal", "findings", "evidence", "changes", "readiness")
+VIEWS = ("status", "unblock", "profile", "requirements", "decisions", "risks", "legal", "findings", "evidence", "changes", "readiness")
 _SEV = {s: i for i, s in enumerate(constants.SEVERITIES)}
 _OPEN_RISK = ("OPEN", "REOPENED", "UNDER_REVIEW", "MITIGATION_PLANNED")
 
@@ -99,8 +101,13 @@ def build_status(st, root, now_iso):
                       "triggered_by_changes": ch.get("decisions_to_review", []) if ch["available"] else []},
         "legal": {"open": items, "message": None if items else legal.NO_ISSUES},
     }
+    out["unblock"] = unblock.items(st, root, _date(now_iso))
     out["next_steps"] = _next_steps(out)
     return out
+
+
+def _date(now_iso):
+    return datetime.date(int(now_iso[0:4]), int(now_iso[5:7]), int(now_iso[8:10]))
 
 
 def _next_steps(s):
@@ -126,6 +133,9 @@ def _next_steps(s):
 def build(view, st, root, now_iso, record_id=None):
     if view == "status":
         data = build_status(st, root, now_iso)
+    elif view == "unblock":
+        latest = (st.project.get("readiness") or [None])[-1]
+        data = {"decision": latest, "items": unblock.items(st, root, _date(now_iso))}
     elif view == "profile":
         p = st.project
         data = {"facts": [{k: f.get(k) for k in ("id", "aspect", "value", "origin", "source", "presence", "last_observed")}
@@ -249,10 +259,24 @@ def render_status(doc):
     out += ["", "## Legal questions"]
     out += _lines(s["legal"]["open"], lambda x: "- **%s** (%s) %s" % (x["id"], x["status"], md(x["title"])),
                   md(s["legal"]["message"] or ""))
+    if s.get("unblock"):
+        out += ["", "## What stands between this project and READY", ""] + _unblock_lines(s["unblock"])
     out += ["", "## Next steps"]
     out += _lines(s["next_steps"], lambda x: "- " + x, "- Nothing pending in Flight Check's records.")
     out.append("")
     return "\n".join(out)
+
+
+def _unblock_lines(items):
+    out = []
+    for i in items:
+        out.append("- **%s** Next: %s" % (md(i["problem"]), md(i["action"])))
+        if i.get("needs"):
+            out.append("  - Counts as verified when: %s" % md(i["needs"]))
+        for c in i.get("commands") or []:
+            label, _, cmd = c.partition(": ") if ": " in c and not c.startswith("mkdir") else ("", "", c)
+            out.append("  - %s`%s`" % ((md(label) + ": ") if label else "", cmd.replace("`", "'")))
+    return out
 
 
 def _table(rows, cols):
@@ -306,6 +330,10 @@ def render_markdown(doc):
             out += ["", "Reassess: %s. Carried forward: %s." % (", ".join(d["reassess_domains"]) or "nothing",
                                                                 ", ".join(d["carried_forward_domains"]) or "nothing")]
             out += ["- " + md(r) for r in d["reasons"]]
+    elif doc["view"] == "unblock":
+        dec = d["decision"]
+        out.append("Latest decision: %s." % (("%s (run %s, %s)" % (dec["decision"], dec["run_id"], dec["at"])) if dec else "none yet"))
+        out += [""] + (_unblock_lines(d["items"]) or ["Nothing in Flight Check's records stands between this project and READY."])
     elif doc["view"] == "readiness":
         out += [md(d["note"]), ""]
         out += _table(list(reversed(d["history"])), [("At", lambda s: s["at"]), ("Decision", lambda s: s["decision"]),

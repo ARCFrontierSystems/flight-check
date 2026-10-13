@@ -7,7 +7,7 @@ import os
 import re
 import sys
 
-from . import VERSION, catalog, constants, finalize, freshness, gate, ledger, legal, lockfile, minischema, packet, profile, registers, release, render_md, state, status, validate
+from . import VERSION, catalog, constants, estimate, finalize, freshness, gate, ledger, legal, lockfile, minischema, packet, profile, registers, release, render_md, sarif, state, status, unblock, validate
 from .jsonio import InputError, dump_json, load_json, write_bytes, write_text
 
 
@@ -70,25 +70,7 @@ def cmd_version(args):
 
 
 def _decision_inputs_changed(st, today):
-    """What can change the ship decision without any file changing: records changed since the latest decision, and
-    acceptances whose review date has passed."""
-    out = []
-    stamps = st.project.get("readiness") or []
-    if stamps and stamps[-1]["revision"] != st.project["revision"]:
-        out.append("the project's records changed after the latest decision (revision %d, now %d)"
-                   % (stamps[-1]["revision"], st.project["revision"]))
-    led = st.ledger or {}
-    for e in (led.get("entries") or {}).values():
-        if e["status"] == "ACCEPTED_RISK" and ledger.acceptance_problems(e.get("accepted_risk"), today):
-            out.append("the acceptance of %s no longer counts" % e["id"])
-    for cid, acc in (led.get("control_acceptances") or {}).items():
-        if ledger.acceptance_problems(acc, today):
-            out.append("the acceptance of control %s no longer counts" % cid)
-    for risk in (st.registers or {}).get("risks", []):
-        review = (risk.get("acceptance") or {}).get("review_date")
-        if risk["status"] == "ACCEPTED" and review and review < today.isoformat():
-            out.append("the acceptance of %s is past its review date" % risk["id"])
-    return out[:20]
+    return unblock.decision_inputs_changed(st, today)
 
 
 def _incremental_scope(state_dir, root, scanned, today):
@@ -113,6 +95,24 @@ def _incremental_scope(state_dir, root, scanned, today):
             "carried_forward_from": ch["carried_forward_from"],
             "agents": sorted({d["agent"] for d in catalog.domains() if d["id"] in ch["reassess_domains"]}),
             "decisions_to_review": ch["decisions_to_review"], "latest_readiness": ch["latest_readiness"]}
+
+
+def _with_recheck(scope, controls):
+    """Add the domains of the controls the user asked to re-check to the run, so they are reassessed instead of carried
+    forward. Re-checking only ever reassesses more."""
+    cat = {c["id"]: c["domain"] for c in catalog.controls()}
+    domains = sorted({cat[c] for c in controls})
+    scope = dict(scope, recheck={"controls": controls, "domains": domains})
+    if scope["mode"] == "changed":
+        order = catalog.domain_ids()
+        scope["reassess_domains"] = [d for d in order if d in set(scope["reassess_domains"]) | set(domains)]
+        scope["carried_forward_domains"] = [d for d in scope["carried_forward_domains"] if d not in domains]
+        scope["carried_forward_from"] = {d: r for d, r in (scope.get("carried_forward_from") or {}).items() if d not in domains}
+        scope["agents"] = sorted({d["agent"] for d in catalog.domains() if d["id"] in scope["reassess_domains"]})
+        scope["reasons"] = list(scope.get("reasons") or []) + [
+            "re-check requested for %s, so %s %s reassessed" % (", ".join(controls), ", ".join(domains),
+                                                                "is" if len(domains) == 1 else "are")]
+    return scope
 
 
 def _project_records(state_dir):
@@ -147,8 +147,18 @@ def cmd_init_run(args):
     root = os.path.abspath(args.root) if args.root else None
     if args.changed and not root:
         return _fail("--changed needs --root")
+    recheck = [c.strip().upper() for c in (args.recheck or "").split(",") if c.strip()]
+    if recheck:
+        known = {c["id"] for c in catalog.controls()}
+        unknown = [c for c in recheck if c not in known]
+        if unknown:
+            return _fail("--recheck: unknown control ID(s): %s" % ", ".join(unknown))
+        if not root:
+            return _fail("--recheck needs --root")
     scanned = freshness.scan(root) if root else None
-    scope = _incremental_scope(os.path.dirname(base), root, scanned, now.date()) if args.changed else None
+    scope = _incremental_scope(os.path.dirname(base), root, scanned, now.date()) if args.changed or recheck else None
+    if scope and recheck:
+        scope = _with_recheck(scope, recheck)
     if scope and scope["mode"] == "changed" and not scope["changed_files"] and not scope["reassess_domains"] \
             and not scope.get("decision_inputs_changed"):
         _print({"ok": True, "nothing_to_reassess": True, "scope": scope,
@@ -186,6 +196,8 @@ def cmd_init_run(args):
     _print({"ok": True, "run_id": run_id, "run_dir": run_dir, "started_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "commit": _read_git_commit(os.path.abspath(args.root)) if args.root else None,
             "flight_check_version": VERSION, **({"scope": scope} if scope else {}),
+            **({"estimate": estimate.estimate(len(scanned[0]), len(scope["agents"]) if scope and scope["mode"] == "changed" else None,
+                                              args.passes)} if scanned is not None else {}),
             **({"project_records": records} if records else {})})
     return 0
 
@@ -1006,21 +1018,27 @@ def _view_state(args):
     return st, root
 
 
+def _report_file(state_dir, name, suffix):
+    """(path, error): where --out writes. Reports go only to <state dir>/reports/, so a pre-approved command can never
+    overwrite another file."""
+    folder = os.path.join(state_dir, "reports")
+    if os.path.basename(name) != name or name.startswith(".") or not name.endswith(suffix):
+        return None, "--out takes a file name ending in %s, without a directory; reports are written to %s" % (suffix, folder)
+    if os.path.islink(folder):
+        return None, "%s is a symbolic link; refusing to write through it" % folder
+    os.makedirs(folder, mode=0o700, exist_ok=True)
+    out = os.path.join(folder, name)
+    if os.path.islink(out):
+        return None, "%s is a symbolic link; refusing to write through it" % out
+    return out, None
+
+
 def _emit_view(args, doc, state_dir):
     text = status.render_markdown(doc) if args.format == "md" else None
     if getattr(args, "out", None):
-        # Reports go only to <state dir>/reports/, so a pre-approved command can never overwrite another file.
-        name = args.out
-        if os.path.basename(name) != name or name.startswith(".") or not name.endswith(".md" if text is not None else ".json"):
-            return _fail("--out takes a file name ending in %s, without a directory; reports are written to %s"
-                         % (".md" if text is not None else ".json", os.path.join(state_dir, "reports")))
-        folder = os.path.join(state_dir, "reports")
-        if os.path.islink(folder):
-            return _fail("%s is a symbolic link; refusing to write through it" % folder)
-        os.makedirs(folder, mode=0o700, exist_ok=True)
-        out = os.path.join(folder, name)
-        if os.path.islink(out):
-            return _fail("%s is a symbolic link; refusing to write through it" % out)
+        out, error = _report_file(state_dir, args.out, ".md" if text is not None else ".json")
+        if error:
+            return _fail(error)
         if text is None:
             dump_json(out, doc)
         else:
@@ -1049,6 +1067,24 @@ def cmd_report(args):
     except (InputError, state.StateError, registers.RegisterError) as exc:
         return _fail(str(exc))
     return _emit_view(args, doc, st.state_dir)
+
+
+def cmd_sarif(args):
+    """Findings that count against release, as SARIF 2.1.0 (for GitHub code scanning)."""
+    try:
+        st, root = _view_state(args)
+        doc, counts = sarif.build(st, root)
+    except (InputError, state.StateError, registers.RegisterError) as exc:
+        return _fail(str(exc))
+    if not args.out:
+        _print(doc)
+        return 0
+    out, error = _report_file(st.state_dir, args.out, ".sarif")
+    if error:
+        return _fail(error)
+    dump_json(out, doc)
+    _print(dict({"ok": True, "written": out}, **counts))
+    return 0
 
 
 def cmd_release_check(args):
@@ -1146,6 +1182,8 @@ def build_parser():
     s.add_argument("--root", help="audit root, used to read the current git commit from .git files")
     s.add_argument("--suffix")
     s.add_argument("--inventory-from", help="copy inventory.json from this earlier run directory (targeted re-audits)")
+    s.add_argument("--passes", type=int, choices=(1, 2, 3), default=1, help="passes the audit will run (for the usage estimate)")
+    s.add_argument("--recheck", help="comma-separated control IDs to re-examine; implies --changed and reassesses their domains")
     s.add_argument("--changed", action="store_true",
                    help="reassess only the domains that changes since the last finalized run can affect; carry the rest forward")
     s.add_argument("--now")
@@ -1233,6 +1271,12 @@ def build_parser():
     s.add_argument("--out", help="file name (.md, or .json with --format json) to write under <state dir>/reports/ instead of printing")
     s.add_argument("--now")
     s.set_defaults(func=cmd_report)
+
+    s = sub.add_parser("sarif", help="open findings as SARIF 2.1.0, for GitHub code scanning")
+    s.add_argument("--root", required=True, help="the audit root (finding paths are checked against it)")
+    s.add_argument("--state-dir")
+    s.add_argument("--out", help="file name ending in .sarif, written under <state dir>/reports/; default: print it")
+    s.set_defaults(func=cmd_sarif)
 
     s = sub.add_parser("release-check", help="for CI: pass only when the latest ship decision is ready and still describes the tracked files")
     s.add_argument("--root", required=True, help="the checkout to release (the audit root)")

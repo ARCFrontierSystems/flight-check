@@ -3,7 +3,7 @@ name: status
 description: Answer questions about the project from Flight Check's records — readiness, open risks, changes, requirements, decisions, legal questions, evidence — without changing anything.
 argument-hint: "[question, e.g. \"what does my project still need?\"] [--out DIR]"
 disable-model-invocation: true
-allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py status *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py report *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py changes *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger show *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py release-check *)
+allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py status *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py report *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py changes *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger show *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py release-check *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py sarif *)
 disallowed-tools: WebFetch, WebSearch, Edit, Write, NotebookEdit, Skill, Agent
 ---
 
@@ -21,7 +21,8 @@ Question: `$ARGUMENTS`
 
 | The user asks | Run |
 |---|---|
-| Nothing, "status", "what does my project still need?", "why isn't it ready?" | `status --root <root>` |
+| Nothing, "status", "what does my project still need?" | `status --root <root>` |
+| "Why isn't it ready?", "how do I get unblocked?", "what would make it READY?" | `report --view unblock --root <root>`; relay each item's problem and next step, including any `commands`, exactly as given |
 | "What changed since the last audit?", "what needs reassessment?" | `changes --root <root>`, or `report --view changes --root <root>` |
 | "Which evidence is stale?" | `report --view evidence --root <root>` |
 | "Which risks are still open?" | `report --view risks --root <root>` and `status --root <root> --format json` (open findings) |
@@ -33,6 +34,7 @@ Question: `$ARGUMENTS`
 | "What is this project?", "what is known or unknown?" | `report --view profile --root <root>` |
 | "How has readiness changed?" | `report --view readiness --root <root>` |
 | "Can I release this?", "would the release check pass?" | `release-check --root <root> --mode warn` (add `--allow-accepted-risks` if the user releases with accepted risks) |
+| "Export findings for GitHub", "make a SARIF file" | `sarif --root <root> --out flight-check.sarif` (written to `.flight-check/reports/`; usage.md shows the workflow that uploads it) |
 | "Save a report", "export the risk register" | the matching `report --view … --root <root> --out <name>.md` (or `--format json --out <name>.json`); files go to `.flight-check/reports/` |
 
 Combine a few commands when one question needs them. Run each command once; do not repeat it to "double-check".
