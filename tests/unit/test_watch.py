@@ -74,7 +74,7 @@ class WatchProjectTests(ProjectTestCase):
         self.assertIsNone(hook("stop", payload, NOW - datetime.timedelta(minutes=27)))  # scanned 3 minutes ago: waits
         got = hook("stop", payload)
         self.assertEqual(got["decision"], "block")
-        self.assertIn("/flight-check:audit --changed", got["reason"])
+        self.assertIn("/flight-check:audit", got["reason"])
         self.assertIn("costs about $", got["reason"])
         later = NOW + datetime.timedelta(hours=1)
         self.assertIsNone(hook("stop", payload, later))  # same changes: not suggested again

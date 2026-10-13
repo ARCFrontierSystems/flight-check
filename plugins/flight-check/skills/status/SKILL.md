@@ -3,13 +3,13 @@ name: status
 description: Answer questions about the project from Flight Check's records, in plain English: is it ready to release, what is wrong and how to fix it, what changed, open risks, requirements, decisions, legal questions. Use when the user asks what Flight Check found or what their project still needs. Changes nothing.
 argument-hint: "[question, e.g. \"what does my project still need?\"] [--out DIR]"
 disable-model-invocation: true
-allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py status *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py report *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py changes *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger show *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py release-check *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py sarif *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py later *)
+allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py status *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py report *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py changes *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger show *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py release-check *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py sarif *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py later *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py settings *)
 disallowed-tools: WebFetch, WebSearch, Edit, Write, NotebookEdit, Skill, Agent
 ---
 
 # Flight Check status
 
-Answers questions about the project **only from Flight Check's records and the commands below**. It never changes the project or Flight Check's records, starts an audit, or reads project files itself. The one thing it writes is a reminder on this machine, when the user asks to be reminded later.
+Answers questions about the project **only from Flight Check's records and the commands below**. It never changes the project or Flight Check's records, starts an audit, or reads project files itself. The only things it writes are the user's own preferences on this machine, when the user asks: a reminder, a spending limit, or a model tier.
 
 Run Flight Check's script only as a single plain command that starts exactly with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py`, as in the table below. Never use shell variables, `cd`, `&&`, pipes, or redirection around it. Run no other shell commands.
 
@@ -33,6 +33,7 @@ Question: `$ARGUMENTS`
 | "Show me the evidence behind FC-0003", "the history of FC-0003" | `report --view findings --id FC-0003 --root <root>`, or `ledger show --ledger <root>/.flight-check/ledger.json --id FC-0003` |
 | "What is this project?", "what is known or unknown?" | `report --view profile --root <root>` |
 | "How has readiness changed?" | `report --view readiness --root <root>` |
+| "Ask me before audits over $3", "use cheaper models", "what are my settings?" | `settings --root <root> [--max-audit-usd N] [--models economy\|balanced\|thorough]` (0 never asks; `balanced` is the measured default, `economy` is cheaper and catches somewhat less, `thorough` costs several times more) |
 | "Remind me later", "not now", "come back to this next week" | `later --root <root> --id <ID> [--on YYYY-MM-DD] --note "<what is left>"` for each item meant; `later --root <root>` lists reminders; `later --root <root> --done <ID>` removes one |
 | "Can I release this?", "would the release check pass?" | `release-check --root <root> --mode warn` (add `--allow-accepted-risks` if the user releases with accepted risks) |
 | "Export findings for GitHub", "make a SARIF file" | `sarif --root <root> --out flight-check.sarif` (written to `.flight-check/reports/`; usage.md shows the workflow that uploads it) |

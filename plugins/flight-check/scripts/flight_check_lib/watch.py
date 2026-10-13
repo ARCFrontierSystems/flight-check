@@ -19,10 +19,12 @@ import json
 import os
 import re
 
-from . import catalog, estimate, freshness, plain, state, textsafety, unblock
+from . import catalog, estimate, freshness, plain, settings, state, textsafety, unblock
 from .jsonio import InputError, dump_json, load_json
 
 WATCH = "watch.json"
+QUICK = ("application-security", "authentication", "authorization", "data-protection", "privacy", "payments",
+         "supply-chain", "ai-llm")  # the areas a quick check covers (cli.QUICK_DOMAINS)
 REMINDERS = "reminders.json"
 SUGGEST_GAP_SECONDS = 20 * 60  # between suggestions
 REPEAT_SAME_SECONDS = 2 * 60 * 60  # before suggesting again for the same changed files
@@ -284,12 +286,21 @@ def stop(payload, now):
         key = _key(*sorted(f["path"] + ":" + f["change"] for f in ch["files"]))
         if key == cfg.get("last_suggested_key") and elapsed is not None and elapsed < REPEAT_SAME_SECONDS:
             return None
-        agents = len({d["agent"] for d in catalog.domains() if d["id"] in ch["reassess_domains"]})
-        est = estimate.estimate(len(scanned[0]), agents)
+        prefs = settings.load(root)
+        agents = {d["agent"] for d in catalog.domains() if d["id"] in ch["reassess_domains"]}
+        quick_agents = {d["agent"] for d in catalog.domains() if d["id"] in ch["reassess_domains"] and d["id"] in QUICK}
+        full = estimate.estimate(len(scanned[0]), len(agents), 1, prefs["models"])
         areas = ", ".join(d.replace("-", " ") for d in ch["reassess_domains"][:5])
-        message = ("Flight Check: %d file(s) changed since the last check, touching %s. A quick check of just these "
-                   "changes costs about $%.2f to $%.2f. Type /flight-check:audit --changed when you reach a good "
-                   "stopping point." % (ch["changed_files"], areas, est["usd_low"], est["usd_high"]))
+        message = "Flight Check: %d file(s) changed since the last check, touching %s." % (ch["changed_files"], areas)
+        quick = estimate.estimate(len(scanned[0]), len(quick_agents), 1, prefs["models"], True) if quick_agents else None
+        if quick and quick["usd_high"] < full["usd_high"]:
+            message += (" A quick security check of these changes costs about $%.2f to $%.2f (/flight-check:audit --quick);"
+                        " a full check of them, with a release decision, about $%.2f to $%.2f (/flight-check:audit)."
+                        % (quick["usd_low"], quick["usd_high"], full["usd_low"], full["usd_high"]))
+        else:
+            message += (" Checking them costs about $%.2f to $%.2f (/flight-check:audit; it only re-checks what changed)."
+                        % (full["usd_low"], full["usd_high"]))
+        message += " Run it when you reach a good stopping point."
     cfg.update(last_suggested_at=now.strftime("%Y-%m-%dT%H:%M:%SZ"), last_suggested_key=key)
     _save(root, WATCH, cfg)
     return {"decision": "block",

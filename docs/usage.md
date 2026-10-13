@@ -5,7 +5,7 @@ All Flight Check commands are run explicitly. Claude never starts an audit on it
 ## `/flight-check:audit`
 
 ```
-/flight-check:audit [path] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2] [--changed] [--recheck ID,...] [--untrusted --out DIR]
+/flight-check:audit [path] [--quick | --full] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2] [--recheck ID,...] [--models TIER] [--untrusted --out DIR]
 ```
 
 - `path`: the project to audit. Defaults to the current directory.
@@ -27,13 +27,18 @@ All Flight Check commands are run explicitly. Claude never starts an audit on it
   - Accessibility test reports, and penetration test summaries.
 - `--domains a,b`: limit the audit to some domains. The others are reported as not assessed, so the ship decision fails safe.
 - `--passes 2` (or 3): run each domain agent two or three times independently and combine the results. Language-model audits vary from run to run; combining passes finds more issues and gives a steadier ship decision. A control counts as verified when any pass verified it with evidence, a gap reported by any pass stands, and the verifier merges repeated findings. Domain-audit usage grows about in proportion. Recommended before a release decision.
-- `--changed`: reassess only what changed since the last finalized audit. See "Audits of changes only" below.
+- **Only what changed, by default.** After the first audit, `/flight-check:audit` reassesses only the areas changes can affect and carries the rest forward (see "Audits of changes only" below). It also reuses the last inventory when no file was added or deleted and no dependency, build, or deployment file changed. `--changed` is accepted and means the same.
+- `--full`: check everything, even what did not change.
+- `--quick`: a quick check of the security-critical areas (those changed since the last audit, or the core ones for a project never audited): one pass, a reading budget per agent, the verifier, and the evidence check. It records nothing and gives no release decision. Use it often while developing; use a full audit for release decisions.
+- `--models economy|balanced|thorough`: the model tier for this run. `balanced` (the default) is what Flight Check's accuracy was measured with. `economy` runs the checking agents on a smaller model and costs less, but catches somewhat less. `thorough` uses the most capable model, at several times the usage.
 - `--recheck ID,...`: re-examine specific controls, typically the release-critical ones the last decision could not verify, together with `--evidence` or `--context` that shows where each is met. It works like `--changed` and also reassesses the domains those controls belong to, so it costs a fraction of a full audit. Example: `/flight-check:audit --recheck SUPPLY-KNOWN-VULNS --evidence .flight-check/evidence/npm-audit.json`.
 - `--untrusted --out DIR`: for code you do not own or trust. See [hardened-mode.md](hardened-mode.md).
 
 A typical first audit ends in **BLOCKED — INSUFFICIENT EVIDENCE**, because some release-critical controls, such as dependency vulnerability status and tested restores, cannot be established from source code alone. That is intended. `/flight-check:status` (or `report --view unblock`) lists everything between the project and READY, each with its next step: the scanner command to run for your project's ecosystems and how to import its output, the control to re-check with `--recheck`, the finding to fix or the risk to accept with `/flight-check:track`.
 
-Before any agent starts, the audit tells you a rough usage estimate, scaled by project size, the number of domain agents it will run, and `--passes`. It is calibrated on Flight Check's measured audits, so treat it as a range, not a quote.
+Before any agent starts, the audit tells you a rough usage estimate, scaled by project size, the number of domain agents it will run, `--passes`, the model tier, and whether it is a quick check. It is calibrated on Flight Check's measured audits, so treat it as a range, not a quote.
+
+**Spending limit.** By default, Flight Check asks before starting an audit estimated to cost more than $5, and offers cheaper options: one pass instead of several, the `economy` models, or a quick check. Change the limit or the default model tier by asking Claude ("ask me before audits over $3", "use cheaper models") or with `settings --root . --max-audit-usd 3 --models economy`; `--max-audit-usd 0` never asks. Settings stay on your machine.
 
 ## `/flight-check:legal-packet`
 

@@ -64,7 +64,7 @@ def walk(base, skip_dirs=(".git",)):
 
 # Subcommands a skill may pre-approve. Commands that record the user's own decisions
 # (ledger accept, revoke, legal, close) are deliberately absent: they must always prompt.
-PREAPPROVABLE_SUBCOMMANDS = {"version", "init-run", "validate", "save-reply", "finalize", "render", "gate", "release-check", "sarif", "later", "watch", "runs", "findings",
+PREAPPROVABLE_SUBCOMMANDS = {"version", "init-run", "validate", "save-reply", "finalize", "render", "gate", "release-check", "sarif", "later", "watch", "settings", "runs", "findings",
                              "packet", "schema-check", "ledger show", "ledger remediate", "status", "report",
                              "changes"}
 PREAPPROVAL = re.compile(r"Bash\(python3 \$\{CLAUDE_PLUGIN_ROOT\}/scripts/flight_check\.py ((?:ledger )?[a-z-]+) \*\)")
