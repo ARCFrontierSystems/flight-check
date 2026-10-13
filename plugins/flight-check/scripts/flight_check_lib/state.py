@@ -42,6 +42,7 @@ runs/
 packets/
 backups/
 pending/
+reports/
 manifest.json
 *.lock
 """
@@ -465,6 +466,12 @@ def _ensure_gitignore(state_dir):
     path = os.path.join(state_dir, ".gitignore")
     if not os.path.lexists(path):
         write_text(path, GITIGNORE)
+    elif os.path.isfile(path) and not os.path.islink(path):
+        # Bring an earlier Flight Check-written file up to date; never touch one the user has edited.
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            lines = set(fh.read().splitlines())
+        if lines < set(GITIGNORE.splitlines()):
+            write_text(path, GITIGNORE)
 
 
 def _journal(st, names, new_head_seq):

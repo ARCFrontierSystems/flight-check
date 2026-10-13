@@ -57,6 +57,7 @@ Or inside a Claude Code session: `/plugin marketplace add ARCFrontierSystems/fli
 | `/flight-check:legal-packet` | Builds the Attorney Review Packet PDF from findings that warrant legal or business review. |
 | `/flight-check:track` | Shows status, and records your decisions: accepted risks, legal review status, counsel decisions you report, closures. |
 | `/flight-check:remediate FC-0001,FC-0002` | Fixes findings you authorize in your own project, then re-audits to verify. |
+| `/flight-check:status [question]` | Answers questions about readiness, open risks, changes, requirements, decisions, and legal questions from Flight Check's records, without changing anything. |
 
 Useful audit options:
 - `--context FILE`: a short description of your markets, audience, regulated data, and business model.

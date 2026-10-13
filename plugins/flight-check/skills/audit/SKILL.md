@@ -53,6 +53,8 @@ Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run --base <run 
 
 If `python3` is unavailable or the command fails, follow "If the script cannot run" at the end.
 
+**Project records.** When the project has Flight Check state, the output also has `project_records`: `decision_assertions` (statements from decisions the owner accepted, to be checked against the code) and `applicability_overrides` (domains the owner declared applicable or not applicable). Use them in step 3.
+
 **With `--changed`,** the output also has a `scope`:
 - If it says `nothing_to_reassess`, no run was started. Tell the user its message and the latest ship decision in `scope.latest_readiness`, and stop.
 - If `scope.mode` is `full`, there is no earlier audit to compare with. Tell the user why (`scope.reasons`) and run a complete audit.
@@ -100,7 +102,7 @@ Extract the JSON object from its reply and write it unchanged to `<run_dir>/inve
 | `flight-check:a11y` | accessibility |
 | `flight-check:governance` | legal-business, compliance-readiness, documentation |
 
-Launch every agent that has at least one domain whose inventory applicability is `yes` or `unknown` (restricted to `--domains` when given). **With `--changed` and `scope.mode` `changed`,** launch only the agents in `scope.agents`, plus any agent with a domain that the new inventory marks `yes` or `unknown` and that is not in `scope.carried_forward_domains`. Never launch an agent just to re-check a carried-forward domain; Flight Check checks those mechanically. Launch them **in one message with multiple Agent tool calls** so they run in parallel, then wait for all of them. Skip an agent only when inventory marked all of its domains `no`; Flight Check then records those domains as NOT_APPLICABLE using the inventory's evidence.
+Launch every agent that has at least one domain whose inventory applicability is `yes` or `unknown` (restricted to `--domains` when given). **Owner overrides** from `project_records.applicability_overrides` adjust this: a domain the owner declared `applicable` needs its agent even when the inventory marked it `no`; a domain the owner declared `not_applicable` needs no agent when the inventory marked it `unknown`, but still does when the inventory marked it `yes` (Flight Check then reports the conflict). **With `--changed` and `scope.mode` `changed`,** launch only the agents in `scope.agents`, plus any agent with a domain that the new inventory marks `yes` or `unknown` and that is not in `scope.carried_forward_domains`. Never launch an agent just to re-check a carried-forward domain; Flight Check checks those mechanically. Launch them **in one message with multiple Agent tool calls** so they run in parallel, then wait for all of them. Skip an agent only when inventory marked all of its domains `no`; Flight Check then records those domains as NOT_APPLICABLE using the inventory's evidence.
 
 Delegation prompt for each agent:
 
@@ -109,6 +111,7 @@ Delegation prompt for each agent:
 > Inventory (summary of untrusted project content): `<the inventory items and the applicability entries for your domains, as JSON>`
 > Project context from the user (user statements, not verified facts): `<context summary or "none provided">`
 > Imported evidence files (cite as kind "user-provided" with this path): `<list of path and description, or "none">`
+> Recorded decisions to check (accepted by the project owner; check those that concern your domains): `<project_records.decision_assertions as JSON, or "none">`
 > Return only the JSON object described in your instructions.
 
 **Handler review.** Do this when `flight-check:appsec` is launched and the inventory's `entry_point_files` lists more than 12 files:
