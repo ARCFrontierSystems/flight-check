@@ -20,6 +20,10 @@ MAX_FILES = 200000
 MAX_LIST_BYTES = 100 * 1024 * 1024  # a file list for MAX_FILES long paths
 
 CURRENT, STALE, MISSING, UNVERIFIED = "current", "stale", "missing", "unverified"
+# Conclusions no longer in force: their old evidence is expected to change (that is often how they were resolved), so
+# it is not reported as stale. Changes to the files they cite still steer reassessment.
+RETIRED = {"finding": ("NOT_REPRODUCED", "VERIFIED", "CLOSED"), "positive_control": ("not_observed",),
+           "requirement": ("SUPERSEDED", "REJECTED"), "decision": ("SUPERSEDED", "REVERSED"), "risk": ("RESOLVED",)}
 
 
 def _hash_file(path):
@@ -246,7 +250,7 @@ def changes(root, st, max_files=MAX_FILES, scanned=None):
                            "forward for them: %s" % (len(never), ", ".join(never)))
     carried = sorted(d for d in applicable if d not in reassess)
     stale = [{"kind": k, "id": i, "state": evidence_state(h, current)} for k, i, _, h, s in conclusions
-             if h and evidence_state(h, current) in (STALE, MISSING)]
+             if h and s not in RETIRED.get(k, ()) and evidence_state(h, current) in (STALE, MISSING)]
     stale_controls = {s["id"] for s in stale if s["kind"] == "control"}
     for rec in (st.registers or {}).get("requirements", []):
         linked = [c for c in rec.get("controls") or [] if c in stale_controls]

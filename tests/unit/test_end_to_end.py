@@ -345,6 +345,30 @@ class SaveReplyTests(unittest.TestCase):
         self.assertEqual(code, 1)  # not a run directory
 
 
+    def test_background_agent_transcript_yields_its_final_reply(self):
+        tmp = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, tmp, True)
+        run_dir = helpers.write_run(parts=[], base=tmp)
+        part = helpers.base_part()
+        early = {"agent": "draft", "coverage": [], "note": "an earlier message, not the reply"}
+        events = [
+            {"type": "user", "message": {"role": "user", "content": "Audit root ... return only the JSON object"}},
+            {"type": "assistant", "message": {"id": "m1", "content": [{"type": "text", "text": "```json\n%s\n```" % json.dumps(early)}]}},
+            {"type": "assistant", "message": {"id": "m1", "content": [{"type": "tool_use", "name": "Grep", "input": {}}]}},
+            {"type": "user", "message": {"role": "user", "content": [{"type": "tool_result", "content": "{\"x\": 1, \"y\": 2}"}]}},
+            {"type": "attachment", "attachment": {}},
+            {"type": "assistant", "message": {"id": "m2", "content": [{"type": "thinking", "thinking": "..."}]}},
+            {"type": "assistant", "message": {"id": "m2", "content": [{"type": "text", "text": "```json\n%s\n```" % json.dumps(part)}]}},
+        ]
+        stored = os.path.join(tmp, "agent.output")
+        with open(stored, "w") as fh:
+            fh.write("\n".join(json.dumps(e) for e in events) + "\n")
+        code, out = run_cli("save-reply", run_dir, "--from", stored, "--as", "part-appsec.json")
+        self.assertEqual(code, 0, out)
+        saved = read_json(os.path.join(run_dir, "part-appsec.json"))
+        self.assertEqual((saved["agent"], saved["findings"]), ("appsec", part["findings"]))
+
+
 class HandlerReviewTests(unittest.TestCase):
     """A handler reviewer reports findings for its files only; its NOT_MET controls outrank the main agent's."""
 

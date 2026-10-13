@@ -1,7 +1,7 @@
 ---
 name: track
-description: Record your decisions on Flight Check findings (accepted risks, legal review status, closures) and show status.
-argument-hint: "[status | FC-0001 <what happened> | accept FC-0001 | revoke FC-0001 | close FC-0001] [--out DIR]"
+description: Record your decisions in Flight Check — accepted risks, legal review status, closures, finding triage, requirements, decisions, risks, and corrections to what Flight Check observed.
+argument-hint: "[status | FC-0001 <what happened> | accept FC-0001 | revoke FC-0001 | close FC-0001 | <a requirement, decision, risk, or correction>] [--out DIR]"
 disable-model-invocation: true
 allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger show *)
 disallowed-tools: WebFetch, WebSearch, Edit, NotebookEdit, Skill
@@ -11,7 +11,7 @@ disallowed-tools: WebFetch, WebSearch, Edit, NotebookEdit, Skill
 
 Records decisions **only the user can make**. Flight Check never accepts a risk, never records a counsel decision, and never closes a finding on its own initiative.
 
-Only `ledger show` is pre-approved. Every command that records a decision (`ledger accept`, `revoke`, `legal`, `close`) raises a Claude Code permission prompt, so the user approves each one explicitly. Never ask the user to pre-allow those commands in their settings, and never try another way to record a decision when a prompt is declined.
+Only `ledger show` is pre-approved. Every command that records a decision (`ledger accept`, `revoke`, `legal`, `close`, `mark`, and the `req`, `decision`, `risk`, `legal`, `profile`, and `applicability` commands below) raises a Claude Code permission prompt, so the user approves each one explicitly. Never ask the user to pre-allow those commands in their settings, and never try another way to record a decision when a prompt is declined.
 
 Run Flight Check's script only as a single plain command that starts exactly with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py`, as in the examples below. Never use shell variables, `cd`, `&&`, pipes, or redirection around it; only that exact form is pre-approved. Run no other shell commands. Do not modify project files.
 
@@ -75,6 +75,31 @@ Only findings that are `VERIFIED` (fixed and confirmed by a re-audit) or `NOT_RE
 `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger close --ledger <ledger> --id <ID> --note "<user's confirmation>"`
 
 If the finding is still open, explain that it must be fixed and verified, or explicitly accepted as a risk.
+
+## Triage a finding
+
+When the user says a finding is being looked at, has a fix planned, is a false positive, or was replaced by another finding:
+`python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py ledger mark --root <root> --id <FC-xxxx> --status UNDER_REVIEW|REMEDIATION_PLANNED|FALSE_POSITIVE|SUPERSEDED|OPEN --reason "<the user's own words>" [--superseded-by FC-yyyy]`
+
+A finding marked false positive or superseded stays visible; if an audit still reports it, the best decision is READY WITH ACCEPTED RISKS, and a CRITICAL one still blocks. Say so before recording it.
+
+## Requirements, decisions, and risks
+
+Record only what the user states; ask for any required field they have not given, and never fill one in yourself.
+- **Requirement:** `req add --root <root> --title "..." --description "..." --category <category> --criticality release-critical|high|normal [--link control:<CONTROL-ID>]`. A requirement becomes VERIFIED only when an audit verifies its linked controls; never set it yourself. Suggest linking a control so an audit can verify it.
+- **Decision:** `decision add --root <root> --title "..." --context "..." --decision "..." [--rationale "..."] [--assertion "a statement the code should satisfy" ...] [--review-trigger <path, pattern, or domain> ...]`. Assertions are checked against the code in every audit; review triggers flag the decision for review when matching files change. To replace one: `decision update --root <root> --id DEC-xxxx --status SUPERSEDED --superseded-by DEC-yyyy --note "..."`.
+- **Risk:** `risk add --root <root> --title "..." --description "..." --domain <domain> --severity <SEVERITY>`, or `risk add --root <root> --from-finding FC-xxxx`. Accepting a register risk (`risk accept`) needs the same complete, user-supplied record as accepting a finding, and never lowers its severity; an accepted CRITICAL risk still blocks.
+- Changes: `<req|decision|risk> update --root <root> --id <ID> --status <STATUS> --note "<the user's own words>"`. The script refuses transitions only evidence may make; relay its reason.
+
+Prefix each with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py`.
+
+## Corrections to what Flight Check observed
+
+- A wrong observation: `profile correct --root <root> --id PF-xxxx --assertion not_used|excluded|replace|scope --reason "..." [--value "..."]`. The observation and its evidence stay; if later evidence contradicts the correction, Flight Check flags it.
+- A fact the code cannot show: `profile declare --root <root> --aspect <aspect> --value "..." --reason "..."`.
+- A domain that does or does not apply: `applicability override --root <root> --domain <domain> --classification applicable|not_applicable --reason "..."` (or `--clear`). When the evidence contradicts an override, the evidence is used and the conflict is reported.
+
+Prefix each with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py`. For questions about the project rather than changes, suggest `/flight-check:status`.
 
 ## Always
 
