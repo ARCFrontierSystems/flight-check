@@ -2,6 +2,10 @@
 
 All notable changes are recorded here. Versions follow [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+- **Fixes are checked by breaking them.** After `/flight-check:fix` or `/flight-check:remediate` fixes a problem and adds a test, it undoes each part of the fix in turn and runs the tests, which must fail every time. A break that survives with every test green shows that the tests miss the real path (for example, they call a function directly but never the line that wires it in), so a test that covers it is added. The fix is restored after each break, and the result is reported in plain words and recorded with the fix.
+
 ## [1.0.1] — 2026-10-13
 
 Easier first steps for new users.
