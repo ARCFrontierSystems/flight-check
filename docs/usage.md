@@ -133,6 +133,23 @@ Every legal or business question is a legal review item (`LR-0001`) in `register
 
 `/flight-check:legal-packet` builds a packet from findings and, on request, from open items without a finding (`item_ids` in the packet request). It refuses to build an empty packet. The 1.0 command `ledger legal` still works with the old status names and records the matching new status.
 
+### What changed, and what is still current
+
+Each finalized audit records the hashes of the files every conclusion cites, and keeps a list of the project's file hashes on this machine (`.flight-check/manifest.json`, not committed).
+
+`changes --root <project>` compares the files now with the last finalized audit and reports:
+- the changed files (only content changes count; timestamps never do);
+- the findings, controls, positive controls, profile facts, legal items, and requirements those files support, and which of them now rest on **stale** (changed) or **missing** evidence;
+- accepted decisions whose review triggers match the changes;
+- the domains to reassess and the domains whose results can be carried forward. A changed file that no rule or stored conclusion explains, an incomplete file list, or a missing manifest (for example in a fresh clone) widens reassessment to every applicable domain;
+- whether the latest readiness decision is now historical.
+
+Your triage of a finding: `ledger mark --id FC-0003 --status UNDER_REVIEW|REMEDIATION_PLANNED|FALSE_POSITIVE|SUPERSEDED|OPEN --reason TEXT [--superseded-by FC-0007]`. A finding you mark false positive or superseded that the next audit still reports is shown as such, and the ship decision is at best READY WITH ACCEPTED RISKS; a CRITICAL one still blocks.
+
+A finding that was verified fixed or closed and comes back is a **regression** when it matches by fingerprint, by rule and file, or by the same quoted line; when only the file and the wording match, it is a **possible regression**.
+
+The ship decision also counts the project's records: a release-critical requirement that is not verified by evidence makes the evidence insufficient, a legal item you marked ACTION_REQUIRED blocks release, and an open CRITICAL or HIGH risk in the register (one not represented by findings) blocks it; an accepted CRITICAL risk still blocks.
+
 Commit `project.json`, `registers.json`, `history.jsonl`, and `ledger.json` if your team shares the history. Flight Check writes `.flight-check/.gitignore` so run output, backups, and lock files stay local.
 
 ## Continuous integration

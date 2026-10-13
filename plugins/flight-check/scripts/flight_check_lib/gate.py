@@ -79,11 +79,57 @@ def _acceptance_timing_problem(acc, started):
     return None
 
 
-def decide(audit, ledger, today, lifecycle=None):
+_OPEN_RISK = ("OPEN", "REOPENED", "UNDER_REVIEW", "MITIGATION_PLANNED")
+
+
+def _register_inputs(registers):
+    """Gate inputs from the project's records (1.5): (kind, id, effect, explanation)."""
+    out = []
+    if not registers:
+        return out
+    for rec in registers.get("requirements", []):
+        if rec["criticality"] == "release-critical" and rec["status"] in ("ACCEPTED", "IMPLEMENTED", "VERIFIED"):
+            current = rec["status"] == "VERIFIED" and (rec.get("verification") or {}).get("state") == "current"
+            if not current:
+                how = ("link it to controls that an audit can verify, or change its criticality"
+                       if not rec.get("controls") else "its linked controls were not all verified with checked evidence")
+                out.append(("requirement", rec["id"], "insufficient",
+                            "Release-critical requirement %s (%s) is not verified by evidence: %s." % (rec["id"], rec["title"], how)))
+    for item in registers.get("legal", []):
+        if item["status"] == "ACTION_REQUIRED":
+            out.append(("legal", item["id"], "blocking",
+                        "Legal review item %s (%s) needs action before release, as recorded by the owner." % (item["id"], item["title"])))
+    for risk in registers.get("risks", []):
+        if (risk.get("links") or {}).get("findings"):
+            continue  # represented by its findings
+        if risk["status"] in _OPEN_RISK:
+            if risk["severity"] == "CRITICAL":
+                out.append(("risk", risk["id"], "critical", "Open CRITICAL risk %s (%s) in the risk register." % (risk["id"], risk["title"])))
+            elif risk["severity"] == "HIGH":
+                out.append(("risk", risk["id"], "blocking", "Open HIGH risk %s (%s) in the risk register." % (risk["id"], risk["title"])))
+        elif risk["status"] == "ACCEPTED":
+            if risk["severity"] == "CRITICAL":
+                out.append(("risk", risk["id"], "accepted_critical",
+                            "Accepted CRITICAL risk %s still blocks release; accepting it records the decision but never lifts the block." % risk["id"]))
+            else:
+                out.append(("risk", risk["id"], "accepted", "Accepted risk %s." % risk["id"]))
+    return out
+
+
+def decide(audit, ledger, today, lifecycle=None, registers=None):
     lifecycle = lifecycle or {}
     started = run_started_at(audit.get("run"))
-    open_findings, accepted_findings, accepted_critical, not_counted = [], [], [], []
+    open_findings, accepted_findings, accepted_critical, not_counted, dismissed = [], [], [], [], []
     for f in audit["findings"]:
+        if f.get("status") in constants.DISMISSED_STATUSES:
+            # The owner marked it a false positive or superseded, yet this run still reports it. That counts like an
+            # acceptance: visible, never READY without qualification, and a CRITICAL one still blocks.
+            if f["severity"] == "CRITICAL":
+                accepted_critical.append(f["id"])
+                open_findings.append(f)
+            else:
+                dismissed.append(f)
+            continue
         if f.get("status") == "ACCEPTED_RISK" and not acceptance_problems(f.get("accepted_risk"), today):
             timing = _acceptance_timing_problem(f.get("accepted_risk"), started)
             if timing:
@@ -127,6 +173,20 @@ def decide(audit, ledger, today, lifecycle=None):
         insufficient.append("%s: the re-audit says the recorded fix is not effective but the finding was not re-observed; resolve manually" % fid)
 
     blocking = [f["id"] for f in open_findings if release_blocking_effective(f)]
+    accepted_risks = []
+    for item in _register_inputs(registers):
+        kind, rid, effect, text = item
+        if effect == "critical":
+            critical.append(rid)
+        elif effect == "accepted_critical":
+            accepted_critical.append(rid)
+            critical.append(rid)
+        elif effect == "insufficient":
+            insufficient.append(text)
+        elif effect == "blocking":
+            blocking.append(rid)
+        elif effect == "accepted":
+            accepted_risks.append(rid)
 
     reasons = []
     if critical:
@@ -137,7 +197,7 @@ def decide(audit, ledger, today, lifecycle=None):
     elif blocking:
         decision = constants.GATE_NOT_READY
         reasons.append("Open release-blocking finding(s): %s." % ", ".join(blocking))
-    elif accepted_findings or accepted_controls:
+    elif accepted_findings or accepted_controls or dismissed or accepted_risks:
         decision = constants.GATE_READY_ACCEPTED
     else:
         decision = constants.GATE_READY
@@ -150,15 +210,21 @@ def decide(audit, ledger, today, lifecycle=None):
         reasons.extend("- " + r for r in insufficient)
     if blocking and decision != constants.GATE_NOT_READY:
         reasons.append("Release-blocking findings that also need remediation: %s." % ", ".join(blocking))
-    if accepted_findings or accepted_controls:
-        refs = [f["id"] for f in accepted_findings] + accepted_controls
+    if accepted_findings or accepted_controls or accepted_risks:
+        refs = [f["id"] for f in accepted_findings] + accepted_controls + accepted_risks
         reasons.append("User-accepted risks in effect: %s." % ", ".join(refs))
+    if dismissed:
+        reasons.append("Still reported by this audit, but marked false positive or superseded by the owner: %s." %
+                       ", ".join(f["id"] for f in dismissed))
     if accepted_critical:
         reasons.append("Accepted CRITICAL finding(s) still block release: %s. Accepting a CRITICAL risk records the decision but never lifts the block." % ", ".join(accepted_critical))
     for note in not_counted:
         reasons.append(note)
     if decision == constants.GATE_READY:
         reasons.append("No open release-blocking findings, no unverified release-critical controls, and every domain was assessed or shown not applicable.")
+    for item in _register_inputs(registers):
+        if item[2] in ("critical", "blocking", "accepted_critical"):
+            reasons.append(item[3])
 
     return {
         "decision": decision,
@@ -167,6 +233,8 @@ def decide(audit, ledger, today, lifecycle=None):
         "blocking_findings": blocking,
         "insufficient_evidence": insufficient,
         "accepted_findings": [f["id"] for f in accepted_findings],
+        "dismissed_findings": [f["id"] for f in dismissed],
+        "accepted_register_risks": accepted_risks,
         "accepted_controls": accepted_controls,
         "accepted_critical_findings": accepted_critical,
         "acceptances_not_counted": not_counted,

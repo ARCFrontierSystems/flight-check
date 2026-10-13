@@ -3,7 +3,7 @@
 import datetime
 import os
 
-from . import VERSION, assemble, catalog, constants, evidence, gate, ledger, legal, minischema, profile, registers, state, validate
+from . import VERSION, assemble, catalog, constants, evidence, freshness, gate, ledger, legal, minischema, profile, registers, state, validate
 from .jsonio import dump_json, load_json
 
 
@@ -89,7 +89,7 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         if item.get("evidence"):
             evidence.annotate(item["evidence"], root, cache)
 
-    def merge_and_gate(led):
+    def merge_ledger(led):
         lifecycle = ledger.merge(led, audit, now, today)
         local_to_id = {f["local_id"]: f["id"] for f in audit["findings"]}
         for f in audit["findings"]:
@@ -98,12 +98,13 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         for c in audit["controls"]:
             if c.get("related_findings"):
                 c["related_findings"] = [local_to_id.get(r, r + " (rejected)") for r in c["related_findings"]]
-        for i, p in enumerate(audit["positive_controls"], 1):
-            p["id"] = "PC-%03d" % i
         audit["findings"].sort(key=lambda f: (constants.SEVERITY_RANK[f["severity"]], f["id"]))
-        decision = gate.decide(audit, led, today, lifecycle)
+        return lifecycle
+
+    def decide(led, lifecycle, regs=None):
+        decision = gate.decide(audit, led, today, lifecycle, regs)
         ledger.record_run(led, audit["run"]["run_id"], now, decision["decision"], audit["run"]["mode"])
-        return lifecycle, decision
+        return decision
 
     run_id = audit["run"]["run_id"]
     if ledger_path:
@@ -116,10 +117,25 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
                 raise state.StateError("run %s was started for project %s, but this state belongs to project %s; "
                                        "it will not be merged" % (run_id, ref["project_id"], tx.project["identity"]["project_id"]))
             prev = (tx.ledger["runs"][-1]["gate"] if tx.ledger.get("runs") else None)
-            lifecycle, decision = merge_and_gate(tx.ledger)
             led = tx.ledger
-            counts = {k: len(v) for k, v in lifecycle.items() if isinstance(v, list) and v and k != "ledger_entries"}
+            lifecycle = merge_ledger(led)
+            # Hashes of the files each conclusion cites, so later changes can be traced to it (freshness.changes).
+            hashes = {}
+            entries = registers.entries_by_id(led)
+            for f in audit["findings"]:
+                entries[f["id"]]["evidence_files"] = freshness.entry_evidence_files(f, root, hashes)
+            ledger.merge_positive_controls(led, audit["positive_controls"], run_id, now,
+                                           lambda p: freshness.entry_evidence_files(p, root, hashes))
+            controls = tx.project.setdefault("controls", {})
+            for c in audit["controls"]:
+                if c["state"] in ("VERIFIED", "NOT_MET", "NOT_APPLICABLE") or c["id"] not in controls:
+                    controls[c["id"]] = {"state": c["state"], "run_id": run_id, "at": now,
+                                         "evidence_files": freshness.entry_evidence_files(c, root, hashes)}
             profile_changes = profile.merge(tx.project, audit["inventory"], root, now, run_id)
+            legal_changes = legal.sync_findings(tx.registers, tx.project, led, audit["findings"], now, run_id, root)
+            register_changes = registers.apply_assessment(tx.registers, audit, registers.entries_by_id(led), now, run_id)
+            decision = decide(led, lifecycle, tx.registers)
+            counts = {k: len(v) for k, v in lifecycle.items() if isinstance(v, list) and v and k != "ledger_entries"}
             kinds = {}
             for change in profile_changes:
                 kinds[change[0]] = kinds.get(change[0], 0) + 1
@@ -127,9 +143,7 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
                      "Audit run %s finalized. Findings: %s. Profile: %s." % (
                          run_id, ", ".join("%s %d" % kv for kv in sorted(counts.items())) or "no lifecycle changes",
                          ", ".join("%s %d" % kv for kv in sorted(kinds.items())) or "unchanged"))
-            for record, change, note in legal.sync_findings(tx.registers, tx.project, tx.ledger, audit["findings"], now, run_id, root):
-                tx.event(record, change, note)
-            for record, change, note in registers.apply_assessment(tx.registers, audit, registers.entries_by_id(tx.ledger), now, run_id):
+            for record, change, note in legal_changes + register_changes:
                 tx.event(record, change, note)
             for change in profile_changes:
                 if change[0] == "applicability":
@@ -141,9 +155,13 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
                     tx.event(change[1], {"contradiction": [False, True]},
                              "The latest observation of %s contradicts an active correction." % change[2])
             tx.readiness = (decision["decision"], run_id, audit["run"]["target"].get("commit"))
+        freshness.write_manifest(state_dir, root, run_id, now)
     else:
         led = ledger.new_ledger(audit["run"]["target"]["name"])
-        lifecycle, decision = merge_and_gate(led)
+        lifecycle = merge_ledger(led)
+        for i, p in enumerate(audit["positive_controls"], 1):
+            p["id"] = "PC-%04d" % i
+        decision = decide(led, lifecycle)
 
     final = {
         "schema_version": constants.SCHEMA_VERSION,

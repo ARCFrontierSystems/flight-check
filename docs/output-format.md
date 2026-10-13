@@ -36,7 +36,8 @@ Top-level keys:
 - **`rejected_findings`, `duplicate_findings`:** kept for transparency; they do not affect the gate.
 - **`positive_controls`, `unconfirmed_positive_controls`, `unverified_areas`.**
 - **`regressions`, `not_reproduced`, `remediated_pending`, `lifecycle`.**
-- **`gate`:** `decision`, `reasons`, `critical_findings`, `blocking_findings`, `insufficient_evidence`, `accepted_findings`, `accepted_controls`, `scope_statement`, `exit_code`.
+- **`gate`:** `decision`, `reasons`, `critical_findings`, `blocking_findings`, `insufficient_evidence`, `accepted_findings`, `accepted_controls`, `scope_statement`, `exit_code`. From 1.5 also `dismissed_findings` (marked false positive or superseded but still reported) and `accepted_register_risks`; `critical_findings`, `blocking_findings`, and `insufficient_evidence` can then also name requirements (`REQ-`), legal items (`LR-`), and risks (`RISK-`) from the project's records.
+- **`lifecycle`** (1.5): also `possible_regressions`, `false_positive_reobserved`, and `superseded_reobserved`. Positive controls carry stable IDs (`PC-0001`) across runs.
 - **`evidence_index`:** every evidence item with a reference such as `E-0001`.
 - **`validation`:** warnings recorded during finalization.
 
