@@ -37,6 +37,7 @@ Top-level keys:
   - `counterevidence[]`, `affected_components[]`, `explanation`, `impact`, `remediation`.
   - `legal` (classification, questions, decisions) and `legal_status`: from version 1.5, the status of the finding's legal review item (`NEEDS_REVIEW`, `AWAITING_BUSINESS_DECISION`, `AWAITING_COUNSEL`, `REVIEWED`, `ACTION_REQUIRED`, `RESOLVED`, `NOT_APPLICABLE`), or null when the finding has no item (no legal classification, or INFORMATIONAL). Version 1.0 used the older ledger statuses (`OPEN`, `LEGAL_REVIEW_REQUESTED`, ...).
   - `human_review`, and `verification` (the verifier's verdict and notes).
+  - `decision_ids` (1.5, optional): recorded decisions (`DEC-`) the finding contradicts.
 - **`rejected_findings`, `duplicate_findings`:** kept for transparency; they do not affect the gate.
 - **`positive_controls`, `unconfirmed_positive_controls`, `unverified_areas`.**
 - **`regressions`, `not_reproduced`, `remediated_pending`, `lifecycle`.**
@@ -44,6 +45,19 @@ Top-level keys:
 - **`lifecycle`** (1.5): also `possible_regressions`, `false_positive_reobserved`, `superseded_reobserved`, and `carried_forward_open`. Positive controls carry stable IDs (`PC-0001`) across runs.
 - **`evidence_index`:** every evidence item with a reference such as `E-0001`.
 - **`validation`:** warnings recorded during finalization.
+
+## Status and report views (1.5)
+
+`status --format json` and `report --view <view> --format json` print (or, with `--out NAME`, write to `.flight-check/reports/NAME`) one object:
+- `report_version` (`1.0`), `view`, `generated_at`, `project` (`name`, `project_id`, `revision`), `scope_note`.
+- `data`, by view:
+  - `status`: `project`, `profile` (`known`, `known_total`, `unknown_aspects`), `applicability` (domains by classification), `readiness` (`latest` stamp, `historical`, `note`), `changes` (`available`, and when available `changed_files`, `reassess_domains`, `carried_forward_domains`, `widened`, `stale_evidence` count; otherwise `reason`), `findings` (`open_by_severity`, `open_total`, `top`, `accepted`, `regressions`), `risks`, `requirements` (not verified), `decisions` (`needs_attention`, `triggered_by_changes`), `legal` (`open`, `message`), `next_steps`.
+  - `profile`: `facts`, `applicability`.
+  - `requirements`, `decisions`, `risks`, `legal`: `records` (summary rows with links), or `record` with `--id`; `legal` adds `message` when no item is open.
+  - `findings`: `findings` (with first and last run), or `finding`, `history`, and `evidence_files` with `--id`.
+  - `evidence`: `baseline`, `changed_files`, `stale_or_missing`. `changes`: the `changes` command's output. `readiness`: the `status` readiness fields plus `history` (last 20 stamps).
+
+Markdown is the default format; it is for reading, and its layout may change between versions.
 
 ## Ledger (`.flight-check/ledger.json`)
 

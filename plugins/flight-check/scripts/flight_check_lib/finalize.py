@@ -210,7 +210,10 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
                 assessed[d] = rec
             profile_changes = profile.merge(tx.project, audit["inventory"], root, now, run_id)
             legal_changes = legal.sync_findings(tx.registers, tx.project, led, audit["findings"], now, run_id, root)
-            register_changes = registers.apply_assessment(tx.registers, audit, registers.entries_by_id(led), now, run_id)
+            decision_changes, unknown = registers.apply_decision_conflicts(tx.registers, audit["findings"], now, run_id)
+            warnings.extend("decision_ids: %s, which is not a recorded decision; the link was dropped" % u for u in unknown)
+            register_changes = decision_changes + registers.apply_assessment(tx.registers, audit, registers.entries_by_id(led),
+                                                                             now, run_id)
             decision = decide(led, lifecycle, tx.registers)
             counts = {k: len(v) for k, v in lifecycle.items() if isinstance(v, list) and v and k != "ledger_entries"}
             kinds = {}

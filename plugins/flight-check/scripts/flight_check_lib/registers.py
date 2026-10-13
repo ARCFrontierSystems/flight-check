@@ -233,6 +233,37 @@ def active_assertions(registers):
     return out
 
 
+def apply_decision_conflicts(registers, findings, now_iso, run_id):
+    """Findings an agent linked to recorded decisions (decision_ids): link them, and move an ACCEPTED decision to
+    NEEDS_REVIEW. Flight Check never changes the decision itself. Returns (changes, unknown decision ids); unknown ids
+    are removed from the finding."""
+    changes, unknown = [], []
+    by_id = {r["id"]: r for r in registers["decisions"]}
+    for f in findings:
+        known = []
+        for did in f.get("decision_ids") or []:
+            rec = by_id.get(did)
+            if rec is None:
+                unknown.append("%s cites %s" % (f["id"], did))
+                continue
+            known.append(did)
+            linked = rec.setdefault("links", {}).setdefault("findings", [])
+            if f["id"] not in linked:
+                linked.append(f["id"])
+            if rec["status"] == "ACCEPTED":
+                note = "Run %s reported %s as contradicting this decision: %s" % (run_id, f["id"], f["title"])
+                rec["status"] = "NEEDS_REVIEW"
+                rec["history"].append(_event(now_iso, "NEEDS_REVIEW", "flight-check", note, run_id=run_id))
+                rec["updated_at"] = now_iso
+                changes.append((did, {"status": ["ACCEPTED", "NEEDS_REVIEW"]}, note))
+        if "decision_ids" in f:
+            if known:
+                f["decision_ids"] = known
+            else:
+                del f["decision_ids"]
+    return changes, unknown
+
+
 def reverse_links(registers, record_id):
     """Records that link to record_id (links are stored on one side only)."""
     out = []

@@ -160,6 +160,10 @@ def _finding_block(f):
     if f.get("also_reported_by"):
         lines.append("")
         lines.append("**Also reported (merged duplicates):** " + "; ".join("%s (%s): %s" % (d["local_id"], catalog.domain_title(d["domain"]), md(d["title"])) for d in f["also_reported_by"]))
+    if f.get("decision_ids"):
+        lines.append("")
+        lines.append("**Contradicts recorded decision(s):** %s. The decision is marked for review; Flight Check does not "
+                     "change it." % ", ".join(f["decision_ids"]))
     if f.get("accepted_risk"):
         a = f["accepted_risk"]
         lines.append("")

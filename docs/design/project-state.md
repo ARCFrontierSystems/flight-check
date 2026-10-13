@@ -174,7 +174,7 @@ Fields: `context`, `decision`, `rationale`, `alternatives`, `owner`, `date`, `re
 | `ACCEPTED`, `SUPERSEDED`, `REVERSED` | user |
 | `NEEDS_REVIEW` | Flight Check, when a review trigger changes or an assessment reports a contradiction; or user |
 
-**Consistency checks:** the `assertions` of `ACCEPTED` decisions are passed to the domain agents as statements to check. A contradiction is reported as an ordinary evidence-backed finding (rule `<domain>.decision-contradiction`) linked to the decision, which moves to `NEEDS_REVIEW`. Flight Check never concludes a violation without evidence, and never changes a decision itself.
+**Consistency checks:** the `assertions` of `ACCEPTED` decisions are passed to the domain agents as statements to check. `init-run` returns them (`project_records.decision_assertions`) with the owner's applicability overrides, and the audit skill puts them in each domain agent's prompt. A contradiction is reported as an ordinary evidence-backed finding that names the decision in `decision_ids` (usually rule `<domain>.decision-contradiction`). Finalize links the finding to the decision, which moves to `NEEDS_REVIEW` if it was `ACCEPTED`; an unknown decision ID is dropped with a warning. Flight Check never concludes a violation without evidence, and never changes a decision itself.
 
 ### 7.3 Risks (`RISK-`)
 
@@ -315,9 +315,11 @@ The 1.0 command `ledger legal` keeps working and updates the linked item.
 | Historical records | superseded facts, closed records, the history log | nobody; append only |
 | Derived conclusions | gate decisions, freshness states, status summaries | computed on demand; only readiness stamps are stored |
 
-## 15. Interfaces planned
+## 15. Interfaces
 
-Script subcommands (each with Markdown and JSON output): `state init|show|check|export|import|adopt|restore`, `profile show|correct`, `applicability override`, `req add|update|list`, `decision add|update|list`, `risk add|update|accept|list`, `legal add|update|list` (the 1.0 `ledger legal` stays), `changes`, `status`. Skills: a read-only `status` skill for natural-language questions, `track` extended for recording, and `audit --changed`. Pre-approval follows the 1.0 rule: read-only subcommands may be pre-approved; every command that records a decision always asks.
+Status and reports (Phase 8): `status` answers the questions of section 26 of the 1.5 plan (what the project is, what is known and unknown, what changed, the most important open issues, requirements not verified, decisions needing attention, legal questions, stale evidence, what to reassess, and the latest readiness decision with whether it is historical). `report --view profile|status|requirements|decisions|risks|legal|findings|evidence|changes|readiness [--id ID]` gives each view in Markdown or JSON (`report_version` 1.0); `--out NAME` writes it under `.flight-check/reports/` only. Both are read-only and may be pre-approved; the `status` skill maps questions to them and sends every change to `track`, `audit`, `remediate`, or `legal-packet`.
+
+Planned script subcommands (each with Markdown and JSON output): `state init|show|check|export|import|adopt|restore`, `profile show|correct`, `applicability override`, `req add|update|list`, `decision add|update|list`, `risk add|update|accept|list`, `legal add|update|list` (the 1.0 `ledger legal` stays), `changes`, `status`. Skills: a read-only `status` skill for natural-language questions, `track` extended for recording, and `audit --changed`. Pre-approval follows the 1.0 rule: read-only subcommands may be pre-approved; every command that records a decision always asks.
 
 ## 16. Out of scope for 1.5
 

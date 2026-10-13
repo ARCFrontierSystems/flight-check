@@ -145,6 +145,25 @@ Each finalized audit records the hashes of the files every conclusion cites, and
 - the domains to reassess and the domains whose results can be carried forward. A changed file that no rule or stored conclusion explains, an incomplete file list, or a missing manifest (for example in a fresh clone) widens reassessment to every applicable domain;
 - whether the latest readiness decision is now historical.
 
+### Status and reports
+
+`/flight-check:status [question]` answers questions such as "what does my project still need?", "what changed since the last audit?", "which requirements are not verified?", "are there legal issues I should review?", or "show me the history of FC-0003" from Flight Check's records. It only reads: for an audit, a fix, a packet, or a decision, it tells you which command to run.
+
+The commands behind it, which you can also run directly:
+
+| Command | Shows |
+|---|---|
+| `status --root <project>` | Readiness (and whether it is historical), what the project is and what is unknown, what changed, the most important open issues, requirements not verified, decisions needing attention, legal questions, and next steps |
+| `report --view profile\|requirements\|decisions\|risks\|legal\|findings\|evidence\|changes\|readiness --root <project> [--id ID]` | One register or view; `--id` shows one record with its history |
+
+Both print Markdown by default; add `--format json` for the documented JSON (see [output-format.md](output-format.md)). `--out NAME.md` (or `NAME.json`) writes the view to `.flight-check/reports/`, which stays on your machine.
+
+### Recorded decisions and the code
+
+When you record a decision with assertions (`decision add ... --assertion "statement the code should satisfy"`), each audit asks the domain agents to check the assertions against the code. A contradiction backed by evidence becomes a finding that names the decision, and the decision is marked `NEEDS_REVIEW` for you to look at. Flight Check never changes or reverses a decision.
+
+Owner applicability overrides (`applicability override`) also steer which agents an audit launches.
+
 ### Audits of changes only
 
 `/flight-check:audit --changed` runs `changes` first, then launches only the domain agents for the domains a change can affect. The inventory always runs again. Every other applicable domain is **carried forward**:

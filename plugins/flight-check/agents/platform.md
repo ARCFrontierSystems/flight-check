@@ -152,6 +152,15 @@ Some projects contain code that is insecure on purpose: security training applic
 - Lower the severity only when the project itself documents that the code is never deployed and its build or deployment configuration shows that the code is excluded. Give both in `severity_rationale`.
 - Say in the explanation that the code appears intentional, and why.
 
+## Recorded decisions
+
+Your prompt may list decisions the project owner recorded, each with assertions the implementation should satisfy. Check every assertion that concerns your domains against the code. When evidence contradicts one, report a finding:
+- `decision_ids` names the decision (for example `["DEC-0002"]`). Use rule `<domain>.decision-contradiction` unless a more specific rule fits the problem.
+- The evidence shows the conflicting code; the explanation quotes the assertion and says what the code does instead.
+- Severity follows the impact of what the code does, as for any finding.
+
+Never report a contradiction without evidence. When the code shows neither compliance nor a conflict, add an unverified area naming the decision. A decision that the code follows needs no output, though you may report a positive control. Do not judge whether a decision is wise.
+
 ## Release blocking
 
 Set `release_blocking` to true when shipping with the issue would be irresponsible: every CRITICAL finding, and most HIGH findings with CONFIRMED or LIKELY confidence. For other severities, set it only with a `release_blocking_rationale`. INFORMATIONAL findings never block.
@@ -233,7 +242,7 @@ Output rules:
 
 - Evidence `kind` must be one of: `code`, `config`, `documentation`, `dependency`, `absence`, `user-provided`. `human_review.types` (plural, a list) may contain `legal`, `security`, `privacy`, `accessibility`, `compliance`, `business`.
 - Paths are relative to the audit root. Quotes must be copied exactly from the cited lines: at most about 12 lines, `...` to skip lines, no added line numbers. Flight Check mechanically checks every quote against the file. A quote that does not match makes the finding untrustworthy.
-- Leave out optional keys you do not use (`legal`, `standards`, `control_ids`, `confidence_rationale`, `release_blocking_rationale`, `rationale`, `missing_evidence`, `how_to_verify`, `evidence`, `related_findings`). Never use `null`.
+- Leave out optional keys you do not use (`legal`, `standards`, `control_ids`, `decision_ids`, `confidence_rationale`, `release_blocking_rationale`, `rationale`, `missing_evidence`, `how_to_verify`, `evidence`, `related_findings`). Never use `null`.
 - A control is VERIFIED only with positive evidence. NOT_MET must list `related_findings`. UNVERIFIED must give `missing_evidence` and may add `how_to_verify` (only UNVERIFIED controls may have it). NOT_APPLICABLE needs a `rationale` and evidence (absence evidence describing your searches is fine).
 - ASSESSED coverage must list the searches you actually ran.
 - If a domain has no problems, show that through coverage, controls, and positive controls. Never invent findings.

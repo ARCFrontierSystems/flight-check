@@ -7,7 +7,7 @@ import os
 import re
 import sys
 
-from . import VERSION, catalog, constants, finalize, freshness, gate, ledger, legal, lockfile, minischema, packet, profile, registers, render_md, state, validate
+from . import VERSION, catalog, constants, finalize, freshness, gate, ledger, legal, lockfile, minischema, packet, profile, registers, render_md, state, status, validate
 from .jsonio import InputError, dump_json, load_json, write_bytes, write_text
 
 
@@ -88,6 +88,21 @@ def _incremental_scope(state_dir, root, scanned):
             "decisions_to_review": ch["decisions_to_review"], "latest_readiness": ch["latest_readiness"]}
 
 
+def _project_records(state_dir):
+    """What the audit skill passes to agents from the project's records: accepted decisions' assertions to check, and
+    the owner's applicability overrides. Empty when there is no usable state."""
+    try:
+        st = state.load(state_dir, strict=False)
+    except (state.StateError, InputError):
+        return None
+    if not st.initialized or st.problems:
+        return None
+    return {"decision_assertions": registers.active_assertions(st.registers)[:40],
+            "applicability_overrides": {a["domain"]: {"classification": a["override"]["classification"],
+                                                      "reason": a["override"]["reason"]}
+                                        for a in st.project["applicability"] if a.get("override")}}
+
+
 def cmd_init_run(args):
     now = _now(args)
     run_id = now.strftime("%Y%m%dT%H%M%SZ")
@@ -130,6 +145,7 @@ def cmd_init_run(args):
         dump_json(os.path.join(run_dir, "run-ref.json"), dict(ref, run_id=run_id))
     if scanned is not None:
         freshness.write_snapshot(run_dir, scanned, now.strftime("%Y-%m-%dT%H:%M:%SZ"))
+    records = _project_records(os.path.dirname(base))
     if scope:
         dump_json(os.path.join(run_dir, "scope.json"), dict(scope, schema_version="1.0", run_id=run_id))
     marker = os.path.join(base, ".gitignore")
@@ -137,7 +153,8 @@ def cmd_init_run(args):
         write_text(marker, "# Flight Check run output can quote project files; do not commit it.\n*\n")
     _print({"ok": True, "run_id": run_id, "run_dir": run_dir, "started_at": now.strftime("%Y-%m-%dT%H:%M:%SZ"),
             "commit": _read_git_commit(os.path.abspath(args.root)) if args.root else None,
-            "flight_check_version": VERSION, **({"scope": scope} if scope else {})})
+            "flight_check_version": VERSION, **({"scope": scope} if scope else {}),
+            **({"project_records": records} if records else {})})
     return 0
 
 
@@ -856,6 +873,59 @@ def cmd_changes(args):
     return freshness.changes(root, st)
 
 
+def _view_state(args):
+    root = args.root or (os.path.dirname(_state_dir(args)) if os.path.basename(_state_dir(args)) == state.STATE_DIR_NAME else None)
+    st = state.load(_state_dir(args), root=root)
+    if not st.initialized:
+        raise state.StateError("no project state yet; run /flight-check:audit (or `state init`) first")
+    return st, root
+
+
+def _emit_view(args, doc, state_dir):
+    text = status.render_markdown(doc) if args.format == "md" else None
+    if getattr(args, "out", None):
+        # Reports go only to <state dir>/reports/, so a pre-approved command can never overwrite another file.
+        name = args.out
+        if os.path.basename(name) != name or name.startswith(".") or not name.endswith(".md" if text is not None else ".json"):
+            return _fail("--out takes a file name ending in %s, without a directory; reports are written to %s"
+                         % (".md" if text is not None else ".json", os.path.join(state_dir, "reports")))
+        folder = os.path.join(state_dir, "reports")
+        if os.path.islink(folder):
+            return _fail("%s is a symbolic link; refusing to write through it" % folder)
+        os.makedirs(folder, mode=0o700, exist_ok=True)
+        out = os.path.join(folder, name)
+        if os.path.islink(out):
+            return _fail("%s is a symbolic link; refusing to write through it" % out)
+        if text is None:
+            dump_json(out, doc)
+        else:
+            write_text(out, text)
+        _print({"ok": True, "view": doc["view"], "written": out})
+    elif text is None:
+        _print(dict({"ok": True}, **doc))
+    else:
+        sys.stdout.write(text)
+    return 0
+
+
+def cmd_status(args):
+    try:
+        st, root = _view_state(args)
+        doc = status.build("status", st, root, _stamp(args))
+    except (InputError, state.StateError, registers.RegisterError) as exc:
+        return _fail(str(exc))
+    return _emit_view(args, doc, st.state_dir)
+
+
+def cmd_report(args):
+    try:
+        st, root = _view_state(args)
+        doc = status.build(args.view, st, root, _stamp(args), args.id)
+    except (InputError, state.StateError, registers.RegisterError) as exc:
+        return _fail(str(exc))
+    return _emit_view(args, doc, st.state_dir)
+
+
 @_state_cmd
 def cmd_ledger_mark(args):
     def fn(tx):
@@ -981,6 +1051,24 @@ def build_parser():
     s.add_argument("--state-dir")
     s.add_argument("--now")
     s.set_defaults(func=cmd_changes)
+
+    s = sub.add_parser("status", help="what the project needs now: readiness, open issues, changes, records needing attention")
+    s.add_argument("--root")
+    s.add_argument("--state-dir")
+    s.add_argument("--format", choices=("md", "json"), default="md")
+    s.add_argument("--out", help="file name (.md, or .json with --format json) to write under <state dir>/reports/ instead of printing")
+    s.add_argument("--now")
+    s.set_defaults(func=cmd_status)
+
+    s = sub.add_parser("report", help="a Markdown or JSON view of the project's records")
+    s.add_argument("--view", required=True, choices=status.VIEWS)
+    s.add_argument("--id", help="one record (REQ-, DEC-, RISK-, LR-, or FC- with the matching view)")
+    s.add_argument("--root")
+    s.add_argument("--state-dir")
+    s.add_argument("--format", choices=("md", "json"), default="md")
+    s.add_argument("--out", help="file name (.md, or .json with --format json) to write under <state dir>/reports/ instead of printing")
+    s.add_argument("--now")
+    s.set_defaults(func=cmd_report)
 
     lp = sub.add_parser("ledger", help="inspect or update the finding ledger")
     lsub = lp.add_subparsers(dest="ledger_command")

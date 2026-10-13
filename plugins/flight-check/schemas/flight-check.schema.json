@@ -93,7 +93,8 @@
         "human_review": {"$ref": "#/$defs/humanReview"},
         "legal": {"$ref": "#/$defs/legal"},
         "standards": {"type": "array", "items": {"$ref": "#/$defs/standardRef"}, "maxItems": 10},
-        "control_ids": {"type": "array", "items": {"$ref": "#/$defs/controlId"}, "maxItems": 10}
+        "control_ids": {"type": "array", "items": {"$ref": "#/$defs/controlId"}, "maxItems": 10},
+        "decision_ids": {"type": "array", "items": {"type": "string", "pattern": "^DEC-[0-9]{4,}$"}, "maxItems": 5}
       }
     },
     "control": {
