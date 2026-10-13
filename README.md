@@ -12,6 +12,8 @@ It examines security, privacy, legal/business risk, compliance readiness, access
 
 ## What Flight Check does
 
+- **Speaks plain English.** It tells you what is wrong, why it matters, and what to do next. Claude fixes what it can after asking you once, and explains exactly what only you can do. You are never stuck: fix it now, have it remind you later, accept the risk for this release, or mark it as not a real problem.
+- **Works alongside you (watch mode, optional).** Turn it on with `/flight-check:watch on`. After each file Claude edits, free instant checks catch common mistakes such as a password written into the code. When changes pile up in sensitive code, it suggests a quick check of them and says what it costs. When you come back, it reminds you of open items.
 - **Audits 19 domains:**
   - application security, authentication, authorization, data protection, privacy (including retention and deletion)
   - payments/subscriptions, third-party services, dependencies/supply chain, IP/assets
@@ -64,6 +66,8 @@ Or inside a Claude Code session: `/plugin marketplace add ARCFrontierSystems/fli
 | `/flight-check:legal-packet` | Builds the Attorney Review Packet PDF from findings that warrant legal or business review. |
 | `/flight-check:track` | Shows status, and records your decisions: accepted risks, legal review status, counsel decisions you report, closures. |
 | `/flight-check:remediate FC-0001,FC-0002` | Fixes findings you authorize in your own project, then re-audits to verify. |
+| `/flight-check:fix` | Fixes what Claude can fix from Flight Check's findings, after asking you once. |
+| `/flight-check:watch on\|off` | Turns watch mode on or off for the current project. |
 | `/flight-check:status [question]` | Answers questions about readiness, open risks, changes, requirements, decisions, and legal questions from Flight Check's records, without changing anything. |
 
 Useful audit options:
@@ -97,6 +101,7 @@ Details: [docs/methodology.md](docs/methodology.md).
 ## Privacy and data handling
 
 - **No telemetry, no network.** Flight Check adds no telemetry, and its script makes no network connections.
+- **Watch mode's hooks.** The plugin registers three hooks (session start, after Claude edits a file, and when Claude finishes a reply). Each runs Flight Check's own script, which reads only local files and exits at once, doing nothing, unless you turned watch mode on for that project. Watch mode never starts a paid audit; its settings and reminders stay in `.flight-check/` and are not committed.
 - **Model provider.** The content Flight Check's agents read is processed by your Claude Code session's model provider under your existing Claude Code configuration, like any other Claude Code task. That includes anything in the audited files: source code, configuration, fixtures, seed data, logs, and any personal, health, payment, or other regulated or confidential data they contain.
 - **Before auditing sensitive material,** check that your organization permits sending it to that provider. To keep files out of an audit, audit a subdirectory (`/flight-check:audit path/to/subdir`) or a copy of the project without them. Flight Check masks likely secrets in what it writes, but the agents still read the original files.
 - **Local files.** Flight Check masks likely secrets in everything it writes from agent results: `report.md`, `audit.final.json`, the ledger, and Attorney Review Packets. The raw agent replies saved in the run directory are kept as received for traceability; run directories are gitignored automatically. They can contain quoted project content. Flight Check never deletes them itself: they are kept until you delete them, so delete `.flight-check/runs/<run>/` directories you no longer need (the ledger keeps finding history without them). Masking is pattern-based, so it can miss unusual secret formats. Each run directory is created readable only by your user account, and the files Flight Check's script writes are owner-only. Your conversation history follows Claude Code's own retention settings. [docs/security-design.md](docs/security-design.md) maps each of these protections to its code and tests.

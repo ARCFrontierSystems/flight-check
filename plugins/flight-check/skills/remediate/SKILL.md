@@ -73,7 +73,7 @@ This step verifies the fixes; do not skip it.
 
 ## 5. Report
 
-For each authorized finding, report:
+Report in plain English first: what was wrong, what you changed, and whether the re-check confirmed it, with IDs and status names in parentheses. Then, for each authorized finding, report:
 - The change made and the test added.
 - The test-suite result.
 - The re-audit result: `FIXED_VERIFIED`, `NOT_FIXED`, or `UNVERIFIED`.

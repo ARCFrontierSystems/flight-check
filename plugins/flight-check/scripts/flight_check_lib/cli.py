@@ -7,7 +7,7 @@ import os
 import re
 import sys
 
-from . import VERSION, catalog, constants, estimate, finalize, freshness, gate, ledger, legal, lockfile, minischema, packet, profile, registers, release, render_md, sarif, state, status, unblock, validate
+from . import VERSION, catalog, constants, estimate, finalize, freshness, gate, ledger, legal, lockfile, minischema, packet, profile, registers, release, render_md, sarif, state, status, unblock, validate, watch
 from .jsonio import InputError, dump_json, load_json, write_bytes, write_text
 
 
@@ -1087,6 +1087,51 @@ def cmd_sarif(args):
     return 0
 
 
+def cmd_watch(args):
+    """Turn watch mode on or off for this project, or show it."""
+    root = os.path.abspath(args.root)
+    try:
+        if args.action in ("on", "off"):
+            watch.set_enabled(root, args.action == "on", _stamp(args))
+    except (InputError, state.StateError, OSError) as exc:
+        return _fail(str(exc))
+    cfg = watch.load_config(root) or {}
+    on = bool(cfg.get("enabled"))
+    _print({"ok": True, "watching": on, "root": root,
+            "message": ("Flight Check is watching this project. After each file edit it runs instant free checks, and "
+                        "when changes pile up in sensitive code it suggests a quick check of them, with its cost. It "
+                        "never starts a paid audit by itself. Turn it off with /flight-check:watch off."
+                        if on else "Flight Check is not watching this project. Turn it on with /flight-check:watch on.")})
+    return 0
+
+
+def cmd_later(args):
+    """Reminders the user asked for: come back to an item later without losing it."""
+    root = os.path.abspath(args.root)
+    try:
+        if args.done:
+            items = watch.done(root, args.done)
+        elif args.id:
+            items = watch.remind_later(root, args.id, args.on, args.note, _stamp(args))
+        else:
+            items = watch.load_reminders(root)
+    except (InputError, state.StateError, OSError) as exc:
+        return _fail(str(exc))
+    _print({"ok": True, "reminders": items,
+            "note": "Reminders are kept on this machine only. An item you put off still counts against a release until "
+                    "it is handled."})
+    return 0
+
+
+def cmd_hook(args):
+    """Called by the plugin's hooks with the hook's JSON on stdin. Prints nothing unless watch mode is on."""
+    raw = sys.stdin.read(1024 * 1024)
+    out = watch.run_hook(args.event, raw, _now(args))
+    if out:
+        sys.stdout.write(json.dumps(out) + "\n")
+    return 0
+
+
 def cmd_release_check(args):
     """Exit 0 only when the latest ship decision is ready and still describes the tracked files under --root."""
     root = os.path.abspath(args.root)
@@ -1271,6 +1316,26 @@ def build_parser():
     s.add_argument("--out", help="file name (.md, or .json with --format json) to write under <state dir>/reports/ instead of printing")
     s.add_argument("--now")
     s.set_defaults(func=cmd_report)
+
+    s = sub.add_parser("watch", help="turn watch mode on or off for this project, or show whether it is on")
+    s.add_argument("action", choices=("on", "off", "status"))
+    s.add_argument("--root", required=True)
+    s.add_argument("--now")
+    s.set_defaults(func=cmd_watch)
+
+    s = sub.add_parser("later", help="remind me later about an item, list reminders, or mark one done (kept on this machine)")
+    s.add_argument("--root", required=True)
+    s.add_argument("--id", help="the item to come back to (FC-0003, SUPPLY-KNOWN-VULNS, LR-0002, ...)")
+    s.add_argument("--on", help="when to remind, as YYYY-MM-DD; default: next session")
+    s.add_argument("--note")
+    s.add_argument("--done", metavar="ID", help="remove a reminder")
+    s.add_argument("--now")
+    s.set_defaults(func=cmd_later)
+
+    s = sub.add_parser("hook", help="used by the plugin's hooks; reads the hook's JSON on stdin")
+    s.add_argument("event", choices=sorted(watch.HANDLERS))
+    s.add_argument("--now")
+    s.set_defaults(func=cmd_hook)
 
     s = sub.add_parser("sarif", help="open findings as SARIF 2.1.0, for GitHub code scanning")
     s.add_argument("--root", required=True, help="the audit root (finding paths are checked against it)")

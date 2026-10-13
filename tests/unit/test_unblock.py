@@ -59,7 +59,8 @@ class UnblockTests(unittest.TestCase):
         commands = " | ".join(supply["commands"])
         for expected in ("mkdir -p .flight-check/evidence", "npm audit --json", "govulncheck -json", "osv-scanner"):
             self.assertIn(expected, commands)
-        self.assertIn("verify the fix", got[5]["action"])
+        self.assertIn("confirm the fix", got[5]["action"])
+        self.assertEqual([i["who"] for i in got], ["claude", "claude", "you", "claude", "claude", "you", "you"])
 
     def test_ready_and_current_needs_nothing_but_records_changed_means_refresh(self):
         st = records(decision="READY FOR RELEASE")
@@ -75,7 +76,7 @@ class UnblockViewTests(ProjectTestCase):
         self.assertEqual(code, 0, out)
         ids = [i["id"] for i in out["data"]["items"]]
         self.assertIn("APPSEC-INJECTION", ids)
-        self.assertTrue(any(i["kind"] == "finding" and "remediate" in i["action"] for i in out["data"]["items"]))
+        self.assertTrue(any(i["kind"] == "finding" and i["who"] == "claude" and "fix it" in i["action"] for i in out["data"]["items"]))
         code, out = run_cli("status", "--root", self.root, "--format", "json", "--now", T2)
         self.assertEqual([i["id"] for i in out["data"]["unblock"]], ids)
 

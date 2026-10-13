@@ -103,5 +103,7 @@ Prefix each with `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py`. For qu
 
 ## Always
 
+- **Plain English first.** Say what was recorded and what it means for the user in everyday words; put IDs and status names in parentheses after the plain sentence.
+- **Never leave the user stuck.** End with the next step, and say what still counts against a release.
 - Report exactly what was recorded.
 - If the script refuses an action, relay its reason and do not work around it.

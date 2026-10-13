@@ -74,6 +74,30 @@ For your own projects only. Flight Check:
 
 A fix counts as verified only when the re-audit confirms it. Run a full `/flight-check:audit` before making a release decision.
 
+## `/flight-check:fix`
+
+```
+/flight-check:fix [all | FC-0003 | SUPPLY-KNOWN-VULNS ...]
+```
+
+Fixes what Claude can fix from Flight Check's findings. It lists, in plain English, what it will change, asks you once (fix all, pick, or not now), and changes only what you agreed to. For each fix it adds or updates a test where the project has tests, offers to run them, and records the fix. The next `/flight-check:audit --changed` confirms it; `fix` never starts a paid audit. For dependency checks it runs a vulnerability scanner (asking before installing one) and tells you how to import the results. Things only you can do, such as replacing a leaked key at its provider or accepting a risk, it explains step by step. Claude also offers this on its own after an audit or a status answer: say "fix it".
+
+## `/flight-check:watch`
+
+```
+/flight-check:watch [on | off | status]
+```
+
+Watch mode keeps Flight Check alongside you while you work on a project. It is off until you turn it on, per project.
+
+- **After each file Claude edits,** free instant checks of that file catch a password or API key written into the code, HTTPS certificate checks turned off, debug mode left on, and a `.env` file that git does not ignore. Claude tells you right away and offers to fix it, asking once.
+- **When changes pile up in sensitive code** (logins, permissions, payments, personal data), it suggests a quick check of just those changes, with its estimated cost, at most every 20 minutes (every 2 hours for the same files). It never starts a paid check itself.
+- **When you start a session,** it reminds you of open items and of anything you asked to come back to.
+
+**Coming back later.** Whenever Flight Check reports something you do not want to handle now, say "remind me later" (or "remind me next Monday"). The reminder (`later --id <ID> [--on YYYY-MM-DD]`) is kept on your machine, and watch mode and `/flight-check:status` bring it up again. Putting something off does not hide it: it still counts against a release until it is fixed, accepted, or marked as not a real problem.
+
+The free checks catch a few common mistakes as they happen; they are not an audit. Only `/flight-check:audit` gives a release decision.
+
 ## Project state
 
 Flight Check keeps project state next to the ledger in `.flight-check/`: `project.json` (identity, profile, and applicability), `registers.json` (requirements, decisions, risks, and legal review items), and `history.jsonl`, an append-only log of every change. The design is in [design/project-state.md](design/project-state.md). The state is created by `state init`, or automatically by the next finalized audit or `ledger` command; an existing 1.0 ledger is kept unchanged and backed up first.
