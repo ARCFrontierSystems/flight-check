@@ -14,10 +14,10 @@ The user has asked for this to be remembered permanently: **every earlier name m
 
 ## Saved for later
 
-The user asked to keep these until they ask for them. When they do, point them to the file, or provide its contents. Do not act on either one before then.
+The user asked to keep these until they ask for them. When they do, point them to the file, or provide its contents. Do not act on them before then.
 
 - Blind-test protocol: `docs/blind-test-protocol.md`, for Phase 5, which runs Flight Check blind against the separate private testbed repository.
-- GitHub repository settings to switch on: `docs/maintainers/github-settings.md`.
+- GitHub repository settings: applied by the owner on 2026-10-13; `docs/maintainers/github-settings.md` records what is set.
 
 ## Working preferences
 

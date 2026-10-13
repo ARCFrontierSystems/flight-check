@@ -1,6 +1,6 @@
 # GitHub settings to switch on
 
-Status: **saved for later, not yet applied.** The repository is already public (checked 2026-10-04), so apply these soon, and before accepting the first outside contribution. The two most urgent are private vulnerability reporting, because `SECURITY.md` already sends reporters there, and the description fix.
+Status: **applied by the owner on 2026-10-13**, except the optional and later items left unticked in the checklist at the end. Keep this page as the record of what is set, and update it when a setting changes.
 
 As of 2026-10-04. GitHub moves these menus from time to time; if a path below no longer matches, search the repository settings for the setting's name. A repository admin applies them in the GitHub web UI.
 
@@ -9,8 +9,8 @@ All of these are free for public repositories. If the repository is ever made pr
 ## 1. Repository basics
 
 - **Description and topics** (repository home page, gear icon next to "About").
-  - The current description overclaims: it says the project will "enforce secure development practices" and "protect applications and data". Flight Check finds and documents risks; it does not enforce or guarantee anything.
-  - Suggested description: "Evidence-based ship-readiness audits for Claude Code projects. Finds and documents risks; does not certify security or legal compliance."
+  - The earlier description overclaimed: it said the project would "enforce secure development practices" and "protect applications and data". Flight Check finds and documents risks; it does not enforce or guarantee anything.
+  - Description in use since 2026-10-13: "Evidence-based ship-readiness audits for Claude Code projects. Finds and documents risks; does not certify security or legal compliance."
   - Suggested topics: `claude-code`, `claude-code-plugin`, `security-audit`, `code-review`, `release-readiness`, `accessibility`, `privacy`.
 - **Private vulnerability reporting** (Settings → Advanced Security or Code security → Private vulnerability reporting → Enable). `SECURITY.md` tells reporters to use it, so it must be on.
 - **Secret scanning and push protection** (same settings page, Secret Protection). Push protection blocks a push that contains a recognized credential.
@@ -37,9 +37,14 @@ Settings → Rules → Rulesets → New branch ruleset. Target the default branc
 - **Optional:** require signed commits, but only after confirming that every tool you commit with can sign. Require linear history if you prefer squash or rebase merges.
 - **Bypass list:** leave it empty, or add only the repository admin for emergencies.
 
-## 3. Ruleset for release tags
+## 3. Rulesets for release tags
 
-New tag ruleset targeting `v*`. Restrict updates and deletions and block force pushes. Restrict creation too, with the maintainers on the bypass list. This ensures a published release tag always points to the code that was reviewed.
+A bypass list applies to every rule in its ruleset, so use two tag rulesets (Settings → Rules → Rulesets → New ruleset → **New tag ruleset**, not a branch ruleset), both Active and targeting the pattern `v*`:
+
+- **Release tags locked:** Restrict updates, Restrict deletions, and Block force pushes, with an empty bypass list. Nobody can move or delete a release tag, admins included; to correct a mistaken tag, an admin disables this ruleset, fixes the tag, and enables it again.
+- **Release tags creation:** Restrict creations, with the Repository admin role on the bypass list (Always allow). Only admins create release tags, including through "Draft a new release".
+
+This ensures a published release tag always points to the code that was reviewed. When adding the `v*` target, click **Add Inclusion pattern** in the pop-up; otherwise GitHub reports that the ruleset targets nothing.
 
 ## 4. GitHub Actions
 
@@ -71,16 +76,16 @@ The repository is now `ARCFrontierSystems/flight-check`; GitHub redirects the ol
 
 ## Checklist
 
-- [ ] Description and topics corrected
+- [x] Description and topics corrected (owner, 2026-10-13)
 - [x] Private vulnerability reporting on (owner, 2026-10-12)
 - [x] DCO GitHub App installed (owner, 2026-10-12), so pull requests without a `Signed-off-by` line are flagged (CONTRIBUTING.md requires the sign-off)
 - [ ] Optional: require the DCO status check on `main` (Settings → Rules → Rulesets)
-- [ ] Secret scanning and push protection on
-- [ ] Dependabot alerts on (optional: `dependabot.yml` for Actions)
-- [ ] `FLIGHT_CHECK_LEAK_DENYLIST` secret added
-- [ ] Wiki off
-- [ ] Default-branch ruleset active with the three required checks
-- [ ] Tag ruleset for `v*` active
-- [ ] Actions: GitHub-only actions, read-only token, fork approval required
+- [x] Secret scanning and push protection on (owner, 2026-10-13)
+- [x] Dependabot alerts on (owner, 2026-10-13); optional `dependabot.yml` for Actions not added
+- [x] `FLIGHT_CHECK_LEAK_DENYLIST` secret added (owner, 2026-10-13)
+- [x] Wiki off (owner, 2026-10-13)
+- [x] Default-branch ruleset active with the three required checks (owner, 2026-10-13)
+- [x] Tag rulesets for `v*` active (owner, 2026-10-13)
+- [x] Actions: GitHub-only actions, read-only token, fork approval required (owner, 2026-10-13)
 - [ ] CODEOWNERS (when there is more than one maintainer)
 - [x] Repository renamed to `flight-check`

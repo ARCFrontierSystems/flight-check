@@ -880,7 +880,7 @@
       "domain": "documentation",
       "title": "Public GitHub repository description reportedly says the project will \"enforce secure development practices\"; the correction is still unchecked",
       "severity": "LOW",
-      "status": "OPEN",
+      "status": "REMEDIATED",
       "first_seen_run": "20261012T220354Z",
       "last_seen_run": "20261013T051206Z",
       "history": [
@@ -904,6 +904,12 @@
           "source": "flight-check",
           "note": "observed again after not being reproduced",
           "run_id": "20261013T051206Z"
+        },
+        {
+          "at": "2026-10-13T13:09:33Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: The owner replaced the repository description on 2026-10-13 with: Evidence-based ship-readiness audits for Claude Code projects. Finds and documents risks; does not certify security or legal compliance."
         }
       ],
       "alt_fingerprints": [
@@ -918,7 +924,17 @@
         "README.md": "ede7ca107bc20146544fc92ab434b953d1afc525333493b863913b74522e8ce0"
       },
       "confidence": "LIKELY",
-      "release_blocking": false
+      "release_blocking": false,
+      "remediations": [
+        {
+          "at": "2026-10-13T13:09:33Z",
+          "note": "The owner replaced the repository description on 2026-10-13 with: Evidence-based ship-readiness audits for Claude Code projects. Finds and documents risks; does not certify security or legal compliance.",
+          "files": [
+            "docs/maintainers/github-settings.md"
+          ],
+          "source": "flight-check"
+        }
+      ]
     },
     "542c65caa70a34bc": {
       "id": "FC-0023",
@@ -1112,7 +1128,7 @@
       "domain": "infrastructure",
       "title": "Branch and tag rulesets, secret scanning and Actions restrictions are documented as not yet applied, while releasing.md relies on the tag ruleset",
       "severity": "LOW",
-      "status": "OPEN",
+      "status": "REMEDIATED",
       "first_seen_run": "20261013T050120Z",
       "last_seen_run": "20261013T050120Z",
       "history": [
@@ -1122,6 +1138,12 @@
           "source": "flight-check",
           "note": "first observed",
           "run_id": "20261013T050120Z"
+        },
+        {
+          "at": "2026-10-13T13:09:33Z",
+          "status": "REMEDIATED",
+          "source": "flight-check",
+          "note": "remediation recorded; pending verification by re-audit: The owner applied the GitHub settings on 2026-10-13: secret scanning and push protection, Dependabot alerts, the leak-denylist secret, a ruleset for main with the three required checks, two tag rulesets for v*, and GitHub-only Actions with a read-only token. Recorded in docs/maintainers/github-settings.md."
         }
       ],
       "evidence_files": {
@@ -1129,7 +1151,17 @@
         "docs/maintainers/releasing.md": "ed60b3cdfdd4c197fc909680fef7ba91e3c4750cc364a0afce7fad2339c79881"
       },
       "confidence": "POTENTIAL",
-      "release_blocking": false
+      "release_blocking": false,
+      "remediations": [
+        {
+          "at": "2026-10-13T13:09:33Z",
+          "note": "The owner applied the GitHub settings on 2026-10-13: secret scanning and push protection, Dependabot alerts, the leak-denylist secret, a ruleset for main with the three required checks, two tag rulesets for v*, and GitHub-only Actions with a read-only token. Recorded in docs/maintainers/github-settings.md.",
+          "files": [
+            "docs/maintainers/github-settings.md"
+          ],
+          "source": "flight-check"
+        }
+      ]
     },
     "cf5d45908409ce3b": {
       "id": "FC-0028",

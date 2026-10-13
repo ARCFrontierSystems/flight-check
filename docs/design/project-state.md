@@ -1,4 +1,6 @@
-# Design: Project State (Flight Check 1.5)
+# Design: Project State
+
+> **Naming.** This design was written while the work was called Flight Check 1.5. It was released as **1.0.0**. Here, "1.0" means the earlier release candidate (1.0.0-rc.1) and its ledger format, and "1.5" means what was released as 1.0.0.
 
 Status: **design, approved phase by phase.** Nothing here is implemented until the phase that builds it says so. This document is the contract for Phases 3 to 8 of the 1.5 plan; when implementation shows that a detail must change, this document changes in the same pull request.
 

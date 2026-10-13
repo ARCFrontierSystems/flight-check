@@ -8,7 +8,7 @@ Flight Check asks one question:
 
 It examines security, privacy, legal/business risk, compliance readiness, accessibility, reliability, and production readiness. It reports what it found with file-and-line evidence, what it verified as working, and what it could not verify. It never confuses "we did not find a problem" with "there is no problem".
 
-> **Status: pre-release (1.5.0-rc.1, the 1.5 release candidate).** Flight Check's blind evaluations are published: [Phase 5](docs/audits/2026-10-06-phase-5-blind-test.md), the [Phase 7 final report](docs/audits/2026-10-12-phase-7-final-report.md), the [1.0 release-candidate evaluation](docs/audits/2026-10-12-v1-release-evaluation.md), and the [1.5 sequence evaluation](docs/audits/2026-10-13-v1.5-sequence-evaluation.md) on held-out test applications. Coming from 1.0? See [docs/migration-1.5.md](docs/migration-1.5.md). Treat results as an aid to human judgment, not a substitute for it.
+> **Status: 1.0.0, not yet released.** Flight Check's blind evaluations are published: [Phase 5](docs/audits/2026-10-06-phase-5-blind-test.md), the [Phase 7 final report](docs/audits/2026-10-12-phase-7-final-report.md), the [release-candidate evaluation](docs/audits/2026-10-12-v1-release-evaluation.md), and the [sequence evaluation of audits over time](docs/audits/2026-10-13-v1.5-sequence-evaluation.md) on held-out test applications. Used the 1.0.0-rc.1 release candidate? See [docs/upgrading-from-rc.md](docs/upgrading-from-rc.md). Treat results as an aid to human judgment, not a substitute for it.
 
 ## What Flight Check does
 
@@ -26,10 +26,10 @@ It examines security, privacy, legal/business risk, compliance readiness, access
 - **Tracks findings over time.** Finding IDs are stable across audits. Regressions are flagged. Accepted risks, counsel decisions, and closures are recorded only from your explicit input.
 - **Offers a remediation mode** (for your own projects). It fixes the findings you authorize, adds regression tests where practical, and re-audits to verify the fixes instead of assuming they worked.
 - **Produces machine-readable output** for CI: `audit.final.json` and gate exit codes.
-- **Remembers the project (1.5).** Project state in `.flight-check/` keeps the project's profile and which domains apply, your requirements, decisions, and risks, a legal review queue, and a hash-chained history of every change. Your corrections and decisions are recorded only from your explicit input, and evidence still decides what is verified.
-- **Audits only what changed (1.5).** `/flight-check:audit --changed` reassesses the areas a change can affect and carries the rest forward, labelled as not reassessed. When a change cannot be traced, it reassesses everything.
-- **Release check for CI (1.5).** `release-check` passes only when the latest ship decision is ready and still describes the files being released, so a release or deploy workflow can depend on it. It reads only the committed records, so it needs no Claude and costs nothing to run. See "Release check" in [docs/usage.md](docs/usage.md).
-- **Answers questions about the project (1.5).** `/flight-check:status` answers questions such as "what does my project still need?" from the records, and `report` gives each register and view in Markdown or JSON.
+- **Remembers the project.** Project state in `.flight-check/` keeps the project's profile and which domains apply, your requirements, decisions, and risks, a legal review queue, and a hash-chained history of every change. Your corrections and decisions are recorded only from your explicit input, and evidence still decides what is verified.
+- **Audits only what changed.** `/flight-check:audit --changed` reassesses the areas a change can affect and carries the rest forward, labelled as not reassessed. When a change cannot be traced, it reassesses everything.
+- **Release check for CI.** `release-check` passes only when the latest ship decision is ready and still describes the files being released, so a release or deploy workflow can depend on it. It reads only the committed records, so it needs no Claude and costs nothing to run. See "Release check" in [docs/usage.md](docs/usage.md).
+- **Answers questions about the project.** `/flight-check:status` answers questions such as "what does my project still need?" from the records, and `report` gives each register and view in Markdown or JSON.
 
 ## What Flight Check is not
 

@@ -194,7 +194,7 @@ def check(st, root, inputs_changed, identity_problems, allow_accepted_risks=Fals
     diff = {"added": [], "changed": [], "deleted": []}
     rec = _load(os.path.join(st.state_dir, AUDITED_FILES))
     if rec is None:
-        problems.append("There is no record of the audited files (%s). Audits finalized with Flight Check 1.5 or "
+        problems.append("There is no record of the audited files (%s). Audits finalized with Flight Check 1.0.0 or "
                         "later write it; commit it with the other state files." % AUDITED_FILES)
     elif latest and rec.get("run_id") != latest["run_id"]:
         problems.append("The record of audited files is from run %s, but the latest decision is from run %s."
