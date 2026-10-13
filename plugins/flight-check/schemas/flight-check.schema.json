@@ -394,6 +394,8 @@
         "history": {"type": "array", "items": {"$ref": "#/$defs/historyEvent"}},
         "evidence_files": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^([0-9a-f]{64}|size:[0-9]+)$"}},
         "superseded_by": {"type": "string", "pattern": "^FC-[0-9]{4,}$"},
+        "confidence": {"$ref": "#/$defs/confidence"},
+        "release_blocking": {"type": "boolean"},
         "regression": {
           "type": "object",
           "required": ["original_resolution", "reappeared_run", "reappeared_at", "match"],
@@ -486,6 +488,29 @@
         "schema_version": {"const": "1.0"},
         "tool": {"type": "object", "required": ["name", "version"]},
         "run": {"$ref": "#/$defs/run"},
+        "carried_forward_findings": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["id", "domain", "title", "severity", "status", "confidence", "effective_confidence", "release_blocking_effective", "last_seen_run", "evidence_state"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^FC-[0-9]{4,}$"},
+              "domain": {"$ref": "#/$defs/domainId"},
+              "severity": {"$ref": "#/$defs/severity"},
+              "confidence": {"$ref": "#/$defs/confidence"},
+              "effective_confidence": {"$ref": "#/$defs/confidence"},
+              "evidence_state": {"type": "string", "enum": ["current", "stale", "missing", "unverified"]}
+            }
+          }
+        },
+        "incremental": {
+          "type": "object",
+          "required": ["changed_files", "reassessed_domains", "carried_forward_domains"],
+          "properties": {
+            "reassessed_domains": {"type": "array", "items": {"$ref": "#/$defs/domainId"}},
+            "carried_forward_domains": {"type": "array", "items": {"$ref": "#/$defs/domainId"}}
+          }
+        },
         "gate": {
           "type": "object",
           "required": ["decision", "reasons"],
@@ -664,8 +689,22 @@
               "state": {"type": "string", "enum": ["VERIFIED", "NOT_MET", "UNVERIFIED", "NOT_APPLICABLE"]},
               "run_id": {"type": "string", "maxLength": 80},
               "at": {"$ref": "#/$defs/stateTime"},
-              "carried_forward": {"type": "boolean"},
               "evidence_files": {"type": "object", "additionalProperties": {"type": "string", "pattern": "^([0-9a-f]{64}|size:[0-9]+)$"}}
+            }
+          }
+        },
+        "domains": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "required": ["status", "run_id", "at"],
+            "additionalProperties": false,
+            "properties": {
+              "status": {"type": "string", "enum": ["ASSESSED", "NOT_APPLICABLE", "NOT_ASSESSED", "CARRIED_FORWARD"]},
+              "run_id": {"type": "string", "maxLength": 80},
+              "at": {"$ref": "#/$defs/stateTime"},
+              "assessed_run_id": {"type": "string", "maxLength": 80},
+              "assessed_at": {"$ref": "#/$defs/stateTime"}
             }
           }
         },

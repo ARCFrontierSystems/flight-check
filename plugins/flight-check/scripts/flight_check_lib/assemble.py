@@ -4,7 +4,7 @@ import copy
 import os
 import re
 
-from . import catalog, constants, textsafety, validate
+from . import catalog, constants, freshness, textsafety, validate
 from .jsonio import load_json
 
 # Structural values (identifiers, enums, paths) are never rewritten by secret masking.
@@ -128,8 +128,33 @@ def _merge_control(existing, incoming, agent):
     existing["related_findings"] = sorted(set((existing.get("related_findings") or []) + (incoming.get("related_findings") or [])))
 
 
-def assemble(run_dir, overrides=None):
-    """Return (audit_dict, warnings). Assumes validate.validate_run_dir passed."""
+def _carried_control(c, cov, prior, files):
+    """A control in a domain carried forward from an earlier assessment: its last recorded state, re-checked against
+    the files it cited. Stale or missing evidence makes it UNVERIFIED; it is never newly verified."""
+    origin = cov["carried_forward"]
+    base = {"id": c["id"], "reported_by": ["carried-forward"]}
+    if not prior:
+        return dict(base, state="UNVERIFIED", missing_evidence="Its domain was carried forward from run %s, but no earlier "
+                    "result for this control was recorded; reassess the domain." % origin["run_id"])
+    ev = freshness.evidence_state(prior.get("evidence_files") or {}, files)
+    base["carried_forward"] = {"run_id": prior["run_id"], "at": prior["at"], "evidence": ev}
+    if ev in (freshness.STALE, freshness.MISSING):
+        return dict(base, state="UNVERIFIED", missing_evidence="Carried forward from run %s, but a file it cited is now %s; "
+                    "reassess the domain." % (prior["run_id"], ev))
+    note = ("Carried forward, not reassessed: %s in run %s (%s); %s." % (
+        prior["state"], prior["run_id"], prior["at"][:10],
+        "the files it cited are unchanged" if ev == freshness.CURRENT else
+        "it cites no files, and no change since then affects its domain"))
+    if prior["state"] == "UNVERIFIED":
+        return dict(base, state="UNVERIFIED", missing_evidence=note)
+    return dict(base, state=prior["state"], rationale=note)
+
+
+def assemble(run_dir, overrides=None, carried=None):
+    """Return (audit_dict, warnings). Assumes validate.validate_run_dir passed.
+
+    carried, for an incremental run: {"domains": {domain: {"run_id", "at"}}, "controls": project controls,
+    "files": current file hashes}. Those domains, when no agent reported on them, are carried forward."""
     warnings = []
     run = load_json(os.path.join(run_dir, "run.json"))
     inventory = load_json(os.path.join(run_dir, "inventory.json"))
@@ -216,6 +241,14 @@ def assemble(run_dir, overrides=None):
                     (" (%s)" % override["by"]) if override.get("by") else "", override["at"][:10], override["reason"]),
                 "evidence": [], "searches": [], "reported_by": ["owner"],
             }
+        elif carried and d in carried["domains"]:
+            origin = carried["domains"][d]
+            coverage[d] = {
+                "domain": d, "status": constants.CARRIED_FORWARD,
+                "rationale": "Carried forward, not reassessed: no change since the last run affects this domain. "
+                             "Last assessed in run %s (%s)." % (origin["run_id"], origin["at"][:10]),
+                "searches": [], "reported_by": [], "carried_forward": dict(origin),
+            }
         else:
             rationale = "No agent reported on this domain in this run."
             if override and override["classification"] == "applicable":
@@ -290,7 +323,9 @@ def assemble(run_dir, overrides=None):
         entry = controls.get(c["id"])
         if entry is None:
             cov = coverage.get(c["domain"])
-            if cov and cov["status"] == "NOT_APPLICABLE":
+            if cov and cov["status"] == constants.CARRIED_FORWARD:
+                entry = _carried_control(c, cov, carried["controls"].get(c["id"]), carried["files"])
+            elif cov and cov["status"] == "NOT_APPLICABLE":
                 entry = {"id": c["id"], "state": "NOT_APPLICABLE",
                          "rationale": "Domain not applicable: %s" % cov["rationale"],
                          "evidence": cov.get("evidence") or [], "reported_by": []}
@@ -298,7 +333,7 @@ def assemble(run_dir, overrides=None):
                 entry = {"id": c["id"], "state": "UNVERIFIED",
                          "missing_evidence": "No agent reported on this control in this run.",
                          "reported_by": []}
-        if entry["state"] == "NOT_MET":
+        if entry["state"] == "NOT_MET" and not entry.get("carried_forward"):
             live = [r for r in entry.get("related_findings") or [] if r not in rejected_ids]
             if not live:
                 entry["state"] = "UNVERIFIED"

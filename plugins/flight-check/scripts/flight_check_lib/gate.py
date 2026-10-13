@@ -9,6 +9,9 @@ Precedence (first match wins; every applicable condition is still reported):
   4. READY WITH ACCEPTED RISKS       valid user-accepted risks are in effect
   5. READY FOR RELEASE
 
+Findings carried forward by an incremental run (domains that no change affects) count exactly like findings
+observed in this run; a carried-forward release-critical control whose cited files changed is UNVERIFIED.
+
 Accepted risks are counted only when they were recorded before the run started, so nothing
 recorded while an audit is in progress can change that audit's decision. Accepted CRITICAL
 findings never lift a block: they are treated exactly like open CRITICAL findings.
@@ -120,7 +123,8 @@ def decide(audit, ledger, today, lifecycle=None, registers=None):
     lifecycle = lifecycle or {}
     started = run_started_at(audit.get("run"))
     open_findings, accepted_findings, accepted_critical, not_counted, dismissed = [], [], [], [], []
-    for f in audit["findings"]:
+    carried_findings = audit.get("carried_forward_findings") or []
+    for f in audit["findings"] + carried_findings:
         if f.get("status") in constants.DISMISSED_STATUSES:
             # The owner marked it a false positive or superseded, yet this run still reports it. That counts like an
             # acceptance: visible, never READY without qualification, and a CRITICAL one still blocks.
@@ -220,8 +224,16 @@ def decide(audit, ledger, today, lifecycle=None, registers=None):
         reasons.append("Accepted CRITICAL finding(s) still block release: %s. Accepting a CRITICAL risk records the decision but never lifts the block." % ", ".join(accepted_critical))
     for note in not_counted:
         reasons.append(note)
+    carried_domains = [c["domain"] for c in audit["coverage"] if c["status"] == constants.CARRIED_FORWARD]
     if decision == constants.GATE_READY:
-        reasons.append("No open release-blocking findings, no unverified release-critical controls, and every domain was assessed or shown not applicable.")
+        reasons.append("No open release-blocking findings, no unverified release-critical controls, and every domain was "
+                       "assessed%s or shown not applicable." % (" in this run, carried forward from an earlier assessment that "
+                                                               "no change affects," if carried_domains else ""))
+    if carried_domains:
+        reasons.append("Carried forward, not reassessed in this run (no change since the last run affects them): %s. "
+                       "Their earlier results count, re-checked only against the hashes of the files they cited%s." % (
+                           ", ".join(carried_domains),
+                           "; carried-forward findings: " + ", ".join(f["id"] for f in carried_findings) if carried_findings else ""))
     for item in _register_inputs(registers):
         if item[2] in ("critical", "blocking", "accepted_critical"):
             reasons.append(item[3])
@@ -236,6 +248,8 @@ def decide(audit, ledger, today, lifecycle=None, registers=None):
         "dismissed_findings": [f["id"] for f in dismissed],
         "accepted_register_risks": accepted_risks,
         "accepted_controls": accepted_controls,
+        "carried_forward_domains": carried_domains,
+        "carried_forward_findings": [f["id"] for f in carried_findings],
         "accepted_critical_findings": accepted_critical,
         "acceptances_not_counted": not_counted,
         "run_started_at": started,

@@ -14,6 +14,8 @@ python3 plugins/flight-check/scripts/flight_check.py schema-check FILE --definit
 | `inventory.json` | inventory agent | Project inventory and domain applicability |
 | `part-<agent>.json` | domain agents | Coverage, controls, findings, positive controls, unverified areas |
 | `verification.json` | verifier agent | Per-finding verdicts and remediation checks |
+| `files.json` | `flight_check.py init-run` (1.5) | Hashes of the project's files when the run started; the next comparison baseline |
+| `scope.json` | `flight_check.py init-run --changed` (1.5) | Domains to reassess and domains to carry forward |
 | `audit.final.json` | `flight_check.py finalize` | The machine-readable result (below) |
 | `summary.json` | audit skill | Executive and legal summaries, remediation priority, candidates |
 | `report.md` | `flight_check.py render` | Human-readable 33-section report |
@@ -23,8 +25,10 @@ python3 plugins/flight-check/scripts/flight_check.py schema-check FILE --definit
 
 Top-level keys:
 - **`schema_version`, `tool`, `finalized_at`, `run`, `inventory`.**
-- **`coverage`:** one entry per domain: `ASSESSED`, `NOT_APPLICABLE`, or `NOT_ASSESSED`, with the rationale and the searches performed.
-- **`controls`:** every catalog control with `state`, `release_critical`, evidence, and `missing_evidence` or `related_findings`.
+- **`coverage`:** one entry per domain: `ASSESSED`, `NOT_APPLICABLE`, or `NOT_ASSESSED`, with the rationale and the searches performed. From 1.5, an audit of changes only (`--changed`) can also report `CARRIED_FORWARD` with `carried_forward` (`run_id`, `at`: the run that last assessed the domain). Agents can never report that status.
+- **`controls`:** every catalog control with `state`, `release_critical`, evidence, and `missing_evidence` or `related_findings`. A control in a carried-forward domain has `carried_forward` (`run_id`, `at`, and `evidence`: `current`, `stale`, `missing`, or `unverified`) and `reported_by: ["carried-forward"]`.
+- **`carried_forward_findings`** (1.5): findings from carried-forward domains that still count in the ship decision, each with `id`, `domain`, `rule`, `title`, `severity`, `status`, `confidence`, `effective_confidence`, `release_blocking_effective`, `last_seen_run`, and `evidence_state`.
+- **`incremental`** (1.5, `--changed` runs only): `baseline_run_id`, `changed_files`, `reassessed_domains`, `carried_forward_domains`.
 - **`findings`:** current findings, sorted by severity. Each has:
   - `id` (stable, `FC-0001`), `fingerprint`, `rule`, `domain`, `title`.
   - `severity`, `confidence`, `effective_confidence`.
@@ -36,14 +40,14 @@ Top-level keys:
 - **`rejected_findings`, `duplicate_findings`:** kept for transparency; they do not affect the gate.
 - **`positive_controls`, `unconfirmed_positive_controls`, `unverified_areas`.**
 - **`regressions`, `not_reproduced`, `remediated_pending`, `lifecycle`.**
-- **`gate`:** `decision`, `reasons`, `critical_findings`, `blocking_findings`, `insufficient_evidence`, `accepted_findings`, `accepted_controls`, `scope_statement`, `exit_code`. From 1.5 also `dismissed_findings` (marked false positive or superseded but still reported) and `accepted_register_risks`; `critical_findings`, `blocking_findings`, and `insufficient_evidence` can then also name requirements (`REQ-`), legal items (`LR-`), and risks (`RISK-`) from the project's records.
-- **`lifecycle`** (1.5): also `possible_regressions`, `false_positive_reobserved`, and `superseded_reobserved`. Positive controls carry stable IDs (`PC-0001`) across runs.
+- **`gate`:** `decision`, `reasons`, `critical_findings`, `blocking_findings`, `insufficient_evidence`, `accepted_findings`, `accepted_controls`, `scope_statement`, `exit_code`. From 1.5 also `dismissed_findings` (marked false positive or superseded but still reported), `accepted_register_risks`, `carried_forward_domains`, and `carried_forward_findings`; `critical_findings`, `blocking_findings`, and `insufficient_evidence` can then also name requirements (`REQ-`), legal items (`LR-`), and risks (`RISK-`) from the project's records.
+- **`lifecycle`** (1.5): also `possible_regressions`, `false_positive_reobserved`, `superseded_reobserved`, and `carried_forward_open`. Positive controls carry stable IDs (`PC-0001`) across runs.
 - **`evidence_index`:** every evidence item with a reference such as `E-0001`.
 - **`validation`:** warnings recorded during finalization.
 
 ## Ledger (`.flight-check/ledger.json`)
 
-- `entries`: keyed by fingerprint. Each entry has a stable `id`, `status`, `history[]`, optional `legal` (classification, status, history), `accepted_risk`, and `remediations[]`.
+- `entries`: keyed by fingerprint. Each entry has a stable `id`, `status`, `history[]`, optional `legal` (classification, status, history), `accepted_risk`, and `remediations[]`. From 1.5 (ledger schema 2.0) also `evidence_files`, and `confidence` and `release_blocking` as of the last observation, so an audit of changes only can count the finding without re-observing it.
 - `control_acceptances`: risks accepted for UNVERIFIED controls.
 - `runs[]`: run IDs with their gate decisions.
 

@@ -9,7 +9,7 @@ import unittest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 import helpers  # noqa: E402
-from flight_check_lib import catalog, constants, freshness, gate, ledger, registers, state  # noqa: E402
+from flight_check_lib import assemble, catalog, constants, freshness, gate, ledger, registers, state  # noqa: E402
 from test_state import run_cli  # noqa: E402
 
 T1, T2, T3 = "2026-10-13T10:00:00Z", "2026-10-13T11:00:00Z", "2026-10-13T12:00:00Z"
@@ -129,6 +129,111 @@ class ChangeDetectionTests(ProjectTestCase):
         self.assertIn("infrastructure", freshness.domains_for_path("deploy/nested/compose.yml"))
         self.assertIn("testing", freshness.domains_for_path("tests/unit/test_x.py"))
         self.assertEqual(freshness.domains_for_path("src/core/engine.zz"), set())
+
+
+def privacy_part():
+    """The data agent's part: privacy only, re-reporting the deletion finding."""
+    part = helpers.base_part(findings=[helpers.deletion_finding()])
+    part["agent"] = "data"
+    part["coverage"] = [c for c in part["coverage"] if c["domain"] == "privacy"]
+    part["controls"] = [c for c in part["controls"] if c["id"] == "PRIV-DELETION"]
+    part["positive_controls"] = []
+    for c in catalog.controls():
+        if c["domain"] == "privacy" and c["id"] != "PRIV-DELETION":
+            part["controls"].append({"id": c["id"], "state": "NOT_APPLICABLE", "rationale": "Fixture has no such feature.",
+                                     "evidence": [{"kind": "absence", "searched": "Glob ** across the fixture"}]})
+    return part
+
+
+class IncrementalTests(ProjectTestCase):
+    """init-run --changed and carrying forward the domains that no change affects (Phase 7b)."""
+
+    def init_changed(self, now):
+        code, out = run_cli("init-run", "--base", os.path.join(self.sd, "runs"), "--root", self.root, "--changed", "--now", now)
+        self.assertEqual(code, 0, out)
+        return out
+
+    def run_changed(self, now, before_finalize=None):
+        out = self.init_changed(now)
+        helpers.write_run(parts=[privacy_part()], base=os.path.join(self.sd, "runs"), run=dict(helpers.base_run(), run_id=out["run_id"]))
+        if before_finalize:
+            before_finalize()
+        code, res = run_cli("finalize", out["run_dir"], "--root", self.root, "--ledger", self.led, "--now", now)
+        self.assertIn(code, (0, 2, 3, 4, 5), res)
+        with open(os.path.join(out["run_dir"], "audit.final.json")) as fh:
+            return out, res, json.load(fh)
+
+    def test_nothing_changed_starts_no_run(self):
+        out = self.init_changed(T2)
+        self.assertTrue(out["nothing_to_reassess"])
+        self.assertEqual(os.listdir(os.path.join(self.sd, "runs")) if os.path.isdir(os.path.join(self.sd, "runs")) else [], [])
+
+    def test_unaffected_domain_is_carried_forward_and_still_counts(self):
+        self.edit("docs/PRIVACY.md")
+        scope = self.init_changed(T2)["scope"]
+        self.assertEqual((scope["reassess_domains"], scope["carried_forward_domains"], scope["agents"]),
+                         (["privacy"], ["application-security"], ["data"]))
+        self.edit("docs/PRIVACY.md", "\n# edited again\n")  # the next init-run must see a fresh change
+        out, res, final = self.run_changed(T3)
+        cov = {c["domain"]: c for c in final["coverage"]}
+        self.assertEqual(cov["application-security"]["status"], constants.CARRIED_FORWARD)
+        self.assertEqual(cov["application-security"]["carried_forward"]["run_id"], "20261013T100000Z")
+        self.assertEqual(cov["privacy"]["status"], "ASSESSED")
+        secrets = next(c for c in final["controls"] if c["id"] == "APPSEC-SECRETS")
+        self.assertEqual((secrets["state"], secrets["carried_forward"]["evidence"]), ("VERIFIED", "current"))
+        carried = final["carried_forward_findings"]
+        self.assertEqual([f["domain"] for f in carried], ["application-security"])
+        self.assertEqual((carried[0]["severity"], carried[0]["effective_confidence"], carried[0]["status"]), ("HIGH", "CONFIRMED", "OPEN"))
+        g = final["gate"]
+        self.assertEqual(g["decision"], constants.GATE_NOT_READY)
+        self.assertIn(carried[0]["id"], g["blocking_findings"])
+        self.assertEqual(g["carried_forward_domains"], ["application-security"])
+        self.assertFalse(any("application-security" in r for r in g["insufficient_evidence"]))
+        self.assertIn(carried[0]["id"], final["lifecycle"]["carried_forward_open"])
+        self.assertEqual(final["incremental"]["reassessed_domains"], ["privacy"])
+        st = state.load(self.sd, root=self.root)
+        self.assertEqual(st.ledger["entries"][next(k for k, e in st.ledger["entries"].items() if e["id"] == carried[0]["id"])]["status"], "OPEN")
+        doms = st.project["domains"]
+        self.assertEqual((doms["application-security"]["status"], doms["application-security"]["assessed_run_id"]),
+                         (constants.CARRIED_FORWARD, "20261013T100000Z"))
+        self.assertEqual(doms["privacy"]["assessed_run_id"], out["run_id"])
+        self.assertEqual(st.project["controls"]["APPSEC-SECRETS"]["run_id"], "20261013T100000Z")
+        self.assertEqual([pc["status"] for pc in st.ledger["positive_controls"].values()], ["observed"])
+        code, rendered = run_cli("render", out["run_dir"], "--allow-missing-summary")
+        self.assertEqual(code, 0, rendered)
+        with open(os.path.join(out["run_dir"], "report.md")) as fh:
+            report = fh.read()
+        self.assertIn("CARRIED FORWARD (not reassessed in this run)", report)
+        self.assertIn("VERIFIED (carried forward)", report)
+        self.assertEqual(run_cli("state", "check", "--state-dir", self.sd)[0], 0)
+        # Nothing changed since: the carried-forward chain holds, so there is nothing to reassess.
+        self.assertTrue(self.init_changed("2026-10-13T13:00:00Z")["nothing_to_reassess"])
+
+    def test_change_during_run_is_not_carried_forward(self):
+        self.edit("docs/PRIVACY.md")
+        out, res, final = self.run_changed(T2, before_finalize=lambda: self.edit("src/store.py"))
+        cov = {c["domain"]: c["status"] for c in final["coverage"]}
+        self.assertEqual(cov["application-security"], "NOT_ASSESSED")
+        self.assertIn("Files changed after this run started", " ".join(final["validation"]["warnings"]))
+        self.assertEqual(final["gate"]["decision"], constants.GATE_INSUFFICIENT)
+        after = self.changes()
+        self.assertIn({"path": "src/store.py", "change": "modified"}, after["files"])  # the snapshot is the new baseline
+        self.assertIn("application-security", after["reassess_domains"])
+
+    def test_carried_controls_are_rechecked_and_never_newly_verify(self):
+        cov = {"carried_forward": {"run_id": "r1", "at": T1}}
+        c = {"id": "APPSEC-SECRETS"}
+        prior = {"state": "VERIFIED", "run_id": "r1", "at": T1, "evidence_files": {"a.py": "0" * 64}}
+        self.assertEqual(assemble._carried_control(c, cov, prior, {"a.py": "1" * 64})["state"], "UNVERIFIED")
+        self.assertEqual(assemble._carried_control(c, cov, prior, {})["state"], "UNVERIFIED")
+        self.assertEqual(assemble._carried_control(c, cov, None, {})["state"], "UNVERIFIED")
+        kept = assemble._carried_control(c, cov, prior, {"a.py": "0" * 64})
+        self.assertEqual((kept["state"], kept["carried_forward"]["evidence"]), ("VERIFIED", "current"))
+        regs = state.new_registers()
+        regs["requirements"].append({"id": "REQ-0001", "title": "No secrets", "criticality": "high", "status": "IMPLEMENTED",
+                                     "controls": ["APPSEC-SECRETS"], "links": {}, "history": []})
+        self.assertEqual(registers.apply_assessment(regs, {"controls": [kept]}, {}, T2, "r2"), [])
+        self.assertEqual(regs["requirements"][0]["status"], "IMPLEMENTED")
 
 
 class LifecycleTests(unittest.TestCase):

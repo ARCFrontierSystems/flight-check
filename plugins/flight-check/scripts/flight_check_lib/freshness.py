@@ -60,15 +60,15 @@ def scan(root, max_files=MAX_FILES):
     return files, notes
 
 
-def write_manifest(state_dir, root, run_id, now_iso):
-    files, notes = scan(root)
+def write_manifest(state_dir, root, run_id, now_iso, scanned=None):
+    files, notes = scanned if scanned is not None else scan(root)
     dump_json(os.path.join(state_dir, MANIFEST), {"schema_version": "1.0", "created_at": now_iso, "run_id": run_id,
                                                   "files": files, "notes": notes, "partial": any("stopped after" in n for n in notes)})
     return len(files)
 
 
-def load_manifest(state_dir):
-    path = os.path.join(state_dir, MANIFEST)
+def load_manifest(state_dir, name=MANIFEST):
+    path = os.path.join(state_dir, name)
     if not os.path.isfile(path) or os.path.islink(path):
         return None
     try:
@@ -77,7 +77,25 @@ def load_manifest(state_dir):
         return None
     if not isinstance(doc, dict) or not isinstance(doc.get("files"), dict):
         return None
+    if not all(isinstance(k, str) and isinstance(v, str) for k, v in doc["files"].items()):
+        return None
     return doc
+
+
+SNAPSHOT = "files.json"
+
+
+def write_snapshot(run_dir, scanned, now_iso):
+    """The project's files as the run started. finalize records them as the next baseline, so a file that changes
+    while agents are reading is reported as changed next time instead of being absorbed unassessed."""
+    files, notes = scanned
+    dump_json(os.path.join(run_dir, SNAPSHOT), {"schema_version": "1.0", "created_at": now_iso, "files": files,
+                                                "notes": notes, "partial": any("stopped after" in n for n in notes)})
+
+
+def load_snapshot(run_dir):
+    doc = load_manifest(run_dir, SNAPSHOT)
+    return (doc["files"], list(doc.get("notes") or [])) if doc else None
 
 
 def file_hashes(evidence_refs):
@@ -145,9 +163,23 @@ def _conclusions(st):
     return out
 
 
-def changes(root, st, max_files=MAX_FILES):
+CARRY_ELIGIBLE = ("ASSESSED", "NOT_APPLICABLE", "CARRIED_FORWARD")
+
+
+def _carry_from(rec, baseline_run):
+    """The earlier assessment a domain's results can be carried forward from, or None. Only a domain that the run
+    which wrote the baseline file list assessed (or itself carried forward) qualifies, so the chain of unchanged
+    files is never broken by a run that skipped the domain."""
+    if not rec or not baseline_run or rec.get("status") not in CARRY_ELIGIBLE or rec.get("run_id") != baseline_run:
+        return None
+    if not rec.get("assessed_run_id"):
+        return None
+    return {"run_id": rec["assessed_run_id"], "at": rec["assessed_at"]}
+
+
+def changes(root, st, max_files=MAX_FILES, scanned=None):
     """What changed since the last finalized assessment, what that affects, and which domains to reassess."""
-    current, scan_notes = scan(root, max_files)
+    current, scan_notes = scanned if scanned is not None else scan(root, max_files)
     manifest = load_manifest(st.state_dir)
     reasons = list(scan_notes)
     widen = any("stopped after" in n for n in scan_notes)
@@ -196,10 +228,17 @@ def changes(root, st, max_files=MAX_FILES):
 
     applicable = _applicable_domains(st)
     decision_reviews = _decision_reviews(st, changed)
+    recorded = (st.project or {}).get("domains") or {}
+    baseline_run = manifest.get("run_id") if manifest else None
+    carry_from = {d: _carry_from(recorded.get(d), baseline_run) for d in applicable}
+    never = sorted(d for d, c in carry_from.items() if c is None)
     if widen:
         reassess = sorted(applicable)
     else:
-        reassess = sorted(d for d in domains if d in applicable)
+        reassess = sorted(set(d for d in domains if d in applicable) | set(never))
+        if never:
+            reasons.append("%d applicable domain(s) were not assessed in the last run, so there is nothing to carry "
+                           "forward for them: %s" % (len(never), ", ".join(never)))
     carried = sorted(d for d in applicable if d not in reassess)
     stale = [{"kind": k, "id": i, "state": evidence_state(h, current)} for k, i, _, h, s in conclusions
              if h and evidence_state(h, current) in (STALE, MISSING)]
@@ -216,8 +255,9 @@ def changes(root, st, max_files=MAX_FILES):
         "affected": affected[:500],
         "stale_evidence": stale[:500],
         "decisions_to_review": decision_reviews,
-        "reassess_domains": reassess if changed or widen else [],
-        "carried_forward_domains": carried if changed or widen else sorted(applicable),
+        "reassess_domains": reassess,
+        "carried_forward_domains": carried,
+        "carried_forward_from": {d: carry_from[d] for d in carried},
         "widened": bool(widen and (changed or not manifest)),
         "reasons": reasons,
         "latest_readiness": latest[-1] if latest else None,

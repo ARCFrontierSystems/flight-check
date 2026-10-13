@@ -265,6 +265,9 @@ def semantic_errors(project, registers):
         domains = [a["domain"] for a in project["applicability"]]
         if len(set(domains)) != len(domains):
             errors.append("project.json: a domain appears twice in applicability")
+        unknown = sorted(d for d in project.get("domains") or {} if d not in catalog.domain_ids())
+        if unknown:
+            errors.append("project.json: unknown domain %s in domains" % ", ".join(unknown[:5]))
         for r in project.get("readiness") or []:
             if r["revision"] > project["revision"]:
                 errors.append("project.json: a readiness stamp is newer than the state revision")

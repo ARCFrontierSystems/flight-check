@@ -51,6 +51,47 @@ def _run_ref(run_dir):
     return ref
 
 
+def _scope(run_dir):
+    """scope.json, written by init-run --changed: which domains this run reassesses and which it carries forward."""
+    path = os.path.join(run_dir, "scope.json")
+    if not os.path.isfile(path):
+        return None
+    doc = load_json(path)
+    if not isinstance(doc, dict) or doc.get("mode") not in ("changed", "full") or \
+            not isinstance(doc.get("carried_forward_domains"), list) or \
+            not all(d in catalog.domain_ids() for d in doc["carried_forward_domains"]):
+        raise state.StateError("%s is not a valid run scope" % path)
+    return doc
+
+
+def _carried_findings(audit, entries, files):
+    """Findings in carried-forward domains that counted at those domains' last assessment, as gate inputs."""
+    origins = {c["domain"]: c["carried_forward"] for c in audit["coverage"] if c["status"] == constants.CARRIED_FORWARD}
+    seen = {f["id"] for f in audit["findings"]}
+    out = []
+    for fid, e in sorted(entries.items()):
+        origin = origins.get(e["domain"])
+        if not origin or fid in seen or e["last_seen_run"] != origin["run_id"]:
+            continue
+        if e["status"] in constants.RESOLVED_STATUSES or e["status"] == "NOT_REPRODUCED":
+            continue
+        ev = freshness.evidence_state(e.get("evidence_files") or {}, files)
+        item = {"id": fid, "domain": e["domain"], "rule": e["rule"], "title": e["title"], "severity": e["severity"],
+                "status": e["status"], "confidence": e.get("confidence", "UNVERIFIED"),
+                "release_blocking": e.get("release_blocking", e["severity"] != "INFORMATIONAL"),
+                "last_seen_run": e["last_seen_run"], "evidence_state": ev}
+        if ev in (freshness.STALE, freshness.MISSING):
+            item["evidence_check"] = "FAILED"
+        if e.get("accepted_risk"):
+            item["accepted_risk"] = e["accepted_risk"]
+        if (e.get("legal") or {}).get("classification"):
+            item["legal_classification"] = e["legal"]["classification"]
+        item["effective_confidence"] = gate.effective_confidence(item)
+        item["release_blocking_effective"] = gate.release_blocking_effective(item)
+        out.append(item)
+    return out
+
+
 def finalize(run_dir, root, ledger_path=None, now_iso=None):
     """Returns a result dict. On validation failure nothing is written and ok is False."""
     errors, warnings = validate.validate_run_dir(run_dir)
@@ -60,13 +101,27 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
     if os.path.exists(final_path):
         return {"ok": False, "errors": ["%s already exists; this run was finalized. Use 'render' to regenerate the report." % final_path], "warnings": warnings}
 
-    overrides = {}
+    overrides, carried, scanned, prior_revision = {}, None, None, None
+    scope = _scope(run_dir)
     if ledger_path:
         # Owner overrides of applicability (read before the merge; the merge re-checks them against this run).
         prior = state.load(os.path.dirname(os.path.abspath(ledger_path)), strict=False)
         if prior.initialized and not prior.problems:
             overrides = {a["domain"]: a["override"] for a in prior.project["applicability"] if a.get("override")}
-    audit, more = assemble.assemble(run_dir, overrides)
+            if scope and scope["mode"] == "changed":
+                # Re-check the scope against the files now: a domain stays carried forward only if nothing that
+                # changed since the last run, including while this run was in progress, affects it.
+                scanned = freshness.scan(root)
+                fresh = freshness.changes(root, prior, scanned=scanned)
+                keep = [d for d in scope["carried_forward_domains"] if d in fresh["carried_forward_domains"]]
+                dropped = sorted(set(scope["carried_forward_domains"]) - set(keep))
+                if dropped:
+                    warnings.append("Files changed after this run started, so these domains were not carried forward and "
+                                    "count as not assessed unless an agent assessed them: %s" % ", ".join(dropped))
+                carried = {"domains": {d: fresh["carried_forward_from"][d] for d in keep},
+                           "controls": prior.project.get("controls") or {}, "files": scanned[0]}
+                prior_revision = prior.project["revision"]
+    audit, more = assemble.assemble(run_dir, overrides, carried)
     warnings.extend(more)
     now, today = _now(now_iso)
     cache = evidence.FileCache()
@@ -112,6 +167,8 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         with state.transaction(state_dir, "flight-check", "finalize", now, root=root, run_id=run_id,
                                ledger_name=os.path.basename(ledger_path), create_ledger=True,
                                project_name=audit["run"]["target"]["name"]) as tx:
+            if prior_revision is not None and tx.project["revision"] != prior_revision:
+                raise state.StateError("the project state changed while run %s was being finalized; run finalize again" % run_id)
             ref = _run_ref(run_dir)
             if ref and ref["project_id"] != tx.project["identity"]["project_id"]:
                 raise state.StateError("run %s was started for project %s, but this state belongs to project %s; "
@@ -123,14 +180,34 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
             hashes = {}
             entries = registers.entries_by_id(led)
             for f in audit["findings"]:
-                entries[f["id"]]["evidence_files"] = freshness.entry_evidence_files(f, root, hashes)
+                entry = entries[f["id"]]
+                entry["evidence_files"] = freshness.entry_evidence_files(f, root, hashes)
+                # Kept so a later incremental run can count this finding without re-observing it.
+                entry["confidence"] = f["effective_confidence"]
+                entry["release_blocking"] = f["release_blocking_effective"]
+            audit["carried_forward_findings"] = _carried_findings(audit, entries, scanned[0] if scanned else {})
             ledger.merge_positive_controls(led, audit["positive_controls"], run_id, now,
-                                           lambda p: freshness.entry_evidence_files(p, root, hashes))
+                                           lambda p: freshness.entry_evidence_files(p, root, hashes),
+                                           {c["domain"] for c in audit["coverage"] if c["status"] == "ASSESSED"})
             controls = tx.project.setdefault("controls", {})
+            coverage = {c["domain"]: c for c in audit["coverage"]}
             for c in audit["controls"]:
-                if c["state"] in ("VERIFIED", "NOT_MET", "NOT_APPLICABLE") or c["id"] not in controls:
+                if "carried-forward" in (c.get("reported_by") or []):
+                    continue  # keeps the record of the run that actually assessed it
+                if c.get("reported_by") or coverage[c["domain"]]["status"] in ("ASSESSED", "NOT_APPLICABLE") or \
+                        c["id"] not in controls:
                     controls[c["id"]] = {"state": c["state"], "run_id": run_id, "at": now,
                                          "evidence_files": freshness.entry_evidence_files(c, root, hashes)}
+            assessed = tx.project.setdefault("domains", {})
+            for d, cov in coverage.items():
+                rec = {"status": cov["status"], "run_id": run_id, "at": now}
+                if cov["status"] in ("ASSESSED", "NOT_APPLICABLE"):
+                    rec.update(assessed_run_id=run_id, assessed_at=now)
+                elif cov["status"] == constants.CARRIED_FORWARD:
+                    rec.update(assessed_run_id=cov["carried_forward"]["run_id"], assessed_at=cov["carried_forward"]["at"])
+                elif (assessed.get(d) or {}).get("assessed_run_id"):
+                    rec.update(assessed_run_id=assessed[d]["assessed_run_id"], assessed_at=assessed[d]["assessed_at"])
+                assessed[d] = rec
             profile_changes = profile.merge(tx.project, audit["inventory"], root, now, run_id)
             legal_changes = legal.sync_findings(tx.registers, tx.project, led, audit["findings"], now, run_id, root)
             register_changes = registers.apply_assessment(tx.registers, audit, registers.entries_by_id(led), now, run_id)
@@ -139,9 +216,11 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
             kinds = {}
             for change in profile_changes:
                 kinds[change[0]] = kinds.get(change[0], 0) + 1
+            n_carried = len(decision["carried_forward_domains"])
             tx.event("state", {"gate": [prev, decision["decision"]]},
-                     "Audit run %s finalized. Findings: %s. Profile: %s." % (
-                         run_id, ", ".join("%s %d" % kv for kv in sorted(counts.items())) or "no lifecycle changes",
+                     "Audit run %s finalized%s. Findings: %s. Profile: %s." % (
+                         run_id, (" (%d domain(s) carried forward, not reassessed)" % n_carried) if n_carried else "",
+                         ", ".join("%s %d" % kv for kv in sorted(counts.items())) or "no lifecycle changes",
                          ", ".join("%s %d" % kv for kv in sorted(kinds.items())) or "unchanged"))
             for record, change, note in legal_changes + register_changes:
                 tx.event(record, change, note)
@@ -155,7 +234,8 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
                     tx.event(change[1], {"contradiction": [False, True]},
                              "The latest observation of %s contradicts an active correction." % change[2])
             tx.readiness = (decision["decision"], run_id, audit["run"]["target"].get("commit"))
-        freshness.write_manifest(state_dir, root, run_id, now)
+        # The files as this run started (init-run's snapshot) become the next baseline when available.
+        freshness.write_manifest(state_dir, root, run_id, now, freshness.load_snapshot(run_dir) or scanned)
     else:
         led = ledger.new_ledger(audit["run"]["target"]["name"])
         lifecycle = merge_ledger(led)
@@ -181,6 +261,7 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         "regressions": lifecycle.get("regressions", []),
         "not_reproduced": lifecycle.get("not_reproduced", []),
         "remediated_pending": lifecycle.get("remediated_pending", []),
+        "carried_forward_findings": audit.get("carried_forward_findings", []),
         "lifecycle": {k: v for k, v in lifecycle.items() if k != "ledger_entries"},
         "gate": decision,
         "notes": audit["notes"],
@@ -188,6 +269,10 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         "validation": {"errors": [], "warnings": warnings},
         "ledger": os.path.abspath(ledger_path) if ledger_path else None,
     }
+    if scope and scope["mode"] == "changed":
+        final["incremental"] = {"baseline_run_id": scope.get("baseline_run_id"), "changed_files": scope.get("changed_files", 0),
+                                "reassessed_domains": [c["domain"] for c in audit["coverage"] if c["status"] == "ASSESSED"],
+                                "carried_forward_domains": decision.get("carried_forward_domains", [])}
     final["evidence_index"] = _index_evidence(final)
     schema_errors = minischema.validate_def(final, catalog.schema(), "auditFinal")
     if schema_errors:
@@ -206,6 +291,9 @@ def finalize(run_dir, root, ledger_path=None, now_iso=None):
         "rejected": len(final["rejected_findings"]),
         "evidence_failures": [f["id"] for f in final["findings"] if f.get("evidence_check") == "FAILED"],
         "lifecycle": final["lifecycle"],
+        "carried_forward_domains": decision.get("carried_forward_domains", []),
+        "carried_forward_findings": [{"id": f["id"], "severity": f["severity"], "status": f["status"], "domain": f["domain"],
+                                      "title": f["title"]} for f in final["carried_forward_findings"]],
         "warnings": warnings,
     }
 

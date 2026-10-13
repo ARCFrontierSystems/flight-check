@@ -271,7 +271,8 @@ def merge(led, audit, now_iso, today):
     checks = {c["finding_id"]: c for c in audit.get("remediation_checks", [])}
     coverage = {c["domain"]: c["status"] for c in audit["coverage"]}
     lifecycle = {"not_reproduced": [], "remediated_pending": [], "verified_this_run": [],
-                 "accepted_not_observed": [], "not_assessed_open": [], "inconsistent_remediation": []}
+                 "accepted_not_observed": [], "not_assessed_open": [], "carried_forward_open": [],
+                 "inconsistent_remediation": []}
     for fp, e in entries.items():
         if fp in matched:
             continue
@@ -289,6 +290,9 @@ def merge(led, audit, now_iso, today):
                 e["status"] = "OPEN"
                 e["history"].append(_event(now_iso, "OPEN", "flight-check", "verifier reports the fix is not effective: %s" % check["notes"], run_id))
                 lifecycle["inconsistent_remediation"].append(e["id"])
+                continue
+            if coverage.get(e["domain"]) == constants.CARRIED_FORWARD:
+                lifecycle["carried_forward_open"].append(e["id"])
                 continue
             if coverage.get(e["domain"]) != "ASSESSED":
                 lifecycle["not_assessed_open"].append(e["id"])
@@ -337,8 +341,9 @@ def mark(led, finding_id, status, reason, now_iso, superseded_by=None, by=None):
     return old
 
 
-def merge_positive_controls(led, positives, run_id, now_iso, evidence_files):
-    """Stable PC- ids for positive controls across runs: same domain and file, and a similar title."""
+def merge_positive_controls(led, positives, run_id, now_iso, evidence_files, assessed_domains=None):
+    """Stable PC- ids for positive controls across runs: same domain and file, and a similar title. Only domains
+    assessed in this run (all, when assessed_domains is None) can mark a positive control not observed."""
     pcs = led.setdefault("positive_controls", {})
     led.setdefault("next_pc_id", 1)
     seen = set()
@@ -362,7 +367,7 @@ def merge_positive_controls(led, positives, run_id, now_iso, evidence_files):
         seen.add(match)
         p["id"] = pc["id"]
     for k, pc in pcs.items():
-        if k not in seen and pc["status"] == "observed":
+        if k not in seen and pc["status"] == "observed" and (assessed_domains is None or pc["domain"] in assessed_domains):
             pc["status"] = "not_observed"
 
 

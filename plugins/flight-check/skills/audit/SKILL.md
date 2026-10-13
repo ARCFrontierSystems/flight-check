@@ -1,7 +1,7 @@
 ---
 name: audit
 description: Evidence-first ship-readiness audit: security, privacy, legal/business, compliance readiness, accessibility, reliability, production readiness. Deterministic ship gate and report.
-argument-hint: "[path] [--untrusted] [--out DIR] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2]"
+argument-hint: "[path] [--untrusted] [--out DIR] [--context FILE] [--evidence FILE ...] [--domains a,b] [--passes 2] [--changed]"
 disable-model-invocation: true
 allowed-tools: Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py validate *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py save-reply *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py finalize *), Bash(python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py render *)
 disallowed-tools: WebFetch, WebSearch, Edit, NotebookEdit, Skill
@@ -34,6 +34,7 @@ Arguments: `$ARGUMENTS`
 - `--context FILE`: user-written project context: jurisdictions and markets, audience (including minors), regulated data, business model, deployment.
 - `--evidence FILE ...`: imported evidence such as vulnerability-scanner JSON, CI test results, restore-test records, accessibility test reports, or pentest reports.
 - `--domains a,b`: restrict the audit to these domains. The ship gate then treats the others as NOT ASSESSED and fails safe.
+- `--changed`: reassess only what changed since the last finalized audit. Flight Check compares file hashes with that audit, reassesses every domain a change can affect, and carries the other domains' results forward, labelled "carried forward, not reassessed". When it cannot trace a change, it reassesses everything. Do not combine with `--domains`.
 - `--passes N` (1 to 3, default 1): run each domain agent N times independently and combine the results. This finds more issues and makes results steadier from run to run, and costs roughly N times as much for the domain audits. Tell the user the cost before starting when N is above 1.
 
 **Trust tier and output locations:**
@@ -48,9 +49,14 @@ Arguments: `$ARGUMENTS`
 
 ## 1. Start the run
 
-Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run --base <run base> --root <root>`. It prints `run_id`, `run_dir`, `started_at`, and `commit`. Use `run_dir` and the absolute audit root exactly as given, character for character, in every file path you write and every prompt you send; never shorten or retype them from memory. Paths outside the audit root are refused.
+Run `python3 ${CLAUDE_PLUGIN_ROOT}/scripts/flight_check.py init-run --base <run base> --root <root>`, adding `--changed` when it was requested. It prints `run_id`, `run_dir`, `started_at`, and `commit`. Use `run_dir` and the absolute audit root exactly as given, character for character, in every file path you write and every prompt you send; never shorten or retype them from memory. Paths outside the audit root are refused.
 
 If `python3` is unavailable or the command fails, follow "If the script cannot run" at the end.
+
+**With `--changed`,** the output also has a `scope`:
+- If it says `nothing_to_reassess`, no run was started. Tell the user its message and the latest ship decision in `scope.latest_readiness`, and stop.
+- If `scope.mode` is `full`, there is no earlier audit to compare with. Tell the user why (`scope.reasons`) and run a complete audit.
+- If `scope.mode` is `changed`, note `scope.reassess_domains`, `scope.carried_forward_domains`, and `scope.agents`. Tell the user how many files changed, which domains will be reassessed, which will be carried forward, and why the scope was widened if `scope.widened` is true. List `scope.decisions_to_review`: decisions whose review triggers matched a change.
 
 Write `<run_dir>/run.json`:
 
@@ -94,7 +100,7 @@ Extract the JSON object from its reply and write it unchanged to `<run_dir>/inve
 | `flight-check:a11y` | accessibility |
 | `flight-check:governance` | legal-business, compliance-readiness, documentation |
 
-Launch every agent that has at least one domain whose inventory applicability is `yes` or `unknown` (restricted to `--domains` when given). Launch them **in one message with multiple Agent tool calls** so they run in parallel, then wait for all of them. Skip an agent only when inventory marked all of its domains `no`; Flight Check then records those domains as NOT_APPLICABLE using the inventory's evidence.
+Launch every agent that has at least one domain whose inventory applicability is `yes` or `unknown` (restricted to `--domains` when given). **With `--changed` and `scope.mode` `changed`,** launch only the agents in `scope.agents`, plus any agent with a domain that the new inventory marks `yes` or `unknown` and that is not in `scope.carried_forward_domains`. Never launch an agent just to re-check a carried-forward domain; Flight Check checks those mechanically. Launch them **in one message with multiple Agent tool calls** so they run in parallel, then wait for all of them. Skip an agent only when inventory marked all of its domains `no`; Flight Check then records those domains as NOT_APPLICABLE using the inventory's evidence.
 
 Delegation prompt for each agent:
 
@@ -185,6 +191,7 @@ Reply concisely:
 - **Unverified release-critical controls,** with how to supply evidence: for example re-run with `--evidence <scanner.json>` for `SUPPLY-KNOWN-VULNS`, or a restore-test record for `REL-BACKUP-RESTORE`.
 - **Legal items:** findings classified for legal or business review; suggest `/flight-check:legal-packet`.
 - **Lifecycle changes:** regressions, and findings not reproduced.
+- **Carried forward** (incremental runs): the domains and findings in the finalize output's `carried_forward_domains` and `carried_forward_findings`. Say they were not reassessed in this run; never call them verified or re-checked by an agent.
 - **Paths:** `report.md`, `audit.final.json`, and the ledger.
 - **Next steps:** `/flight-check:remediate FC-...` (own projects only) and `/flight-check:track` (accepted risks, counsel decisions, closing verified items).
 - **The scope reminder:** this reflects only the evidence examined; it is not a certification or legal advice.

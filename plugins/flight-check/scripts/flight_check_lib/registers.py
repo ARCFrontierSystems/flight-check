@@ -262,6 +262,10 @@ def apply_assessment(registers, final, ledger_entries, now_iso, run_id):
                          if ledger_entries.get(f, {}).get("status") in ("OPEN", "REGRESSION", "REMEDIATED", "NOT_REPRODUCED")]
         verified = (all(s == "VERIFIED" for s in states) and all(c in ("PASSED", None) for c in checks)
                     and not open_findings)
+        if verified and any(controls.get(c, {}).get("carried_forward") for c in linked):
+            # Remembered, not re-verified: an earlier verification stands while its evidence is unchanged, but a
+            # carried-forward control never verifies a requirement for the first time.
+            continue
         old_state = (rec.get("verification") or {}).get("state")
         if verified:
             rec["verification"] = {"state": "current", "at": now_iso, "run_id": run_id}
