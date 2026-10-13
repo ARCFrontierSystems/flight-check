@@ -2,10 +2,15 @@
 
 All notable changes are recorded here. Versions follow [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [1.0.2] — 2026-10-13
+
+Findings filed in the right area more often, and fixes checked by breaking them.
 
 - **Fixes are checked by breaking them.** After `/flight-check:fix` or `/flight-check:remediate` fixes a problem and adds a test, it undoes each part of the fix in turn and runs the tests, which must fail every time. A break that survives with every test green shows that the tests miss the real path (for example, they call a function directly but never the line that wires it in), so a test that covers it is added. The fix is restored after each break, and the result is reported in plain words and recorded with the fix.
 - **Findings land in the right area more often.** Every checking agent and the verifier now share one guide for choosing a finding's area by the harm it describes, not by the file it was found in, with the pairs most often confused (authentication or authorization; application security, data protection, or privacy; reliability, operational readiness, or production readiness; documentation or the gap itself). The verifier, which sees all findings together, can move a finding to another area with a new optional `domain` field in its verdict. The move changes the finding's `rule` prefix, is recorded as `verification.original_domain`, and is shown in the report.
+- **Measured once, before the logs change below.** A re-run of the benchmark application whose misses prompted this change found every seeded issue at the right place, as before, and filed 93% of them in the expected area (89% before; must-find issues 96%, before 91%), with the same decoy false-alarm rate. This is one run on the application the misses came from, not a held-out evaluation.
+- **No more overlap between two checks on logs.** `APPSEC-ERROR-DISCLOSURE` now covers only what error responses show users and clients (stack traces, internal details, secrets). Credentials, tokens, and personal data written to logs or error trackers belong to `DATA-SENSITIVE-HANDLING` (data protection). Before, both checks claimed sensitive data in logs, so the same problem could be filed in either area.
+- **Benchmark runner** (development only): headless runs no longer stop at the audit's spending-limit question; the runner's `--budget` is the hard cap.
 
 ## [1.0.1] — 2026-10-13
 

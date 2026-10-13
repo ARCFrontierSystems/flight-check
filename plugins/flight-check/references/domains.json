@@ -2,10 +2,10 @@
   "catalog_version": "1.0",
   "description": "Audit domains. Every finding, control, and coverage entry belongs to exactly one domain. 'Overall ship readiness' is not a domain: it is the ship gate computed from all domains.",
   "domains": [
-    {"id": "application-security", "title": "Application Security", "agent": "appsec", "summary": "Input/output handling, injection, web/API hardening, file uploads, webhooks, secrets, administration surfaces, logging and error disclosure."},
+    {"id": "application-security", "title": "Application Security", "agent": "appsec", "summary": "Input/output handling, injection, web/API hardening, file uploads, webhooks, secrets, administration surfaces, error disclosure to users."},
     {"id": "authentication", "title": "Authentication", "agent": "appsec", "summary": "Registration, login, credentials, password reset and recovery, MFA, sessions, tokens, cookies, brute-force and enumeration defenses."},
     {"id": "authorization", "title": "Authorization", "agent": "appsec", "summary": "Server-side enforcement, roles and attributes, object-level ownership, tenant isolation, administrative and background-job authorization."},
-    {"id": "data-protection", "title": "Data Protection", "agent": "data", "summary": "Datastore and storage access control, row-level security, sensitive-data handling, encryption, backups security, data exposure."},
+    {"id": "data-protection", "title": "Data Protection", "agent": "data", "summary": "Datastore and storage access control, row-level security, sensitive-data handling (including sensitive data in logs), encryption, backups security, data exposure."},
     {"id": "privacy", "title": "Privacy", "agent": "data", "summary": "Collection, purpose, sharing, tracking, consent, retention, deletion, export, correction, and consistency between privacy disclosures and implementation."},
     {"id": "payments", "title": "Payments / Subscriptions", "agent": "payments", "summary": "Payment boundaries, keys, webhooks, idempotency, subscription state, entitlements, trials, renewals, cancellations, refunds, chargebacks."},
     {"id": "third-party", "title": "Third-Party Services", "agent": "supply-chain", "summary": "Inventory of external services, credentials, data shared, failure modes, vendor dependency and exit considerations."},

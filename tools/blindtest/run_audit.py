@@ -124,6 +124,9 @@ def main(argv=None):
                 shutil.copy(src, os.path.join(target, ".flight-check", name))
     if args.decisions:
         print("recorded %d decision(s)" % record_decisions(script, target, args.decisions))
+    # A headless run cannot answer the audit's spending-limit question; --budget is the hard cap instead.
+    subprocess.run([sys.executable, script, "settings", "--root", target, "--max-audit-usd", "0"], check=True,
+                   stdout=subprocess.DEVNULL)
     # Only the four subcommands an audit needs; never the ledger commands that record user decisions.
     # The ledger is written by the script, so the session itself may write only run directories.
     settings = {"permissions": {

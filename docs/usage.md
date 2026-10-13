@@ -280,7 +280,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ARCFrontierSystems/flight-check
-          ref: v1.0.1 # the Flight Check release you audit with
+          ref: v1.0.2 # the Flight Check release you audit with
           path: .flight-check-tool
           persist-credentials: false
       - run: python3 .flight-check-tool/plugins/flight-check/scripts/flight_check.py release-check --root . --mode require
@@ -315,7 +315,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           repository: ARCFrontierSystems/flight-check
-          ref: v1.0.1 # the Flight Check release you audit with
+          ref: v1.0.2 # the Flight Check release you audit with
           path: .flight-check-tool
           persist-credentials: false
       - run: python3 .flight-check-tool/plugins/flight-check/scripts/flight_check.py sarif --root . --out flight-check.sarif
